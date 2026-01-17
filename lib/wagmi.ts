@@ -41,7 +41,7 @@ const flowTestnet = {
 
 export const config = getDefaultConfig({
   appName: 'Flow Sentinel',
-  projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'c4f79cc821944d9680842e34466bfb',
+  projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'demo-project-id',
   chains: [flowTestnet, flowEVM, mainnet, polygon, optimism, arbitrum, base],
   ssr: true,
 })

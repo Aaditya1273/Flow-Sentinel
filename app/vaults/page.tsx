@@ -204,12 +204,12 @@ export default function VaultsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p className="text-gray-300">Loading strategies from blockchain...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading strategies from blockchain...</p>
           </div>
         </div>
       </div>
@@ -217,7 +217,7 @@ export default function VaultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       <div className="pt-20 pb-8">
@@ -228,61 +228,63 @@ export default function VaultsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-4xl font-bold text-white mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               Vault Strategies
             </h1>
-            <p className="text-xl text-gray-300 mb-6">
+            <p className="text-xl text-muted-foreground mb-6">
               Choose from proven DeFi strategies powered by Flow blockchain smart contracts
             </p>
             
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
-              <div className="flex items-center space-x-2 text-blue-400 mb-2">
+            <div className="tool-card p-4 mb-6 border border-accent/20 bg-accent/5">
+              <div className="flex items-center space-x-2 text-accent mb-2">
                 <Shield className="w-5 h-5" />
                 <span className="font-semibold">Real Blockchain Strategies</span>
               </div>
-              <p className="text-sm text-blue-300">
+              <p className="text-sm text-muted-foreground">
                 All strategies are powered by deployed smart contracts on Flow Testnet. Each strategy implements real DeFi logic with MEV protection and automated execution.
                 {!isConnected && " Connect your wallet to create vaults with these strategies."}
               </p>
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
-                <div className="flex items-center space-x-2 text-red-400 mb-2">
+              <div className="tool-card p-4 mb-6 border border-destructive/20 bg-destructive/5">
+                <div className="flex items-center space-x-2 text-destructive mb-2">
                   <Shield className="w-5 h-5" />
                   <span className="font-semibold">Error Loading Strategies</span>
                 </div>
-                <p className="text-sm text-red-300">{error}</p>
+                <p className="text-sm text-destructive/80">{error}</p>
               </div>
             )}
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="glass p-4 rounded-xl">
-                <div className="text-2xl font-bold text-white">
-                  {formatCurrency(strategies.reduce((sum, v) => sum + v.tvl, 0))}
+            {/* Stats - Only show real data */}
+            {strategies.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="tool-card p-4 border border-border">
+                  <div className="text-2xl font-bold text-foreground financial-number">
+                    {formatCurrency(strategies.reduce((sum, v) => sum + v.tvl, 0))}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Value Locked</div>
                 </div>
-                <div className="text-sm text-gray-400">Total Value Locked</div>
-              </div>
-              <div className="glass p-4 rounded-xl">
-                <div className="text-2xl font-bold text-white">
-                  {strategies.length}
+                <div className="tool-card p-4 border border-border">
+                  <div className="text-2xl font-bold text-foreground">
+                    {strategies.length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Available Strategies</div>
                 </div>
-                <div className="text-sm text-gray-400">Available Strategies</div>
-              </div>
-              <div className="glass p-4 rounded-xl">
-                <div className="text-2xl font-bold text-blue-400">
-                  {strategies.reduce((sum, v) => sum + v.participants, 0).toLocaleString()}
+                <div className="tool-card p-4 border border-border">
+                  <div className="text-2xl font-bold text-accent">
+                    {strategies.reduce((sum, v) => sum + v.participants, 0).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Users</div>
                 </div>
-                <div className="text-sm text-gray-400">Total Users</div>
-              </div>
-              <div className="glass p-4 rounded-xl">
-                <div className="text-2xl font-bold text-purple-400">
-                  {strategies.length > 0 ? Math.max(...strategies.map(v => v.expectedAPY)).toFixed(1) : '0'}%
+                <div className="tool-card p-4 border border-border">
+                  <div className="text-2xl font-bold text-accent">
+                    {Math.max(...strategies.map(v => v.expectedAPY)).toFixed(1)}%
+                  </div>
+                  <div className="text-sm text-muted-foreground">Highest APY</div>
                 </div>
-                <div className="text-sm text-gray-400">Highest APY</div>
               </div>
-            </div>
+            )}
           </motion.div>
 
           {/* Filters */}
@@ -290,19 +292,19 @@ export default function VaultsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="glass p-6 rounded-xl mb-8"
+            className="tool-card p-6 border border-border mb-8"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* Search */}
               <div className="lg:col-span-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Search strategies..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent"
                   />
                 </div>
               </div>
@@ -311,7 +313,7 @@ export default function VaultsPage() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-accent"
               >
                 {categories.map(cat => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -322,7 +324,7 @@ export default function VaultsPage() {
               <select
                 value={selectedRisk}
                 onChange={(e) => setSelectedRisk(e.target.value)}
-                className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-accent"
               >
                 {riskLevels.map(risk => (
                   <option key={risk.value} value={risk.value}>{risk.label}</option>
@@ -333,7 +335,7 @@ export default function VaultsPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-accent"
               >
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -350,7 +352,7 @@ export default function VaultsPage() {
               transition={{ delay: 0.2 }}
               className="mb-8"
             >
-              <h2 className="text-2xl font-bold text-white mb-4">Featured Strategies</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-4">Featured Strategies</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {filteredStrategies.filter(strategy => strategy.featured).map((strategy, index) => (
                   <motion.div
@@ -359,18 +361,18 @@ export default function VaultsPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + index * 0.1 }}
                   >
-                    <Card className="glass p-6 hover:bg-white/5 transition-colors cursor-pointer">
+                    <Card className="tool-card p-6 border border-border hover:border-accent/50 transition-colors cursor-pointer">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-500/20 rounded-lg">
+                          <div className="p-2 bg-accent/20 rounded-lg">
                             {getCategoryIcon(strategy.category)}
                           </div>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <h3 className="text-lg font-semibold text-white">{strategy.name}</h3>
-                              {strategy.verified && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
+                              <h3 className="text-lg font-semibold text-foreground">{strategy.name}</h3>
+                              {strategy.verified && <Star className="w-4 h-4 text-accent fill-current" />}
                             </div>
-                            <p className="text-sm text-gray-400">{strategy.creator}</p>
+                            <p className="text-sm text-muted-foreground">{strategy.creator}</p>
                           </div>
                         </div>
                         <Badge className={getRiskColor(strategy.riskLevel)}>
@@ -378,26 +380,26 @@ export default function VaultsPage() {
                         </Badge>
                       </div>
 
-                      <p className="text-gray-300 mb-4">{strategy.description}</p>
+                      <p className="text-muted-foreground mb-4">{strategy.description}</p>
 
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div>
-                          <div className="text-2xl font-bold text-green-400">
+                          <div className="text-2xl font-bold text-accent financial-number">
                             {strategy.expectedAPY.toFixed(1)}%
                           </div>
-                          <div className="text-xs text-gray-400">APY</div>
+                          <div className="text-xs text-muted-foreground">APY</div>
                         </div>
                         <div>
-                          <div className="text-lg font-semibold text-white">
+                          <div className="text-lg font-semibold text-foreground financial-number">
                             {formatCurrency(strategy.tvl)}
                           </div>
-                          <div className="text-xs text-gray-400">TVL</div>
+                          <div className="text-xs text-muted-foreground">TVL</div>
                         </div>
                         <div>
-                          <div className="text-lg font-semibold text-blue-400">
+                          <div className="text-lg font-semibold text-accent">
                             {strategy.participants.toLocaleString()}
                           </div>
-                          <div className="text-xs text-gray-400">Users</div>
+                          <div className="text-xs text-muted-foreground">Users</div>
                         </div>
                       </div>
 
@@ -410,7 +412,7 @@ export default function VaultsPage() {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-muted-foreground">
                           Min: {strategy.minDeposit} FLOW
                         </div>
                         <Button size="sm" onClick={() => handleInvestClick(strategy)}>
@@ -431,7 +433,7 @@ export default function VaultsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <h2 className="text-2xl font-bold text-white mb-4">All Strategies</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-4">All Strategies</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredStrategies.filter(strategy => !strategy.featured).map((strategy, index) => (
                 <motion.div
@@ -440,18 +442,18 @@ export default function VaultsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + index * 0.05 }}
                 >
-                  <Card className="glass p-6 hover:bg-white/5 transition-colors cursor-pointer h-full">
+                  <Card className="tool-card p-6 border border-border hover:border-accent/50 transition-colors cursor-pointer h-full">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-2">
-                        <div className="p-1.5 bg-blue-500/20 rounded">
+                        <div className="p-1.5 bg-accent/20 rounded">
                           {getCategoryIcon(strategy.category)}
                         </div>
                         <div>
                           <div className="flex items-center space-x-1">
-                            <h3 className="font-semibold text-white">{strategy.name}</h3>
-                            {strategy.verified && <Star className="w-3 h-3 text-yellow-400 fill-current" />}
+                            <h3 className="font-semibold text-foreground">{strategy.name}</h3>
+                            {strategy.verified && <Star className="w-3 h-3 text-accent fill-current" />}
                           </div>
-                          <p className="text-xs text-gray-400">{strategy.creator}</p>
+                          <p className="text-xs text-muted-foreground">{strategy.creator}</p>
                         </div>
                       </div>
                       <Badge className={getRiskColor(strategy.riskLevel)}>
@@ -459,24 +461,24 @@ export default function VaultsPage() {
                       </Badge>
                     </div>
 
-                    <p className="text-sm text-gray-300 mb-4 line-clamp-2">{strategy.description}</p>
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{strategy.description}</p>
 
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       <div>
-                        <div className="text-xl font-bold text-green-400">
+                        <div className="text-xl font-bold text-accent financial-number">
                           {strategy.expectedAPY.toFixed(1)}%
                         </div>
-                        <div className="text-xs text-gray-400">APY</div>
+                        <div className="text-xs text-muted-foreground">APY</div>
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-white">
+                        <div className="text-sm font-semibold text-foreground financial-number">
                           {formatCurrency(strategy.tvl)}
                         </div>
-                        <div className="text-xs text-gray-400">TVL</div>
+                        <div className="text-xs text-muted-foreground">TVL</div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
                       <div className="flex items-center">
                         <Users className="w-3 h-3 mr-1" />
                         {strategy.participants.toLocaleString()}
@@ -495,7 +497,7 @@ export default function VaultsPage() {
 
           {filteredStrategies.length === 0 && !loading && (
             <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
+              <div className="text-muted-foreground mb-4">
                 {strategies.length === 0 
                   ? 'No strategies available. Please check your blockchain connection.'
                   : 'No strategies found matching your criteria'

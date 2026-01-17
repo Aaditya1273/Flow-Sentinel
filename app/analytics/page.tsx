@@ -157,15 +157,15 @@ export default function AnalyticsPage() {
 
   if (!user.loggedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <BarChart3 className="w-16 h-16 text-blue-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-4">
+            <BarChart3 className="w-16 h-16 text-accent mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-4">
               Connect Your Wallet
             </h1>
-            <p className="text-gray-300 mb-8">
+            <p className="text-muted-foreground mb-8">
               Connect your Flow wallet to view your portfolio analytics
             </p>
           </div>
@@ -176,12 +176,12 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p className="text-gray-300">Loading analytics data...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading analytics data...</p>
           </div>
         </div>
       </div>
@@ -202,7 +202,7 @@ export default function AnalyticsPage() {
   const areaData = `${pathData} L ${chartWidth - padding} ${chartHeight - padding} L ${padding} ${chartHeight - padding} Z`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       <div className="pt-20 pb-8">
@@ -215,10 +215,10 @@ export default function AnalyticsPage() {
           >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
-                <h1 className="text-4xl font-bold text-white mb-2">
+                <h1 className="text-4xl font-bold text-foreground mb-2">
                   Portfolio Analytics
                 </h1>
-                <p className="text-xl text-gray-300">
+                <p className="text-xl text-muted-foreground">
                   Deep insights into your DeFi performance
                 </p>
               </div>
@@ -243,66 +243,66 @@ export default function AnalyticsPage() {
             transition={{ delay: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           >
-            <Card className="glass p-6">
+            <Card className="tool-card p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <DollarSign className="w-8 h-8 text-blue-400" />
-                <Badge variant="outline" className="text-green-400">
+                <DollarSign className="w-8 h-8 text-accent" />
+                <Badge variant="outline" className="status-active">
                   +{formatPercentage(analyticsData.totalPnLPercent)}
                 </Badge>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1 financial-number">
                 {formatCurrency(analyticsData.totalPortfolioValue)}
               </div>
-              <div className="text-sm text-gray-400">Total Portfolio Value</div>
-              <div className="text-sm text-green-400 mt-1">
+              <div className="text-sm text-muted-foreground">Total Portfolio Value</div>
+              <div className="text-sm text-accent mt-1">
                 +{formatCurrency(analyticsData.totalPnL)} P&L
               </div>
             </Card>
 
-            <Card className="glass p-6">
+            <Card className="tool-card p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <TrendingUp className="w-8 h-8 text-green-400" />
-                <Badge variant="outline" className="text-green-400">
+                <TrendingUp className="w-8 h-8 text-accent" />
+                <Badge variant="outline" className="text-accent">
                   24h
                 </Badge>
               </div>
-              <div className="text-2xl font-bold text-green-400 mb-1">
+              <div className="text-2xl font-bold text-accent mb-1 financial-number">
                 +{formatCurrency(analyticsData.dailyPnL)}
               </div>
-              <div className="text-sm text-gray-400">Daily P&L</div>
-              <div className="text-sm text-green-400 mt-1">
+              <div className="text-sm text-muted-foreground">Daily P&L</div>
+              <div className="text-sm text-accent mt-1">
                 +{formatPercentage(analyticsData.dailyPnLPercent)}
               </div>
             </Card>
 
-            <Card className="glass p-6">
+            <Card className="tool-card p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <BarChart3 className="w-8 h-8 text-purple-400" />
-                <Badge variant="outline" className="text-purple-400">
+                <BarChart3 className="w-8 h-8 text-accent" />
+                <Badge variant="outline" className="text-accent">
                   Sharpe
                 </Badge>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1">
                 {analyticsData.riskMetrics.sharpeRatio.toFixed(2)}
               </div>
-              <div className="text-sm text-gray-400">Sharpe Ratio</div>
-              <div className="text-sm text-purple-400 mt-1">
+              <div className="text-sm text-muted-foreground">Sharpe Ratio</div>
+              <div className="text-sm text-accent mt-1">
                 Risk-Adjusted Returns
               </div>
             </Card>
 
-            <Card className="glass p-6">
+            <Card className="tool-card p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <Activity className="w-8 h-8 text-yellow-400" />
-                <Badge variant="outline" className="text-yellow-400">
+                <Activity className="w-8 h-8 text-accent" />
+                <Badge variant="outline" className="text-accent">
                   Vol
                 </Badge>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1">
                 {analyticsData.riskMetrics.volatility.toFixed(1)}%
               </div>
-              <div className="text-sm text-gray-400">Volatility</div>
-              <div className="text-sm text-yellow-400 mt-1">
+              <div className="text-sm text-muted-foreground">Volatility</div>
+              <div className="text-sm text-accent mt-1">
                 30-day rolling
               </div>
             </Card>
@@ -316,21 +316,21 @@ export default function AnalyticsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <Card className="glass p-6">
+                <Card className="tool-card p-6 border border-border">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-white">
+                    <h3 className="text-xl font-semibold text-foreground">
                       Portfolio Performance
                     </h3>
                     
-                    <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
+                    <div className="flex space-x-1 bg-muted rounded-lg p-1">
                       {timeframes.map((tf) => (
                         <button
                           key={tf.value}
                           onClick={() => setTimeframe(tf.value)}
                           className={`px-3 py-1 text-sm rounded-md transition-colors ${
                             timeframe === tf.value
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-400 hover:text-white'
+                              ? 'bg-accent text-background'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           {tf.label}
@@ -340,10 +340,10 @@ export default function AnalyticsPage() {
                   </div>
 
                   <div className="mb-4">
-                    <div className="text-3xl font-bold text-white">
+                    <div className="text-3xl font-bold text-foreground financial-number">
                       {formatCurrency(analyticsData.totalPortfolioValue)}
                     </div>
-                    <div className="flex items-center text-green-400">
+                    <div className="flex items-center text-accent">
                       <TrendingUp className="w-4 h-4 mr-1" />
                       +{formatCurrency(analyticsData.totalPnL)} ({formatPercentage(analyticsData.totalPnLPercent)})
                     </div>
@@ -372,7 +372,7 @@ export default function AnalyticsPage() {
                             y1={padding + (i * (chartHeight - 2 * padding)) / 4}
                             x2={chartWidth - padding}
                             y2={padding + (i * (chartHeight - 2 * padding)) / 4}
-                            stroke="rgb(55, 65, 81)"
+                            stroke="hsl(var(--border))"
                             strokeWidth="1"
                             opacity="0.3"
                           />
@@ -389,7 +389,7 @@ export default function AnalyticsPage() {
                         <motion.path
                           d={pathData}
                           fill="none"
-                          stroke="rgb(59, 130, 246)"
+                          stroke="hsl(var(--accent))"
                           strokeWidth="3"
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -410,31 +410,31 @@ export default function AnalyticsPage() {
                 transition={{ delay: 0.3 }}
                 className="mt-6"
               >
-                <Card className="glass p-6">
-                  <h3 className="text-xl font-semibold text-white mb-4">
+                <Card className="tool-card p-6 border border-border">
+                  <h3 className="text-xl font-semibold text-foreground mb-4">
                     Vault Performance
                   </h3>
                   
                   <div className="space-y-4">
                     {analyticsData.topPerformers.map((vault, index) => (
-                      <div key={vault.name} className="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
+                      <div key={vault.name} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                         <div className="flex items-center space-x-3">
-                          <div className="text-lg font-semibold text-gray-400">
+                          <div className="text-lg font-semibold text-muted-foreground">
                             #{index + 1}
                           </div>
                           <div>
-                            <div className="font-medium text-white">{vault.name}</div>
-                            <div className="text-sm text-gray-400">
+                            <div className="font-medium text-foreground">{vault.name}</div>
+                            <div className="text-sm text-muted-foreground">
                               {vault.allocation.toFixed(1)}% allocation
                             </div>
                           </div>
                         </div>
                         
                         <div className="text-right">
-                          <div className={`font-semibold ${vault.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          <div className={`font-semibold ${vault.pnl >= 0 ? 'text-accent' : 'text-destructive'} financial-number`}>
                             {vault.pnl >= 0 ? '+' : ''}{formatCurrency(vault.pnl)}
                           </div>
-                          <div className={`text-sm ${vault.pnlPercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          <div className={`text-sm ${vault.pnlPercent >= 0 ? 'text-accent' : 'text-destructive'}`}>
                             {vault.pnlPercent >= 0 ? '+' : ''}{formatPercentage(vault.pnlPercent)}
                           </div>
                         </div>

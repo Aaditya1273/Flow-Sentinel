@@ -299,13 +299,13 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
         {/* Step 2: Configure */}
         {step === 2 && selectedStrategyData && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-foreground">
               Configure Your Vault
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Vault Name
                 </label>
                 <input
@@ -313,12 +313,12 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
                   value={vaultName}
                   onChange={(e) => setVaultName(e.target.value)}
                   placeholder={`My ${selectedStrategyData.name} Vault`}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Initial Deposit (FLOW)
                 </label>
                 <div className="relative">
@@ -330,31 +330,31 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
                     min={selectedStrategyData.minDeposit}
                     max={flowBalance}
                     step="0.1"
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent"
                   />
-                  <DollarSign className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
+                  <DollarSign className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground" />
                 </div>
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>Minimum: {selectedStrategyData.minDeposit} FLOW</span>
                   <span>Available: {flowBalance.toFixed(2)} FLOW</span>
                 </div>
               </div>
 
               {/* Strategy Details */}
-              <div className="glass p-4 rounded-lg">
-                <h4 className="text-sm font-semibold text-white mb-3">Strategy Details</h4>
+              <div className="tool-card p-4 border border-border">
+                <h4 className="text-sm font-semibold text-foreground mb-3">Strategy Details</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-400">Category:</span>
-                    <span className="text-white ml-2 capitalize">{selectedStrategyData.category.replace('-', ' ')}</span>
+                    <span className="text-muted-foreground">Category:</span>
+                    <span className="text-foreground ml-2 capitalize">{selectedStrategyData.category.replace('-', ' ')}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400">Expected APY:</span>
-                    <span className="text-green-400 ml-2 font-semibold">{selectedStrategyData.expectedAPY.toFixed(1)}%</span>
+                    <span className="text-muted-foreground">Expected APY:</span>
+                    <span className="text-accent ml-2 font-semibold">{selectedStrategyData.expectedAPY.toFixed(1)}%</span>
                   </div>
                 </div>
                 <div className="mt-3">
-                  <span className="text-gray-400 text-sm">Features:</span>
+                  <span className="text-muted-foreground text-sm">Features:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {selectedStrategyData.features.map((feature) => (
                       <Badge key={feature} variant="outline" className="text-xs">
@@ -383,13 +383,13 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
         {/* Step 3: Confirm */}
         {step === 3 && selectedStrategyData && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-foreground">
               Confirm Vault Creation
             </h3>
 
-            <div className="glass p-4 rounded-lg">
+            <div className="tool-card p-4 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-white">
+                <h4 className="text-lg font-semibold text-foreground">
                   {vaultName}
                 </h4>
                 <Badge className={getRiskColor(selectedStrategyData.riskLevel)}>
@@ -399,31 +399,31 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
 
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <div className="text-sm text-gray-400">Strategy</div>
-                  <div className="text-white">{selectedStrategyData.name}</div>
+                  <div className="text-sm text-muted-foreground">Strategy</div>
+                  <div className="text-foreground">{selectedStrategyData.name}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400">Expected APY</div>
-                  <div className="text-green-400 font-semibold">
+                  <div className="text-sm text-muted-foreground">Expected APY</div>
+                  <div className="text-accent font-semibold">
                     {selectedStrategyData.expectedAPY.toFixed(1)}%
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400">Initial Deposit</div>
-                  <div className="text-white">{depositAmount} FLOW</div>
+                  <div className="text-sm text-muted-foreground">Initial Deposit</div>
+                  <div className="text-foreground financial-number">{depositAmount} FLOW</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400">Est. Gas Fee</div>
-                  <div className="text-white">~0.001 FLOW</div>
+                  <div className="text-sm text-muted-foreground">Est. Gas Fee</div>
+                  <div className="text-foreground">~0.001 FLOW</div>
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-4">
-                <div className="flex items-center text-yellow-400 mb-2">
+              <div className="border-t border-border pt-4">
+                <div className="flex items-center text-accent mb-2">
                   <AlertTriangle className="w-4 h-4 mr-2" />
                   <span className="text-sm font-medium">Important Notice</span>
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   By creating this vault, you acknowledge the risks associated with DeFi protocols. 
                   Your funds will be managed autonomously according to the selected strategy deployed on Flow blockchain.
                 </p>
@@ -445,14 +445,14 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
         {/* Step 4: Creating */}
         {step === 4 && (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-6"></div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent mx-auto mb-6"></div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               Creating Your Vault
             </h3>
-            <p className="text-gray-400 mb-4">
+            <p className="text-muted-foreground mb-4">
               Deploying your vault with {selectedStrategyData?.name} strategy to Flow blockchain...
             </p>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-muted-foreground">
               This may take a few moments. Do not close this window.
             </div>
           </div>

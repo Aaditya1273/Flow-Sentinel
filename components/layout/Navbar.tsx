@@ -8,6 +8,7 @@ import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit'
 import { useFlow } from 'lib/flow'
 import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
+import { ClientOnly } from 'components/ClientOnly'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,8 +31,8 @@ export function Navbar() {
   const navItems = [
     { name: 'Vaults', href: '/vaults' },
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Analytics', href: '/analytics' },
-    { name: 'Docs', href: '/docs' },
+    { name: 'Portfolio', href: '/analytics' },
+    { name: 'About', href: '/docs' },
   ]
 
   const handleDisconnect = () => {
@@ -83,76 +84,78 @@ export function Navbar() {
 
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center space-x-4">
-            {!mounted ? (
+            <ClientOnly fallback={
               <Button variant="outline" disabled>
                 <Wallet className="w-4 h-4 mr-2" />
                 Loading...
               </Button>
-            ) : !isConnected ? (
-              walletType === 'evm' ? (
-                <div className="flex items-center space-x-2">
-                  <ConnectButton />
-                  <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
-                    Back
-                  </Button>
-                </div>
-              ) : walletType === 'flow' ? (
-                <div className="flex items-center space-x-2">
-                  <Button onClick={handleConnect} variant="outline">
-                    <Wallet className="w-4 h-4 mr-2" />
-                    Connect Flow Wallet
-                  </Button>
-                  <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
-                    Back
-                  </Button>
-                </div>
-              ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <Wallet className="w-4 h-4 mr-2" />
-                      Connect Wallet
-                      <ChevronDown className="w-4 h-4 ml-2" />
+            }>
+              {!isConnected ? (
+                walletType === 'evm' ? (
+                  <div className="flex items-center space-x-2">
+                    <ConnectButton />
+                    <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                      Back
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={handleConnect}>
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">Flow Wallet</span>
-                        <span className="text-xs text-muted-foreground">Native Flow blockchain</span>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleConnectEVM}>
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">EVM Wallet</span>
-                        <span className="text-xs text-muted-foreground">MetaMask, WalletConnect</span>
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )
-            ) : isConnected ? (
-              <div className="flex items-center space-x-3">
-                {walletType === 'flow' ? (
-                  <Badge variant="outline" className="status-active">
-                    Flow: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                  </Badge>
-                ) : walletType === 'evm' ? (
-                  <ConnectButton />
+                  </div>
+                ) : walletType === 'flow' ? (
+                  <div className="flex items-center space-x-2">
+                    <Button onClick={handleConnect} variant="outline">
+                      <Wallet className="w-4 h-4 mr-2" />
+                      Connect Flow Wallet
+                    </Button>
+                    <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                      Back
+                    </Button>
+                  </div>
                 ) : (
-                  <Badge variant="outline" className="status-active">
-                    {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                  </Badge>
-                )}
-                <Button onClick={handleDisconnect} variant="ghost" size="sm">
-                  Disconnect
-                </Button>
-                <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
-                  Switch
-                </Button>
-              </div>
-            ) : null}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <Wallet className="w-4 h-4 mr-2" />
+                        Connect Wallet
+                        <ChevronDown className="w-4 h-4 ml-2" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={handleConnect}>
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">Flow Wallet</span>
+                          <span className="text-xs text-muted-foreground">Native Flow blockchain</span>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleConnectEVM}>
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">EVM Wallet</span>
+                          <span className="text-xs text-muted-foreground">MetaMask, WalletConnect</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
+              ) : (
+                <div className="flex items-center space-x-3">
+                  {walletType === 'flow' ? (
+                    <Badge variant="outline" className="status-active">
+                      Flow: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                    </Badge>
+                  ) : walletType === 'evm' ? (
+                    <ConnectButton />
+                  ) : (
+                    <Badge variant="outline" className="status-active">
+                      {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                    </Badge>
+                  )}
+                  <Button onClick={handleDisconnect} variant="ghost" size="sm">
+                    Disconnect
+                  </Button>
+                  <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                    Switch
+                  </Button>
+                </div>
+              )}
+            </ClientOnly>
           </div>
 
           {/* Mobile menu button */}

@@ -121,7 +121,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       <div className="pt-20 pb-8">
@@ -134,10 +134,10 @@ export default function DashboardPage() {
           >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">
+                <h1 className="text-3xl font-bold text-foreground mb-2">
                   Dashboard
                 </h1>
-                <p className="text-gray-300">
+                <p className="text-muted-foreground">
                   Welcome back! Your autonomous vault is working for you.
                 </p>
               </div>
@@ -145,13 +145,13 @@ export default function DashboardPage() {
               <div className="mt-4 md:mt-0 flex space-x-4">
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="btn-primary flex items-center px-4 py-2 rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Vault
                 </button>
                 
-                <button className="flex items-center px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+                <button className="btn-secondary flex items-center px-4 py-2 rounded-lg transition-colors">
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
                 </button>
@@ -166,68 +166,68 @@ export default function DashboardPage() {
             transition={{ delay: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           >
-            <div className="glass p-6 rounded-xl">
+            <div className="tool-card p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <DollarSign className="w-8 h-8 text-green-400" />
-                <span className="text-green-400 text-sm font-medium">
+                <DollarSign className="w-8 h-8 text-accent" />
+                <span className="text-accent text-sm font-medium">
                   {performance?.pnlPercent ? formatPercentage(performance.pnlPercent) : '+0%'}
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1 financial-number">
                 {formatCurrency(vaultData?.balance || 0)}
               </div>
-              <div className="text-gray-400 text-sm">Vault Balance</div>
-              <div className="text-sm text-green-400 mt-1">
+              <div className="text-muted-foreground text-sm">Vault Balance</div>
+              <div className="text-sm text-accent mt-1">
                 {performance?.pnl ? `+${formatCurrency(performance.pnl)} P&L` : 'No P&L data'}
               </div>
             </div>
 
-            <div className="glass p-6 rounded-xl">
+            <div className="tool-card p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <TrendingUp className="w-8 h-8 text-blue-400" />
-                <span className="text-blue-400 text-sm font-medium">
+                <TrendingUp className="w-8 h-8 text-accent" />
+                <span className="text-accent text-sm font-medium">
                   Flow
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1 financial-number">
                 {formatCurrency(flowBalance)}
               </div>
-              <div className="text-gray-400 text-sm">Available Balance</div>
-              <div className="text-sm text-blue-400 mt-1">
+              <div className="text-muted-foreground text-sm">Available Balance</div>
+              <div className="text-sm text-accent mt-1">
                 Ready to invest
               </div>
             </div>
 
-            <div className="glass p-6 rounded-xl">
+            <div className="tool-card p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <Shield className="w-8 h-8 text-purple-400" />
+                <Shield className="w-8 h-8 text-accent" />
                 <span className={`text-sm font-medium ${
-                  vaultData?.isActive ? 'text-green-400' : 'text-yellow-400'
+                  vaultData?.isActive ? 'status-active' : 'status-warning'
                 }`}>
                   {vaultData?.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1">
                 {vaultData?.name || 'My Vault'}
               </div>
-              <div className="text-gray-400 text-sm">Vault Status</div>
-              <div className="text-sm text-purple-400 mt-1">
+              <div className="text-muted-foreground text-sm">Vault Status</div>
+              <div className="text-sm text-accent mt-1">
                 {vaultData?.strategy || 'Strategy'}
               </div>
             </div>
 
-            <div className="glass p-6 rounded-xl">
+            <div className="tool-card p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <Zap className="w-8 h-8 text-yellow-400" />
-                <span className="text-yellow-400 text-sm font-medium">
+                <Zap className="w-8 h-8 text-accent" />
+                <span className="text-accent text-sm font-medium">
                   Total
                 </span>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1 financial-number">
                 {formatCurrency(vaultData?.totalDeposits || 0)}
               </div>
-              <div className="text-gray-400 text-sm">Total Deposited</div>
-              <div className="text-sm text-yellow-400 mt-1">
+              <div className="text-muted-foreground text-sm">Total Deposited</div>
+              <div className="text-sm text-accent mt-1">
                 Since {vaultData?.createdAt ? new Date(vaultData.createdAt).toLocaleDateString() : 'creation'}
               </div>
             </div>
@@ -243,7 +243,7 @@ export default function DashboardPage() {
                 transition={{ delay: 0.2 }}
                 className="mb-6"
               >
-                <h2 className="text-xl font-semibold text-white mb-4">
+                <h2 className="text-xl font-semibold text-foreground mb-4">
                   Your Vault
                 </h2>
                 
@@ -268,9 +268,9 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="glass p-6 rounded-xl"
+                className="tool-card p-6 border border-border"
               >
-                <h3 className="text-lg font-semibold text-white mb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
                   Portfolio Performance
                 </h3>
                 <PortfolioChart />
@@ -293,24 +293,24 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="glass p-6 rounded-xl"
+                className="tool-card p-6 border border-border"
               >
-                <h3 className="text-lg font-semibold text-white mb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
                   Quick Actions
                 </h3>
                 
                 <div className="space-y-3">
-                  <button className="w-full flex items-center px-4 py-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors">
+                  <button className="w-full flex items-center px-4 py-3 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg transition-colors border border-accent/20">
                     <Plus className="w-4 h-4 mr-3" />
                     Create New Vault
                   </button>
                   
-                  <button className="w-full flex items-center px-4 py-3 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-lg transition-colors">
+                  <button className="w-full flex items-center px-4 py-3 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg transition-colors border border-accent/20">
                     <DollarSign className="w-4 h-4 mr-3" />
                     Deposit Funds
                   </button>
                   
-                  <button className="w-full flex items-center px-4 py-3 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 rounded-lg transition-colors">
+                  <button className="w-full flex items-center px-4 py-3 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg transition-colors border border-accent/20">
                     <Activity className="w-4 h-4 mr-3" />
                     View Analytics
                   </button>
@@ -323,38 +323,38 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="glass p-6 rounded-xl"
+                  className="tool-card p-6 border border-border"
                 >
-                  <h3 className="text-lg font-semibold text-white mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Vault Details
                   </h3>
                   
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Vault ID</span>
-                      <span className="text-white">{vaultData.id}</span>
+                      <span className="text-muted-foreground">Vault ID</span>
+                      <span className="text-foreground">{vaultData.id}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Strategy</span>
-                      <span className="text-white">{vaultData.strategy}</span>
+                      <span className="text-muted-foreground">Strategy</span>
+                      <span className="text-foreground">{vaultData.strategy}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Status</span>
-                      <span className={vaultData.isActive ? 'text-green-400' : 'text-yellow-400'}>
+                      <span className="text-muted-foreground">Status</span>
+                      <span className={vaultData.isActive ? 'status-active' : 'status-warning'}>
                         {vaultData.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Total Deposits</span>
-                      <span className="text-white">{formatCurrency(vaultData.totalDeposits)}</span>
+                      <span className="text-muted-foreground">Total Deposits</span>
+                      <span className="text-foreground financial-number">{formatCurrency(vaultData.totalDeposits)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Total Withdrawals</span>
-                      <span className="text-white">{formatCurrency(vaultData.totalWithdrawals)}</span>
+                      <span className="text-muted-foreground">Total Withdrawals</span>
+                      <span className="text-foreground financial-number">{formatCurrency(vaultData.totalWithdrawals)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Created</span>
-                      <span className="text-white">
+                      <span className="text-muted-foreground">Created</span>
+                      <span className="text-foreground">
                         {new Date(vaultData.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -365,10 +365,10 @@ export default function DashboardPage() {
           </div>
 
           {error && (
-            <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <div className="mt-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
               <div className="flex items-center">
-                <AlertTriangle className="w-5 h-5 text-red-400 mr-2" />
-                <p className="text-red-400">{error}</p>
+                <AlertTriangle className="w-5 h-5 text-destructive mr-2" />
+                <p className="text-destructive">{error}</p>
               </div>
             </div>
           )}

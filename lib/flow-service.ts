@@ -135,15 +135,18 @@ transaction(strategyId: String, initialDeposit: UFix64) {
             panic("Initial deposit below minimum required: ".concat(minDeposit.toString()))
         }
         
-        // Create the vault
-        let vault <- SentinelVault.createVault(owner: signer.address)
-        
-        // Save it to storage
-        signer.storage.save(<-vault, to: /storage/SentinelVault)
-        
-        // Create public capability
-        let cap = signer.capabilities.storage.issue<&{SentinelVault.VaultPublic}>(/storage/SentinelVault)
-        signer.capabilities.publish(cap, at: /public/SentinelVault)
+        // Check if vault already exists
+        if signer.storage.borrow<&SentinelVault.Vault>(from: /storage/SentinelVault) == nil {
+            // Create the vault only if it doesn't exist
+            let vault <- SentinelVault.createVault(owner: signer.address)
+            
+            // Save it to storage
+            signer.storage.save(<-vault, to: /storage/SentinelVault)
+            
+            // Create public capability
+            let cap = signer.capabilities.storage.issue<&{SentinelVault.VaultPublic}>(/storage/SentinelVault)
+            signer.capabilities.publish(cap, at: /public/SentinelVault)
+        }
         
         // Get vault reference with proper authorization for deposit
         self.vaultRef = signer.storage.borrow<auth(SentinelVault.Deposit) &SentinelVault.Vault>(from: /storage/SentinelVault)
@@ -352,15 +355,18 @@ export class FlowService {
             let flowVault: @{FungibleToken.Vault}
             
             prepare(signer: auth(BorrowValue, IssueStorageCapabilityController, PublishCapability, SaveValue) &Account) {
-                // Create the vault
-                let vault <- SentinelVault.createVault(owner: signer.address)
-                
-                // Save it to storage
-                signer.storage.save(<-vault, to: /storage/SentinelVault)
-                
-                // Create public capability
-                let cap = signer.capabilities.storage.issue<&{SentinelVault.VaultPublic}>(/storage/SentinelVault)
-                signer.capabilities.publish(cap, at: /public/SentinelVault)
+                // Check if vault already exists
+                if signer.storage.borrow<&SentinelVault.Vault>(from: /storage/SentinelVault) == nil {
+                    // Create the vault only if it doesn't exist
+                    let vault <- SentinelVault.createVault(owner: signer.address)
+                    
+                    // Save it to storage
+                    signer.storage.save(<-vault, to: /storage/SentinelVault)
+                    
+                    // Create public capability
+                    let cap = signer.capabilities.storage.issue<&{SentinelVault.VaultPublic}>(/storage/SentinelVault)
+                    signer.capabilities.publish(cap, at: /public/SentinelVault)
+                }
                 
                 // Get Flow tokens for initial deposit if amount > 0
                 if initialDeposit > 0.0 {
