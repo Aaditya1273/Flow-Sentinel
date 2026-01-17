@@ -6,6 +6,8 @@ import { motion } from 'framer-motion'
 import { Menu, X, Shield } from 'lucide-react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useFlow } from '@/lib/flow'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -19,16 +21,16 @@ export function Navbar() {
   ]
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
+    <nav className="fixed top-0 w-full z-50 glass border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <div className="relative">
-              <Shield className="h-8 w-8 text-blue-400" />
-              <div className="absolute inset-0 bg-blue-400/20 blur-xl rounded-full" />
+              <Shield className="h-8 w-8 text-primary" />
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
             </div>
-            <span className="text-xl font-bold text-white">
+            <span className="text-xl font-bold gradient-text">
               Flow Sentinel
             </span>
           </Link>
@@ -39,7 +41,7 @@ export function Navbar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-gray-300 hover:text-white transition-colors duration-200"
+                className="text-muted-foreground hover:text-foreground transition-colors duration-200"
               >
                 {item.name}
               </Link>
@@ -50,16 +52,13 @@ export function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             {/* Flow Wallet */}
             {!user.loggedIn ? (
-              <button
-                onClick={logIn}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
-              >
+              <Button onClick={logIn} variant="outline">
                 Connect Flow
-              </button>
+              </Button>
             ) : (
-              <div className="px-4 py-2 bg-green-600/20 text-green-400 rounded-lg border border-green-600/30">
+              <Badge variant="success">
                 {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-              </div>
+              </Badge>
             )}
             
             {/* EVM Wallet */}
@@ -68,12 +67,13 @@ export function Navbar() {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-300 hover:text-white"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -83,35 +83,32 @@ export function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden py-4 border-t border-white/10"
+            className="md:hidden py-4 border-t border-border"
           >
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-gray-300 hover:text-white transition-colors duration-200"
+                  className="text-muted-foreground hover:text-foreground transition-colors duration-200"
                   onClick={() => setIsOpen(false)}
                 >
                   {item.name}
                 </Link>
               ))}
               
-              <div className="pt-4 border-t border-white/10">
+              <div className="pt-4 border-t border-border space-y-2">
                 {!user.loggedIn ? (
-                  <button
-                    onClick={logIn}
-                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
-                  >
+                  <Button onClick={logIn} className="w-full">
                     Connect Flow Wallet
-                  </button>
+                  </Button>
                 ) : (
-                  <div className="px-4 py-2 bg-green-600/20 text-green-400 rounded-lg border border-green-600/30 text-center">
+                  <Badge variant="success" className="w-full justify-center">
                     {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                  </div>
+                  </Badge>
                 )}
                 
-                <div className="mt-2">
+                <div className="w-full">
                   <ConnectButton />
                 </div>
               </div>
