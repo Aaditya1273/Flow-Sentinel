@@ -32,6 +32,14 @@ export function useVaultData() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Get EVM balance using wagmi
+  const { data: evmBalance } = useBalance({
+    address: user.addr as `0x${string}`,
+    query: {
+      enabled: walletType === 'evm' && !!user.addr,
+    },
+  })
+
   const fetchVaultData = async () => {
     if (!user.addr) return
 
@@ -44,15 +52,15 @@ export function useVaultData() {
       
       if (vaultInfo) {
         const vault: VaultData = {
-          id: vaultInfo.id?.toString() || '1',
-          name: vaultInfo.name || 'My Vault',
+          id: '1', // Use a default ID since it's not available from the public interface
+          name: 'My Vault', // Default name since it's not stored in the contract
           balance: parseFloat(vaultInfo.balance || '0'),
-          strategy: vaultInfo.strategy || 'Conservative Growth',
+          strategy: 'Conservative Growth', // Default strategy since it's not stored in the contract
           isActive: vaultInfo.isActive || false,
           lastExecution: parseInt(vaultInfo.lastExecution || '0'),
-          totalDeposits: parseFloat(vaultInfo.totalDeposits || '0'),
-          totalWithdrawals: parseFloat(vaultInfo.totalWithdrawals || '0'),
-          createdAt: parseInt(vaultInfo.createdAt || Date.now().toString())
+          totalDeposits: parseFloat(vaultInfo.balance || '0'), // Use balance as total deposits for now
+          totalWithdrawals: 0, // Not tracked in current contract
+          createdAt: Date.now() // Use current time as default
         }
         setVaultData(vault)
 
@@ -76,12 +84,20 @@ export function useVaultData() {
 
       // Fetch Flow balance
       if (walletType === 'evm') {
-        // For EVM wallets, show a mock balance or fetch from EVM provider
-        // You can integrate with wagmi to get the actual EVM balance
-        setFlowBalance(100000) // Mock 100k FLOW for demo
+        // For EVM wallets, use the real balance from wagmi
+        if (evmBalance) {
+          const balanceInFlow = parseFloat(evmBalance.value.toString()) / Math.pow(10, evmBalance.decimals)
+          console.log('EVM balance fetched:', balanceInFlow)
+          setFlowBalance(balanceInFlow)
+        } else {
+          setFlowBalance(0)
+        }
       } else {
+        console.log('Fetching Flow balance for Flow wallet:', user.addr)
         const balance = await FlowService.getUserFlowBalance(user.addr, walletType)
-        setFlowBalance(parseFloat(balance?.toString() || '0'))
+        const parsedBalance = parseFloat(balance?.toString() || '0')
+        console.log('Flow balance result:', balance, 'parsed:', parsedBalance)
+        setFlowBalance(parsedBalance)
       }
 
     } catch (err) {
@@ -152,7 +168,7 @@ export function useVaultData() {
     }
   }
 
-  // Fetch data when user connects
+  // Fetch data when user connects or EVM balance changes
   useEffect(() => {
     if (user.loggedIn && user.addr) {
       fetchVaultData()
@@ -161,7 +177,7 @@ export function useVaultData() {
       setPerformance(null)
       setFlowBalance(0)
     }
-  }, [user.loggedIn, user.addr, walletType])
+  }, [user.loggedIn, user.addr, walletType, evmBalance])
 
   return {
     vaultData,

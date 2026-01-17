@@ -134,21 +134,21 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="glass p-6 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-background border border-border rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white">Create New Vault</h2>
-            <p className="text-gray-400">Deploy your autonomous DeFi strategy on Flow blockchain</p>
+            <h2 className="text-2xl font-bold text-foreground">Create New Vault</h2>
+            <p className="text-muted-foreground">Deploy your autonomous DeFi strategy on Flow blockchain</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -161,18 +161,18 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
             <div key={stepNum} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 step >= stepNum 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-700 text-gray-400'
+                  ? 'bg-accent text-foreground' 
+                  : 'bg-muted text-muted-foreground'
               }`}>
                 {stepNum === 4 && step === 4 ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-foreground"></div>
                 ) : (
                   stepNum
                 )}
               </div>
               {stepNum < 4 && (
                 <div className={`w-12 h-0.5 mx-2 ${
-                  step > stepNum ? 'bg-blue-600' : 'bg-gray-700'
+                  step > stepNum ? 'bg-accent' : 'bg-muted'
                 }`} />
               )}
             </div>
@@ -182,17 +182,17 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
         {/* Loading State */}
         {loading && (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p className="text-gray-300">Loading strategies from blockchain...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading strategies from blockchain...</p>
           </div>
         )}
 
         {/* Error State */}
         {error && (
           <div className="text-center py-12">
-            <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">Error Loading Strategies</h3>
-            <p className="text-gray-400 mb-4">{error}</p>
+            <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Strategies</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
             <Button onClick={() => window.location.reload()}>
               Retry
             </Button>
@@ -202,7 +202,7 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
         {/* Step 1: Select Strategy */}
         {step === 1 && !loading && !error && (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white mb-4">
+            <h3 className="text-lg font-semibold text-foreground mb-4">
               Choose Your Strategy
             </h3>
             
@@ -211,58 +211,58 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
                 <p className="text-gray-400">No strategies available. Please ensure contracts are deployed.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {strategies.map((strategy) => (
                   <motion.div
                     key={strategy.id}
                     whileHover={{ scale: 1.02 }}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                    className={`tool-card p-6 cursor-pointer transition-all border-2 ${
                       selectedStrategy === strategy.id
-                        ? 'border-blue-500 bg-blue-500/10'
-                        : 'border-gray-700 hover:border-gray-600'
+                        ? 'border-accent bg-accent/10'
+                        : 'border-border hover:border-accent/50'
                     }`}
                     onClick={() => setSelectedStrategy(strategy.id)}
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-500/20 rounded-lg">
+                        <div className="p-3 bg-accent rounded-lg">
                           {getCategoryIcon(strategy.category)}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-white">
+                          <h4 className="text-xl font-semibold text-foreground">
                             {strategy.name}
                           </h4>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             by {strategy.creator}
                           </p>
                         </div>
                       </div>
                       <div className="flex flex-col items-end space-y-2">
-                        <Badge className={getRiskColor(strategy.riskLevel)}>
+                        <Badge className={`${getRiskColor(strategy.riskLevel)} font-medium`}>
                           {getRiskLabel(strategy.riskLevel)} RISK
                         </Badge>
                         {strategy.verified && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs status-active border-accent">
                             VERIFIED
                           </Badge>
                         )}
                       </div>
                     </div>
 
-                    <p className="text-sm text-gray-400 mb-3 line-clamp-2">
+                    <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                       {strategy.description}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div className="grid grid-cols-2 gap-6 mb-4">
                       <div>
-                        <div className="text-sm text-gray-400">Expected APY</div>
-                        <div className="text-lg font-bold text-green-400">
+                        <div className="text-xs text-muted-foreground mb-1 font-medium">Expected APY</div>
+                        <div className="text-2xl font-bold status-active financial-number">
                           {strategy.expectedAPY.toFixed(1)}%
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-400">Min Deposit</div>
-                        <div className="text-white font-medium">
+                        <div className="text-xs text-muted-foreground mb-1 font-medium">Min Deposit</div>
+                        <div className="text-lg font-semibold text-foreground financial-number">
                           {strategy.minDeposit} FLOW
                         </div>
                       </div>
@@ -270,12 +270,12 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
 
                     <div className="flex flex-wrap gap-2">
                       {strategy.features.slice(0, 3).map((feature) => (
-                        <Badge key={feature} variant="outline" className="text-xs">
+                        <Badge key={feature} variant="outline" className="text-xs bg-accent/20 border-accent/30">
                           {feature}
                         </Badge>
                       ))}
                       {strategy.features.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs bg-accent/20 border-accent/30">
                           +{strategy.features.length - 3} more
                         </Badge>
                       )}
