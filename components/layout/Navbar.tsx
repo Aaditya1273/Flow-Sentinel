@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Menu, X, Shield } from 'lucide-react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { useFlow } from '@/lib/flow'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useFlow } from 'lib/flow'
+import { Button } from 'components/ui/button'
+import { Badge } from 'components/ui/badge'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
