@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Menu, X, Wallet, ChevronDown } from 'lucide-react'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit'
 import { useFlow } from 'lib/flow'
 import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
@@ -20,6 +20,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { user, logIn, logOut, walletType, setWalletType, isConnected } = useFlow()
+  const { openConnectModal } = useConnectModal()
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -40,13 +41,15 @@ export function Navbar() {
     }, 500)
   }
 
-  const handleConnect = () => {
-    logIn()
+  const handleConnect = async () => {
+    await logIn()
   }
 
   const handleConnectEVM = () => {
     setWalletType('evm')
-    // EVM connection is handled by RainbowKit ConnectButton
+    setTimeout(() => {
+      openConnectModal?.()
+    }, 100)
   }
 
   return (
@@ -85,48 +88,50 @@ export function Navbar() {
                 <Wallet className="w-4 h-4 mr-2" />
                 Loading...
               </Button>
-            ) : !isConnected && !walletType ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <Wallet className="w-4 h-4 mr-2" />
-                    Connect Wallet
-                    <ChevronDown className="w-4 h-4 ml-2" />
+            ) : !isConnected ? (
+              walletType === 'evm' ? (
+                <div className="flex items-center space-x-2">
+                  <ConnectButton />
+                  <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                    Back
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={handleConnect}>
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">Flow Wallet</span>
-                      <span className="text-xs text-muted-foreground">Native Flow blockchain</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleConnectEVM}>
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">EVM Wallet</span>
-                      <span className="text-xs text-muted-foreground">MetaMask, WalletConnect</span>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : walletType === 'evm' && !isConnected ? (
-              <div className="flex items-center space-x-2">
-                <ConnectButton />
-                <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
-                  Back
-                </Button>
-              </div>
-            ) : walletType === 'flow' && !isConnected ? (
-              <div className="flex items-center space-x-2">
-                <Button onClick={handleConnect} variant="outline">
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Connect Flow Wallet
-                </Button>
-                <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
-                  Back
-                </Button>
-              </div>
+                </div>
+              ) : walletType === 'flow' ? (
+                <div className="flex items-center space-x-2">
+                  <Button onClick={handleConnect} variant="outline">
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Connect Flow Wallet
+                  </Button>
+                  <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                    Back
+                  </Button>
+                </div>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <Wallet className="w-4 h-4 mr-2" />
+                      Connect Wallet
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={handleConnect}>
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">Flow Wallet</span>
+                        <span className="text-xs text-muted-foreground">Native Flow blockchain</span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleConnectEVM}>
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">EVM Wallet</span>
+                        <span className="text-xs text-muted-foreground">MetaMask, WalletConnect</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )
             ) : isConnected ? (
               <div className="flex items-center space-x-3">
                 {walletType === 'flow' ? (
@@ -189,38 +194,40 @@ export function Navbar() {
                   <Button variant="outline" disabled className="w-full">
                     Loading...
                   </Button>
-                ) : !isConnected && !walletType ? (
-                  <div className="space-y-2">
-                    <Button onClick={handleConnect} className="w-full justify-start" variant="outline">
-                      <div className="text-left">
-                        <div className="font-medium">Flow Wallet</div>
-                        <div className="text-xs text-muted-foreground">Native Flow blockchain</div>
-                      </div>
-                    </Button>
-                    <Button onClick={handleConnectEVM} className="w-full justify-start" variant="outline">
-                      <div className="text-left">
-                        <div className="font-medium">EVM Wallet</div>
-                        <div className="text-xs text-muted-foreground">MetaMask, WalletConnect</div>
-                      </div>
-                    </Button>
-                  </div>
-                ) : walletType === 'evm' && !isConnected ? (
-                  <div className="space-y-2">
-                    <ConnectButton />
-                    <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
-                      Back to Wallet Selection
-                    </Button>
-                  </div>
-                ) : walletType === 'flow' && !isConnected ? (
-                  <div className="space-y-2">
-                    <Button onClick={handleConnect} variant="outline" className="w-full">
-                      <Wallet className="w-4 h-4 mr-2" />
-                      Connect Flow Wallet
-                    </Button>
-                    <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
-                      Back to Wallet Selection
-                    </Button>
-                  </div>
+                ) : !isConnected ? (
+                  walletType === 'evm' ? (
+                    <div className="space-y-2">
+                      <ConnectButton />
+                      <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
+                        Back to Wallet Selection
+                      </Button>
+                    </div>
+                  ) : walletType === 'flow' ? (
+                    <div className="space-y-2">
+                      <Button onClick={handleConnect} variant="outline" className="w-full">
+                        <Wallet className="w-4 h-4 mr-2" />
+                        Connect Flow Wallet
+                      </Button>
+                      <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
+                        Back to Wallet Selection
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button onClick={handleConnect} className="w-full justify-start" variant="outline">
+                        <div className="text-left">
+                          <div className="font-medium">Flow Wallet</div>
+                          <div className="text-xs text-muted-foreground">Native Flow blockchain</div>
+                        </div>
+                      </Button>
+                      <Button onClick={handleConnectEVM} className="w-full justify-start" variant="outline">
+                        <div className="text-left">
+                          <div className="font-medium">EVM Wallet</div>
+                          <div className="text-xs text-muted-foreground">MetaMask, WalletConnect</div>
+                        </div>
+                      </Button>
+                    </div>
+                  )
                 ) : isConnected ? (
                   <div className="space-y-2">
                     <Badge variant="outline" className="w-full justify-center status-active">

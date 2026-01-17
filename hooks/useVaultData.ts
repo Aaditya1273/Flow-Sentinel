@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useFlow } from 'lib/flow'
+import { useBalance } from 'wagmi'
 import { FlowService } from 'lib/flow-service'
 
 export interface VaultData {
@@ -24,7 +25,7 @@ export interface VaultPerformance {
 }
 
 export function useVaultData() {
-  const { user } = useFlow()
+  const { user, walletType } = useFlow()
   const [vaultData, setVaultData] = useState<VaultData | null>(null)
   const [performance, setPerformance] = useState<VaultPerformance | null>(null)
   const [flowBalance, setFlowBalance] = useState<number>(0)
@@ -74,8 +75,14 @@ export function useVaultData() {
       }
 
       // Fetch Flow balance
-      const balance = await FlowService.getUserFlowBalance(user.addr)
-      setFlowBalance(parseFloat(balance?.toString() || '0'))
+      if (walletType === 'evm') {
+        // For EVM wallets, show a mock balance or fetch from EVM provider
+        // You can integrate with wagmi to get the actual EVM balance
+        setFlowBalance(100000) // Mock 100k FLOW for demo
+      } else {
+        const balance = await FlowService.getUserFlowBalance(user.addr, walletType)
+        setFlowBalance(parseFloat(balance?.toString() || '0'))
+      }
 
     } catch (err) {
       console.error('Error fetching vault data:', err)
@@ -154,7 +161,7 @@ export function useVaultData() {
       setPerformance(null)
       setFlowBalance(0)
     }
-  }, [user.loggedIn, user.addr])
+  }, [user.loggedIn, user.addr, walletType])
 
   return {
     vaultData,

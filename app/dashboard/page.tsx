@@ -36,20 +36,22 @@ export default function DashboardPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <Shield className="w-16 h-16 text-blue-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-4">
+        <div className="flex items-center justify-center min-h-screen pt-16">
+          <div className="text-center max-w-lg px-4">
+            <div className="w-16 h-16 bg-accent rounded-xl flex items-center justify-center mx-auto mb-6">
+              <Shield className="w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-bold mb-4">
               Connect Your Wallet
             </h1>
-            <p className="text-gray-300 mb-8">
+            <p className="text-muted-foreground mb-8 leading-relaxed">
               Connect your Flow wallet to access your Sentinel dashboard
             </p>
             <button
               onClick={logIn}
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+              className="btn-primary px-8 py-3 rounded-lg font-medium text-base"
             >
               Connect Flow Wallet
             </button>
@@ -61,12 +63,12 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen pt-16">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p className="text-gray-300">Loading your vault data...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading your vault data...</p>
           </div>
         </div>
       </div>
@@ -76,34 +78,36 @@ export default function DashboardPage() {
   // Show create vault interface if no vault exists
   if (!vaultData && !loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center max-w-md">
-            <Shield className="w-16 h-16 text-blue-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-4">
+        <div className="flex items-center justify-center min-h-screen pt-16">
+          <div className="text-center max-w-lg px-4">
+            <div className="w-16 h-16 bg-accent rounded-xl flex items-center justify-center mx-auto mb-6">
+              <Shield className="w-8 h-8 text-foreground" />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground mb-4">
               Create Your First Vault
             </h1>
-            <p className="text-gray-300 mb-8">
+            <p className="text-muted-foreground mb-8 leading-relaxed">
               Start your DeFi journey by creating an autonomous vault. Choose from our proven strategies to maximize your yields.
             </p>
-            <div className="glass p-6 rounded-xl mb-6">
-              <div className="text-lg font-semibold text-white mb-2">
+            <div className="tool-card p-6 mb-8 border border-border">
+              <div className="text-sm text-muted-foreground mb-2 font-medium">
                 Your Flow Balance
               </div>
-              <div className="text-3xl font-bold text-green-400">
-                {formatCurrency(flowBalance)} FLOW
+              <div className="text-3xl font-bold text-foreground financial-number">
+                {formatCurrency(flowBalance)}
               </div>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+              className="btn-primary px-8 py-3 rounded-lg font-medium text-base"
             >
               Create Your First Vault
             </button>
             {error && (
-              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <p className="text-red-400 text-sm">{error}</p>
+              <div className="mt-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-destructive text-sm">{error}</p>
               </div>
             )}
           </div>

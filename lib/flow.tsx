@@ -8,6 +8,8 @@ import { useAccount, useDisconnect } from 'wagmi'
 fcl.config({
   'accessNode.api': process.env.NEXT_PUBLIC_FLOW_ACCESS_NODE || 'https://rest-testnet.onflow.org',
   'discovery.wallet': 'https://fcl-discovery.onflow.org/testnet/authn',
+  'discovery.authn.endpoint': 'https://fcl-discovery.onflow.org/api/testnet/authn',
+  'walletconnect.projectId': process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'c4f79cc821944d9680842e34466bfb',
   'app.detail.title': 'Flow Sentinel',
   'app.detail.icon': '/logo.png',
   'app.detail.description': 'Autonomous DeFi Wealth Manager',
@@ -77,12 +79,17 @@ export function FlowProvider({ children }: { children: ReactNode }) {
     }
   }, [user.loggedIn, walletType])
 
-  const logIn = () => {
+  const logIn = async () => {
     setLoading(true)
-    if (walletType === 'flow' || !walletType) {
-      setWalletType('flow')
-      fcl.authenticate().finally(() => setLoading(false))
-    } else {
+    try {
+      if (walletType === 'flow' || !walletType) {
+        setWalletType('flow')
+        await fcl.authenticate()
+      }
+    } catch (error) {
+      console.error('Flow authentication error:', error)
+      setWalletType(null)
+    } finally {
       setLoading(false)
     }
     // EVM login is handled by RainbowKit

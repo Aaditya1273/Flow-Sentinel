@@ -388,8 +388,16 @@ export class FlowService {
     }
   }
 
-  static async getUserFlowBalance(address: string) {
+  static async getUserFlowBalance(address: string, walletType?: string) {
     try {
+      // If it's an EVM wallet, we need to handle it differently
+      if (walletType === 'evm') {
+        // For EVM wallets, we can't directly query Flow balance from Flow blockchain
+        // This would need to be handled by the EVM provider or bridge
+        console.log('EVM wallet detected, balance query not supported yet')
+        return 0
+      }
+
       const balance = await fcl.query({
         cadence: `
           import FlowToken from ${process.env.NEXT_PUBLIC_FLOW_TOKEN_ADDRESS || '0x7e60df042a9c0868'}
