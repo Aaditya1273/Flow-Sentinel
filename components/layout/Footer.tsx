@@ -6,10 +6,10 @@ import { Shield, Twitter, Github, MessageCircle } from 'lucide-react'
 export function Footer() {
   const footerLinks = {
     product: [
-      { name: 'Features', href: '#features' },
-      { name: 'How it Works', href: '#how-it-works' },
+      { name: 'Vaults', href: '/vaults' },
+      { name: 'Analytics', href: '/analytics' },
       { name: 'Dashboard', href: '/dashboard' },
-      { name: 'Pricing', href: '/pricing' },
+      { name: 'Settings', href: '/settings' },
     ],
     developers: [
       { name: 'Documentation', href: '/docs' },

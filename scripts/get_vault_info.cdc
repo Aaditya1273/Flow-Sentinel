@@ -1,4 +1,4 @@
-import SentinelVault from 0xf8d6e0586b0a20c7
+import SentinelVault from 0x136b642d0aa31ca9
 
 // Script to get comprehensive vault information
 access(all) fun main(address: Address): {String: AnyStruct} {
@@ -21,8 +21,9 @@ access(all) fun main(address: Address): {String: AnyStruct} {
         "hasVault": true,
         "balance": vault.getBalance(),
         "status": vault.getStatus(),
-        "isActive": vault.isActive(),
+        "isActive": vault.getIsActive(),
         "lastExecution": vault.getLastExecution(),
+        "owner": vault.getOwner(),
         "totalVaults": SentinelVault.getTotalVaults(),
         "totalValueLocked": SentinelVault.getTotalValueLocked()
     }

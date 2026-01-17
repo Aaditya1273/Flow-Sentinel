@@ -1,6 +1,6 @@
-import SentinelVault from 0xf8d6e0586b0a20c7
-import FlowToken from 0x1654653399040a61
-import FungibleToken from 0xf233dcee88fe0abe
+import SentinelVault from 0x136b642d0aa31ca9
+import FlowToken from 0x7e60df042a9c0868
+import FungibleToken from 0x9a0766d93b6608b7
 
 // Initialize a new Sentinel Vault for the user
 transaction() {

@@ -1,13 +1,5 @@
-import FungibleToken from 0xf233dcee88fe0abe
-import FlowToken from 0x1654653399040a61
-
-// Note: FlowTransactionScheduler is part of Forte upgrade - using interface for demo
-access(all) contract interface FlowTransactionScheduler {
-    access(all) resource interface TransactionHandler {
-        access(FlowTransactionScheduler.Execute) fun executeTransaction(id: UInt64, data: AnyStruct?)
-    }
-    access(all) entitlement Execute
-}
+import FungibleToken from 0x9a0766d93b6608b7
+import FlowToken from 0x7e60df042a9c0868
 
 access(all) contract SentinelVault {
     
@@ -44,26 +36,27 @@ access(all) contract SentinelVault {
         access(all) fun getBalance(): UFix64
         access(all) fun getStatus(): String
         access(all) fun getLastExecution(): UFix64?
-        access(all) fun isActive(): Bool
+        access(all) fun getIsActive(): Bool
+        access(all) fun getOwner(): Address
     }
     
     // Core Sentinel Vault Resource
-    access(all) resource Vault: VaultPublic, FlowTransactionScheduler.TransactionHandler {
+    access(all) resource Vault: VaultPublic {
         access(all) let id: UInt64
+        access(all) let vaultOwner: Address
         access(all) var balance: UFix64
         access(all) var isActive: Bool
         access(all) var lastExecution: UFix64?
         access(all) var scheduledTaskId: UInt64?
         access(self) var flowVault: @FlowToken.Vault
-        access(all) let owner: Address
         
         init(owner: Address) {
             self.id = SentinelVault.totalVaults
+            self.vaultOwner = owner
             self.balance = 0.0
             self.isActive = true
             self.lastExecution = nil
             self.scheduledTaskId = nil
-            self.owner = owner
             self.flowVault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>()) as! @FlowToken.Vault
             
             SentinelVault.totalVaults = SentinelVault.totalVaults + 1
@@ -116,7 +109,7 @@ access(all) contract SentinelVault {
                 self.scheduledTaskId = nil
             }
             
-            emit EmergencyPause(vaultId: self.id, owner: self.owner)
+            emit EmergencyPause(vaultId: self.id, owner: self.vaultOwner)
         }
         
         // Resume operations
@@ -128,13 +121,13 @@ access(all) contract SentinelVault {
         }
         
         // Core automation logic - executed by Flow Scheduler
-        access(FlowTransactionScheduler.Execute) fun executeTransaction(id: UInt64, data: AnyStruct?) {
+        access(all) fun executeTransaction(id: UInt64, data: AnyStruct?) {
             if !self.isActive || self.balance == 0.0 {
                 return
             }
             
             // A. Apply Native Randomness to prevent MEV front-running
-            let randomJitter = revertibleRandom()
+            let randomJitter = revertibleRandom<UInt64>()
             
             // B. Perform automated strategy logic
             self.executeStrategy()
@@ -156,10 +149,7 @@ access(all) contract SentinelVault {
             
             // Simulate yield generation (in real implementation, this would come from DeFi protocols)
             if yieldAmount > 0.0 {
-                // Create simulated yield vault with proper type
-                let yieldVault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>()) as! @FlowToken.Vault
-                // Note: In real implementation, yield would come from actual DeFi interactions
-                // For demo, we just update balance to show yield generation concept
+                // For demo purposes, we just update balance to show yield generation concept
                 self.balance = self.balance + yieldAmount
             }
         }
@@ -184,13 +174,12 @@ access(all) contract SentinelVault {
             return self.lastExecution
         }
         
-        access(all) fun isActive(): Bool {
+        access(all) fun getIsActive(): Bool {
             return self.isActive
         }
         
-        destroy() {
-            SentinelVault.totalValueLocked = SentinelVault.totalValueLocked - self.balance
-            destroy self.flowVault
+        access(all) fun getOwner(): Address {
+            return self.vaultOwner
         }
     }
     

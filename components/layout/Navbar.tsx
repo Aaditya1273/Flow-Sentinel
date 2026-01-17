@@ -3,19 +3,27 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Menu, X, Shield } from 'lucide-react'
+import { Menu, X, Shield, Wallet, ChevronDown } from 'lucide-react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useFlow } from 'lib/flow'
 import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from 'components/ui/dropdown-menu'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
-  const { user, logIn } = useFlow()
+  const [walletType, setWalletType] = useState<'flow' | 'evm' | null>(null)
+  const { user, logIn, logOut } = useFlow()
 
   const navItems = [
-    { name: 'Features', href: '#features' },
-    { name: 'How it Works', href: '#how-it-works' },
+    { name: 'Vaults', href: '/vaults' },
+    { name: 'Analytics', href: '/analytics' },
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Docs', href: '/docs' },
   ]
@@ -50,19 +58,68 @@ export function Navbar() {
 
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* Flow Wallet */}
-            {!user.loggedIn ? (
-              <Button onClick={logIn} variant="outline">
-                Connect Flow
-              </Button>
-            ) : (
-              <Badge variant="success">
-                {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-              </Badge>
-            )}
-            
-            {/* EVM Wallet */}
-            <ConnectButton />
+            {!user.loggedIn && !walletType ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default">
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Connect Wallet
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setWalletType('flow')}>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">Flow Wallet</span>
+                      <span className="text-xs text-muted-foreground">Native Flow blockchain</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setWalletType('evm')}>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">EVM Wallet</span>
+                      <span className="text-xs text-muted-foreground">MetaMask, WalletConnect</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : walletType === 'flow' ? (
+              <div className="flex items-center space-x-2">
+                {!user.loggedIn ? (
+                  <Button onClick={logIn} variant="default">
+                    Connect Flow
+                  </Button>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="success">
+                      Flow: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                    </Badge>
+                    <Button onClick={logOut} variant="ghost" size="sm">
+                      Disconnect
+                    </Button>
+                  </div>
+                )}
+                <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                  Switch
+                </Button>
+              </div>
+            ) : walletType === 'evm' ? (
+              <div className="flex items-center space-x-2">
+                <ConnectButton />
+                <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                  Switch
+                </Button>
+              </div>
+            ) : user.loggedIn ? (
+              <div className="flex items-center space-x-2">
+                <Badge variant="success">
+                  Flow: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                </Badge>
+                <Button onClick={logOut} variant="ghost" size="sm">
+                  Disconnect
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           {/* Mobile menu button */}
@@ -97,19 +154,34 @@ export function Navbar() {
                 </Link>
               ))}
               
-              <div className="pt-4 border-t border-border space-y-2">
-                {!user.loggedIn ? (
-                  <Button onClick={logIn} className="w-full">
-                    Connect Flow Wallet
-                  </Button>
-                ) : (
-                  <Badge variant="success" className="w-full justify-center">
-                    {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                  </Badge>
-                )}
+              <div className="pt-4 border-t border-border space-y-3">
+                <div className="text-sm text-muted-foreground">Choose Wallet Type:</div>
                 
-                <div className="w-full">
-                  <ConnectButton />
+                {/* Flow Wallet Mobile */}
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Flow Blockchain</div>
+                  {!user.loggedIn ? (
+                    <Button onClick={logIn} className="w-full" size="sm">
+                      Connect Flow Wallet
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Badge variant="success" className="w-full justify-center">
+                        {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                      </Badge>
+                      <Button onClick={logOut} variant="outline" size="sm" className="w-full">
+                        Disconnect Flow
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* EVM Wallet Mobile */}
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">EVM Compatible</div>
+                  <div className="w-full">
+                    <ConnectButton />
+                  </div>
                 </div>
               </div>
             </div>

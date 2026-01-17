@@ -2,8 +2,8 @@
   "version": "1.0",
   "networks": {
     "emulator": "127.0.0.1:3569",
-    "testnet": "access.devnet.nodes.onflow.org:9000",
-    "mainnet": "access.mainnet.nodes.onflow.org:9000"
+    "testnet": "https://rest-testnet.onflow.org",
+    "mainnet": "https://rest-mainnet.onflow.org"
   },
   "accounts": {
     "emulator-account": {
@@ -11,10 +11,12 @@
       "key": "2eae2f31cb5b756151fa11d82949c634b8f28796a711d7eb1e52cc301ed11111"
     },
     "testnet-account": {
-      "address": "0x01",
+      "address": "0x136b642d0aa31ca9",
       "key": {
         "type": "file",
-        "location": "./testnet-key.pem"
+        "location": "./testnet-private-key.pem",
+        "signatureAlgorithm": "ECDSA_secp256k1",
+        "hashAlgorithm": "SHA2_256"
       }
     }
   },
@@ -23,14 +25,14 @@
       "source": "./contracts/SentinelVault.cdc",
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
-        "testnet": "0x01"
+        "testnet": "0x136b642d0aa31ca9"
       }
     },
     "SentinelInterfaces": {
       "source": "./contracts/SentinelInterfaces.cdc",
       "aliases": {
         "emulator": "f8d6e0586b0a20c7",
-        "testnet": "0x01"
+        "testnet": "0x136b642d0aa31ca9"
       }
     }
   },

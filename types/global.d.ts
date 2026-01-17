@@ -1,4 +1,4 @@
-// Global type definitions for Flow Sentinel
+// Global type definitions for Flow Sentinel - React 19.2 & Next.js 16.1.2
 
 declare module '*.svg' {
   const content: React.FunctionComponent<React.SVGAttributes<SVGElement>>
@@ -34,6 +34,26 @@ declare module '*.webp' {
 declare global {
   interface Window {
     fcl?: any
+  }
+  
+  // React 19.2 types
+  namespace React {
+    interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
+      // React 19.2 specific attributes
+      inert?: boolean
+    }
+  }
+}
+
+// Next.js 16.1.2 specific types
+declare module 'next' {
+  interface NextConfig {
+    experimental?: {
+      reactCompiler?: boolean
+      ppr?: 'incremental' | boolean
+      turbo?: any
+      optimizePackageImports?: string[]
+    }
   }
 }
 

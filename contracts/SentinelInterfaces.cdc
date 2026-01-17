@@ -1,12 +1,12 @@
-import FungibleToken from 0xf233dcee88fe0abe
+import FungibleToken from 0x9a0766d93b6608b7
 
 // Standard interfaces for Flow Sentinel ecosystem
 access(all) contract SentinelInterfaces {
     
     // Interface for vault operations
     access(all) resource interface IVault {
-        access(all) fun deposit(from: @FungibleToken.Vault)
-        access(all) fun withdraw(amount: UFix64): @FungibleToken.Vault
+        access(all) fun deposit(from: @{FungibleToken.Vault})
+        access(all) fun withdraw(amount: UFix64): @{FungibleToken.Vault}
         access(all) fun getBalance(): UFix64
         access(all) fun emergencyPause()
         access(all) fun resume()
@@ -14,7 +14,7 @@ access(all) contract SentinelInterfaces {
     
     // Interface for strategy execution
     access(all) resource interface IStrategy {
-        access(all) fun execute(vault: &AnyResource): UFix64
+        access(all) fun executeStrategy(vault: &AnyResource): UFix64
         access(all) fun getExpectedYield(): UFix64
         access(all) fun getRiskLevel(): UInt8
     }
@@ -28,7 +28,7 @@ access(all) contract SentinelInterfaces {
     
     // Events for the ecosystem
     access(all) event VaultOperation(vaultId: UInt64, operation: String, amount: UFix64)
-    access(all) event StrategyUpdate(strategyId: UInt64, newParameters: {String: AnyStruct})
+    access(all) event StrategyUpdate(strategyId: UInt64, newParametersCount: UInt64)
     access(all) event SecurityEvent(vaultId: UInt64, eventType: String, severity: UInt8)
     
     // Standard error codes
