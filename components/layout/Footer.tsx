@@ -115,7 +115,7 @@ export function Footer() {
 
         <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">
-            © 2024 Flow Sentinel. All rights reserved.
+            © 2026 Flow Sentinel. All rights reserved.
           </p>
           <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <span className="text-sm text-muted-foreground">Built on</span>

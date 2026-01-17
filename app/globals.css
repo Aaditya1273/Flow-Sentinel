@@ -4,26 +4,35 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
-    --radius: 0.75rem;
+    /* Enhanced Black & White System with Better Contrast */
+    --background: 0 0% 4%;           /* Deeper black background */
+    --foreground: 0 0% 98%;          /* Brighter white text */
+    --card: 0 0% 8%;                 /* Darker cards with more contrast */
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;             /* Bright white for primary actions */
+    --primary-foreground: 0 0% 4%;   /* Deep black text on white */
+    --secondary: 0 0% 12%;           /* More defined gray surfaces */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;    /* Higher contrast gray text */
+    --accent: 0 0% 16%;              /* More visible accent */
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 85% 65%;        /* Brighter red for visibility */
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 16%;              /* More visible borders */
+    --input: 0 0% 8%;
+    --ring: 0 0% 98%;
+    --radius: 0.5rem;                /* Slightly larger radius for modern look */
+    
+    /* Enhanced Success/Positive */
+    --success: 142 85% 45%;          /* Brighter green for better visibility */
+    --success-foreground: 0 0% 98%;
+    
+    /* Enhanced Warning */
+    --warning: 38 95% 55%;           /* More vibrant orange */
+    --warning-foreground: 0 0% 4%;
   }
 }
 
@@ -33,46 +42,170 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    /* Clean black background */
+    background: hsl(var(--background));
     min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: 'tnum' 1; /* Tabular numbers for financial data */
   }
 }
 
-/* Custom scrollbar */
+/* Clean scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted;
+  background: hsl(var(--muted));
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full;
+  background: hsl(var(--muted-foreground));
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  background: hsl(var(--foreground));
 }
 
-/* Glassmorphism effect */
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* Enhanced card styling with better contrast */
+.tool-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius));
+  transition: all 0.2s ease-in-out;
 }
 
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.tool-card:hover {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--muted-foreground) / 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px hsl(var(--background) / 0.5);
 }
 
-/* Animated background */
-.animated-bg {
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
+/* Enhanced financial number styling */
+.financial-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+/* Enhanced status indicators with better contrast */
+.status-active {
+  color: hsl(var(--success));
+  font-weight: 500;
+}
+
+.status-inactive {
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+}
+
+.status-error {
+  color: hsl(var(--destructive));
+  font-weight: 500;
+}
+
+.status-warning {
+  color: hsl(var(--warning));
+  font-weight: 500;
+}
+
+/* Enhanced button styles */
+.btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 1px solid hsl(var(--primary));
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+  background: hsl(var(--primary) / 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary:hover {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--muted-foreground) / 0.3);
+  transform: translateY(-1px);
+}
+
+/* Logo styling */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-image {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* Enhanced section spacing and alignment */
+.section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  font-size: 1.25rem;
+  color: hsl(var(--muted-foreground));
+  max-width: 48rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Grid improvements */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+@media (max-width: 768px) {
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
 }

@@ -14,8 +14,8 @@ access(all) contract SentinelInterfaces {
     
     // Interface for strategy execution
     access(all) resource interface IStrategy {
-        access(all) fun executeStrategy(vault: &AnyResource): UFix64
-        access(all) fun getExpectedYield(): UFix64
+        access(all) fun executeStrategy(vaultBalance: UFix64): UFix64
+        access(all) fun getExpectedYield(amount: UFix64): UFix64
         access(all) fun getRiskLevel(): UInt8
     }
     

@@ -1,82 +1,94 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { X, Shield, AlertTriangle, DollarSign } from 'lucide-react'
+import { X, Shield, AlertTriangle, DollarSign, TrendingUp, Zap } from 'lucide-react'
 import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
 import { useVaultData } from 'hooks/useVaultData'
+import { FlowService } from 'lib/flow-service'
 
 interface CreateVaultModalProps {
   onClose: () => void
+  preselectedStrategy?: string
 }
 
-interface VaultTemplate {
+interface Strategy {
   id: string
   name: string
   description: string
-  risk: 'low' | 'medium' | 'high'
-  expectedAPY: string
+  riskLevel: number
+  category: string
+  expectedAPY: number
   minDeposit: number
   features: string[]
-  strategy: string
+  creator: string
+  verified: boolean
 }
 
-const vaultTemplates: VaultTemplate[] = [
-  {
-    id: 'conservative',
-    name: 'Conservative Growth',
-    description: 'Stable returns with minimal risk through liquid staking and low-risk DeFi protocols',
-    risk: 'low',
-    expectedAPY: '4-8%',
-    minDeposit: 10,
-    features: ['Liquid Staking', 'Auto-Compounding', 'Emergency Pause'],
-    strategy: 'Balanced allocation across stable protocols with automatic rebalancing'
-  },
-  {
-    id: 'balanced',
-    name: 'Balanced Yield',
-    description: 'Moderate risk with diversified yield farming and lending strategies',
-    risk: 'medium',
-    expectedAPY: '8-15%',
-    minDeposit: 25,
-    features: ['Yield Farming', 'MEV Protection', 'Risk Management', 'Auto-Harvest'],
-    strategy: 'Diversified approach combining lending, farming, and liquidity provision'
-  },
-  {
-    id: 'aggressive',
-    name: 'Aggressive Growth',
-    description: 'Maximum yield potential through advanced DeFi strategies and leverage',
-    risk: 'high',
-    expectedAPY: '15-30%',
-    minDeposit: 50,
-    features: ['Leveraged Farming', 'MEV Protection', 'Advanced Strategies', 'Real-time Monitoring'],
-    strategy: 'High-yield farming with leverage and sophisticated risk management'
-  }
-]
-
-export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
+export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultModalProps) {
+  const [strategies, setStrategies] = useState<Strategy[]>([])
+  const [selectedStrategy, setSelectedStrategy] = useState<string | null>(preselectedStrategy || null)
   const [depositAmount, setDepositAmount] = useState('')
   const [vaultName, setVaultName] = useState('')
-  const [step, setStep] = useState(1) // 1: Select Template, 2: Configure, 3: Confirm, 4: Creating
+  const [step, setStep] = useState(1) // 1: Select Strategy, 2: Configure, 3: Confirm, 4: Creating
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   
-  const { createVault, flowBalance, loading } = useVaultData()
-  const selectedVault = vaultTemplates.find(v => v.id === selectedTemplate)
+  const { createVault, flowBalance, loading: vaultLoading } = useVaultData()
+  const selectedStrategyData = strategies.find(s => s.id === selectedStrategy)
+
+  // Load strategies from blockchain
+  useEffect(() => {
+    const loadStrategies = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const blockchainStrategies = await FlowService.getAllStrategies()
+        
+        if (blockchainStrategies && blockchainStrategies.length > 0) {
+          const transformedStrategies: Strategy[] = blockchainStrategies.map((strategy: any) => ({
+            id: strategy.id,
+            name: strategy.name,
+            description: strategy.description,
+            riskLevel: parseInt(strategy.riskLevel || '1'),
+            category: strategy.category,
+            expectedAPY: parseFloat(strategy.expectedAPY || '0'),
+            minDeposit: parseFloat(strategy.minDeposit || '0'),
+            features: strategy.features || [],
+            creator: strategy.creator || 'Unknown',
+            verified: strategy.verified === true
+          }))
+          
+          setStrategies(transformedStrategies)
+        } else {
+          setError('No strategies available. Please ensure contracts are deployed.')
+        }
+      } catch (err) {
+        console.error('Error loading strategies:', err)
+        setError('Failed to load strategies from blockchain.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadStrategies()
+  }, [])
 
   const handleCreateVault = async () => {
-    if (!selectedVault || !vaultName || !depositAmount) return
+    if (!selectedStrategyData || !vaultName || !depositAmount) return
     
     try {
       setStep(4) // Show loading step
       
-      await createVault(
-        vaultName || selectedVault.name,
-        selectedVault.strategy,
+      // Use the real FlowService to create vault with strategy
+      await FlowService.createVaultWithStrategy(
+        selectedStrategyData.id,
         Number(depositAmount)
       )
       
-      console.log('Vault created successfully')
+      console.log('Vault created successfully with strategy:', selectedStrategyData.id)
       onClose()
       
       // Refresh the page to show the new vault
@@ -89,12 +101,31 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
     }
   }
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case 'low': return 'text-green-400 bg-green-400/20'
-      case 'medium': return 'text-yellow-400 bg-yellow-400/20'
-      case 'high': return 'text-red-400 bg-red-400/20'
+  const getRiskColor = (riskLevel: number) => {
+    switch (riskLevel) {
+      case 1: return 'text-green-400 bg-green-400/20'
+      case 2: return 'text-yellow-400 bg-yellow-400/20'
+      case 3: return 'text-red-400 bg-red-400/20'
       default: return 'text-gray-400 bg-gray-400/20'
+    }
+  }
+
+  const getRiskLabel = (riskLevel: number) => {
+    switch (riskLevel) {
+      case 1: return 'LOW'
+      case 2: return 'MEDIUM'
+      case 3: return 'HIGH'
+      default: return 'UNKNOWN'
+    }
+  }
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'liquid-staking': return <Shield className="w-5 h-5" />
+      case 'yield-farming': return <TrendingUp className="w-5 h-5" />
+      case 'lending': return <DollarSign className="w-5 h-5" />
+      case 'arbitrage': return <Zap className="w-5 h-5" />
+      default: return <Shield className="w-5 h-5" />
     }
   }
 
@@ -110,14 +141,14 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="glass p-6 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="glass p-6 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white">Create New Vault</h2>
-            <p className="text-gray-400">Set up your autonomous DeFi strategy</p>
+            <p className="text-gray-400">Deploy your autonomous DeFi strategy on Flow blockchain</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -148,75 +179,116 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
           ))}
         </div>
 
-        {/* Step 1: Select Template */}
-        {step === 1 && (
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-300">Loading strategies from blockchain...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12">
+            <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Error Loading Strategies</h3>
+            <p className="text-gray-400 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        )}
+
+        {/* Step 1: Select Strategy */}
+        {step === 1 && !loading && !error && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white mb-4">
               Choose Your Strategy
             </h3>
             
-            {vaultTemplates.map((template) => (
-              <motion.div
-                key={template.id}
-                whileHover={{ scale: 1.02 }}
-                className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                  selectedTemplate === template.id
-                    ? 'border-blue-500 bg-blue-500/10'
-                    : 'border-gray-700 hover:border-gray-600'
-                }`}
-                onClick={() => setSelectedTemplate(template.id)}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="text-lg font-semibold text-white">
-                      {template.name}
-                    </h4>
-                    <p className="text-sm text-gray-400 mt-1">
-                      {template.description}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end space-y-2">
-                    <Badge className={getRiskColor(template.risk)}>
-                      {template.risk.toUpperCase()} RISK
-                    </Badge>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-green-400">
-                        {template.expectedAPY}
+            {strategies.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-400">No strategies available. Please ensure contracts are deployed.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {strategies.map((strategy) => (
+                  <motion.div
+                    key={strategy.id}
+                    whileHover={{ scale: 1.02 }}
+                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                      selectedStrategy === strategy.id
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-gray-700 hover:border-gray-600'
+                    }`}
+                    onClick={() => setSelectedStrategy(strategy.id)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-500/20 rounded-lg">
+                          {getCategoryIcon(strategy.category)}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">
+                            {strategy.name}
+                          </h4>
+                          <p className="text-sm text-gray-400">
+                            by {strategy.creator}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-400">Expected APY</div>
+                      <div className="flex flex-col items-end space-y-2">
+                        <Badge className={getRiskColor(strategy.riskLevel)}>
+                          {getRiskLabel(strategy.riskLevel)} RISK
+                        </Badge>
+                        {strategy.verified && (
+                          <Badge variant="outline" className="text-xs">
+                            VERIFIED
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-3">
-                  <div>
-                    <div className="text-sm text-gray-400">Min Deposit</div>
-                    <div className="text-white font-medium">
-                      {template.minDeposit} FLOW
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-400">Strategy</div>
-                    <div className="text-white font-medium text-sm">
-                      {template.strategy}
-                    </div>
-                  </div>
-                </div>
+                    <p className="text-sm text-gray-400 mb-3 line-clamp-2">
+                      {strategy.description}
+                    </p>
 
-                <div className="flex flex-wrap gap-2">
-                  {template.features.map((feature) => (
-                    <Badge key={feature} variant="outline" className="text-xs">
-                      {feature}
-                    </Badge>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <div className="text-sm text-gray-400">Expected APY</div>
+                        <div className="text-lg font-bold text-green-400">
+                          {strategy.expectedAPY.toFixed(1)}%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-400">Min Deposit</div>
+                        <div className="text-white font-medium">
+                          {strategy.minDeposit} FLOW
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {strategy.features.slice(0, 3).map((feature) => (
+                        <Badge key={feature} variant="outline" className="text-xs">
+                          {feature}
+                        </Badge>
+                      ))}
+                      {strategy.features.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{strategy.features.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
 
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={() => setStep(2)}
-                disabled={!selectedTemplate}
+                disabled={!selectedStrategy}
               >
                 Continue
               </Button>
@@ -225,7 +297,7 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
         )}
 
         {/* Step 2: Configure */}
-        {step === 2 && selectedVault && (
+        {step === 2 && selectedStrategyData && (
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-white">
               Configure Your Vault
@@ -240,7 +312,7 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
                   type="text"
                   value={vaultName}
                   onChange={(e) => setVaultName(e.target.value)}
-                  placeholder={selectedVault.name}
+                  placeholder={`My ${selectedStrategyData.name} Vault`}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -254,16 +326,42 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
                     type="number"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder={selectedVault.minDeposit.toString()}
-                    min={selectedVault.minDeposit}
+                    placeholder={selectedStrategyData.minDeposit.toString()}
+                    min={selectedStrategyData.minDeposit}
                     max={flowBalance}
+                    step="0.1"
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                   />
                   <DollarSign className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
                 </div>
                 <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>Minimum: {selectedVault.minDeposit} FLOW</span>
+                  <span>Minimum: {selectedStrategyData.minDeposit} FLOW</span>
                   <span>Available: {flowBalance.toFixed(2)} FLOW</span>
+                </div>
+              </div>
+
+              {/* Strategy Details */}
+              <div className="glass p-4 rounded-lg">
+                <h4 className="text-sm font-semibold text-white mb-3">Strategy Details</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-400">Category:</span>
+                    <span className="text-white ml-2 capitalize">{selectedStrategyData.category.replace('-', ' ')}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Expected APY:</span>
+                    <span className="text-green-400 ml-2 font-semibold">{selectedStrategyData.expectedAPY.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <span className="text-gray-400 text-sm">Features:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedStrategyData.features.map((feature) => (
+                      <Badge key={feature} variant="outline" className="text-xs">
+                        {feature}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -274,7 +372,7 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
               </Button>
               <Button 
                 onClick={() => setStep(3)}
-                disabled={!vaultName || !depositAmount || Number(depositAmount) < selectedVault.minDeposit || Number(depositAmount) > flowBalance}
+                disabled={!vaultName || !depositAmount || Number(depositAmount) < selectedStrategyData.minDeposit || Number(depositAmount) > flowBalance}
               >
                 Review
               </Button>
@@ -283,7 +381,7 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
         )}
 
         {/* Step 3: Confirm */}
-        {step === 3 && selectedVault && (
+        {step === 3 && selectedStrategyData && (
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-white">
               Confirm Vault Creation
@@ -292,22 +390,22 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
             <div className="glass p-4 rounded-lg">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-semibold text-white">
-                  {vaultName || selectedVault.name}
+                  {vaultName}
                 </h4>
-                <Badge className={getRiskColor(selectedVault.risk)}>
-                  {selectedVault.risk.toUpperCase()} RISK
+                <Badge className={getRiskColor(selectedStrategyData.riskLevel)}>
+                  {getRiskLabel(selectedStrategyData.riskLevel)} RISK
                 </Badge>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <div className="text-sm text-gray-400">Strategy</div>
-                  <div className="text-white">{selectedVault.name}</div>
+                  <div className="text-white">{selectedStrategyData.name}</div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-400">Expected APY</div>
                   <div className="text-green-400 font-semibold">
-                    {selectedVault.expectedAPY}
+                    {selectedStrategyData.expectedAPY.toFixed(1)}%
                   </div>
                 </div>
                 <div>
@@ -327,7 +425,7 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
                 </div>
                 <p className="text-xs text-gray-400">
                   By creating this vault, you acknowledge the risks associated with DeFi protocols. 
-                  Your funds will be managed autonomously according to the selected strategy.
+                  Your funds will be managed autonomously according to the selected strategy deployed on Flow blockchain.
                 </p>
               </div>
             </div>
@@ -336,9 +434,9 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
               <Button variant="outline" onClick={() => setStep(2)}>
                 Back
               </Button>
-              <Button onClick={handleCreateVault} disabled={loading}>
+              <Button onClick={handleCreateVault} disabled={vaultLoading}>
                 <Shield className="w-4 h-4 mr-2" />
-                {loading ? 'Creating...' : 'Create Vault'}
+                {vaultLoading ? 'Creating...' : 'Create Vault'}
               </Button>
             </div>
           </div>
@@ -352,7 +450,7 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
               Creating Your Vault
             </h3>
             <p className="text-gray-400 mb-4">
-              Please wait while we deploy your vault to the Flow blockchain...
+              Deploying your vault with {selectedStrategyData?.name} strategy to Flow blockchain...
             </p>
             <div className="text-sm text-gray-500">
               This may take a few moments. Do not close this window.

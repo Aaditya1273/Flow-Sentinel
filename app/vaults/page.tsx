@@ -4,13 +4,11 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Search, 
-  Filter, 
   TrendingUp, 
   Shield, 
   Zap, 
   DollarSign,
   Users,
-  Clock,
   Star,
   ArrowUpRight
 } from 'lucide-react'
@@ -18,18 +16,18 @@ import { Navbar } from 'components/layout/Navbar'
 import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
 import { Card } from 'components/ui/card'
-import { formatCurrency } from 'lib/utils'
-import { useFlow } from 'lib/flow'
 import { formatCurrency, formatPercentage } from 'lib/utils'
+import { useFlow } from 'lib/flow'
+import { FlowService } from 'lib/flow-service'
 
 interface VaultStrategy {
   id: string
   name: string
   description: string
-  apy: number
+  expectedAPY: number
   tvl: number
-  risk: 'low' | 'medium' | 'high'
-  category: 'yield-farming' | 'liquid-staking' | 'lending' | 'arbitrage'
+  riskLevel: number
+  category: string
   participants: number
   minDeposit: number
   featured: boolean
@@ -39,132 +37,18 @@ interface VaultStrategy {
   performance7d: number
   performance30d: number
   features: string[]
-  strategy: string
+  isActive: boolean
 }
-
-const mockVaultStrategies: VaultStrategy[] = [
-  {
-    id: '1',
-    name: 'Flow Liquid Staking Pro',
-    description: 'Maximize staking rewards with automated delegation and MEV protection',
-    apy: 12.5,
-    tvl: 2500000,
-    risk: 'low',
-    category: 'liquid-staking',
-    participants: 1247,
-    minDeposit: 10,
-    featured: true,
-    creator: 'Flow Foundation',
-    verified: true,
-    performance24h: 0.8,
-    performance7d: 5.2,
-    performance30d: 18.7,
-    features: ['Auto-Delegation', 'MEV Protection', 'Instant Liquidity'],
-    strategy: 'Automated liquid staking with optimal validator selection'
-  },
-  {
-    id: '2',
-    name: 'DeFi Yield Maximizer',
-    description: 'Multi-protocol yield farming with automatic rebalancing',
-    apy: 24.8,
-    tvl: 1800000,
-    risk: 'medium',
-    category: 'yield-farming',
-    participants: 892,
-    minDeposit: 100,
-    featured: true,
-    creator: 'Sentinel Labs',
-    verified: true,
-    performance24h: 1.2,
-    performance7d: 8.9,
-    performance30d: 32.1,
-    features: ['Multi-Protocol', 'Auto-Compound', 'Risk Management'],
-    strategy: 'Diversified farming across top DeFi protocols'
-  },
-  {
-    id: '3',
-    name: 'Arbitrage Hunter',
-    description: 'Capture arbitrage opportunities across DEXs with MEV protection',
-    apy: 18.3,
-    tvl: 950000,
-    risk: 'medium',
-    category: 'arbitrage',
-    participants: 456,
-    minDeposit: 250,
-    featured: false,
-    creator: 'Alpha Strategies',
-    verified: true,
-    performance24h: 0.6,
-    performance7d: 4.1,
-    performance30d: 15.8,
-    features: ['MEV Protection', 'Cross-DEX', 'Flash Loans'],
-    strategy: 'Automated arbitrage with advanced MEV protection'
-  },
-  {
-    id: '4',
-    name: 'Conservative Lending',
-    description: 'Safe lending strategies with blue-chip collateral',
-    apy: 8.7,
-    tvl: 3200000,
-    risk: 'low',
-    category: 'lending',
-    participants: 2156,
-    minDeposit: 50,
-    featured: false,
-    creator: 'Secure Finance',
-    verified: true,
-    performance24h: 0.3,
-    performance7d: 2.1,
-    performance30d: 9.4,
-    features: ['Blue-chip Only', 'Over-collateralized', 'Insurance'],
-    strategy: 'Conservative lending with premium collateral'
-  },
-  {
-    id: '5',
-    name: 'High-Yield Farming',
-    description: 'Aggressive yield farming with leverage and advanced strategies',
-    apy: 45.2,
-    tvl: 680000,
-    risk: 'high',
-    category: 'yield-farming',
-    participants: 234,
-    minDeposit: 500,
-    featured: false,
-    creator: 'Degen Capital',
-    verified: false,
-    performance24h: 2.8,
-    performance7d: 15.6,
-    performance30d: 67.3,
-    features: ['Leveraged', 'High-Risk', 'Expert Only'],
-    strategy: 'Leveraged farming with sophisticated risk management'
-  },
-  {
-    id: '6',
-    name: 'Stable Yield Plus',
-    description: 'Enhanced stablecoin yields through optimized lending',
-    apy: 6.4,
-    tvl: 4100000,
-    risk: 'low',
-    category: 'lending',
-    participants: 3421,
-    minDeposit: 25,
-    featured: false,
-    creator: 'Stable Protocol',
-    verified: true,
-    performance24h: 0.2,
-    performance7d: 1.3,
-    performance30d: 5.8,
-    features: ['Stablecoin Only', 'Low Risk', 'High Liquidity'],
-    strategy: 'Optimized stablecoin lending across multiple protocols'
-  }
-]
 
 export default function VaultsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedRisk, setSelectedRisk] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<string>('apy')
-  const [filteredVaults, setFilteredVaults] = useState(mockVaultStrategies)
+  const [sortBy, setSortBy] = useState<string>('expectedAPY')
+  const [strategies, setStrategies] = useState<VaultStrategy[]>([])
+  const [filteredStrategies, setFilteredStrategies] = useState<VaultStrategy[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { isConnected } = useFlow()
 
   const categories = [
@@ -177,34 +61,84 @@ export default function VaultsPage() {
 
   const riskLevels = [
     { value: 'all', label: 'All Risk Levels' },
-    { value: 'low', label: 'Low Risk' },
-    { value: 'medium', label: 'Medium Risk' },
-    { value: 'high', label: 'High Risk' }
+    { value: '1', label: 'Low Risk' },
+    { value: '2', label: 'Medium Risk' },
+    { value: '3', label: 'High Risk' }
   ]
 
   const sortOptions = [
-    { value: 'apy', label: 'Highest APY' },
+    { value: 'expectedAPY', label: 'Highest APY' },
     { value: 'tvl', label: 'Highest TVL' },
     { value: 'participants', label: 'Most Popular' },
     { value: 'performance30d', label: 'Best 30d Performance' }
   ]
 
+  // Load strategies from blockchain
   useEffect(() => {
-    // Always show available strategies that users can create vaults for
-    let filtered = mockVaultStrategies.filter(vault => {
-      const matchesSearch = vault.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           vault.description.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesCategory = selectedCategory === 'all' || vault.category === selectedCategory
-      const matchesRisk = selectedRisk === 'all' || vault.risk === selectedRisk
+    const loadStrategies = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Fetch all strategies from the blockchain
+        const blockchainStrategies = await FlowService.getAllStrategies()
+        
+        if (blockchainStrategies && blockchainStrategies.length > 0) {
+          // Transform blockchain data to match our interface
+          const transformedStrategies: VaultStrategy[] = blockchainStrategies.map((strategy: any) => ({
+            id: strategy.id,
+            name: strategy.name,
+            description: strategy.description,
+            expectedAPY: parseFloat(strategy.expectedAPY || '0'),
+            tvl: parseFloat(strategy.tvl || '0'),
+            riskLevel: parseInt(strategy.riskLevel || '1'),
+            category: strategy.category,
+            participants: parseInt(strategy.participants || '0'),
+            minDeposit: parseFloat(strategy.minDeposit || '0'),
+            featured: strategy.featured === true,
+            creator: strategy.creator || 'Unknown',
+            verified: strategy.verified === true,
+            performance24h: parseFloat(strategy.performance24h || '0'),
+            performance7d: parseFloat(strategy.performance7d || '0'),
+            performance30d: parseFloat(strategy.performance30d || '0'),
+            features: strategy.features || [],
+            isActive: strategy.isActive !== false
+          }))
+          
+          setStrategies(transformedStrategies)
+        } else {
+          // Fallback to demo data if blockchain is not available
+          console.warn('No strategies found on blockchain, using demo data')
+          setStrategies([])
+        }
+      } catch (err) {
+        console.error('Error loading strategies:', err)
+        setError('Failed to load strategies from blockchain. Please try again.')
+        setStrategies([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadStrategies()
+  }, [])
+
+  // Filter and sort strategies
+  useEffect(() => {
+    let filtered = strategies.filter(strategy => {
+      const matchesSearch = strategy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           strategy.description.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCategory = selectedCategory === 'all' || strategy.category === selectedCategory
+      const matchesRisk = selectedRisk === 'all' || strategy.riskLevel.toString() === selectedRisk
       
-      return matchesSearch && matchesCategory && matchesRisk
+      return matchesSearch && matchesCategory && matchesRisk && strategy.isActive
     })
 
     // Sort filtered results
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'apy':
-          return b.apy - a.apy
+        case 'expectedAPY':
+          return b.expectedAPY - a.expectedAPY
         case 'tvl':
           return b.tvl - a.tvl
         case 'participants':
@@ -216,24 +150,45 @@ export default function VaultsPage() {
       }
     })
 
-    setFilteredVaults(filtered)
-  }, [searchTerm, selectedCategory, selectedRisk, sortBy])
+    setFilteredStrategies(filtered)
+  }, [strategies, searchTerm, selectedCategory, selectedRisk, sortBy])
 
-  const handleInvestClick = (vault: VaultStrategy) => {
+  const handleInvestClick = async (strategy: VaultStrategy) => {
     if (!isConnected) {
       alert('Please connect your wallet first')
       return
     }
-    // Redirect to dashboard with vault creation
-    window.location.href = `/dashboard?create=true&strategy=${vault.id}`
+    
+    try {
+      // Redirect to dashboard with strategy selection
+      const params = new URLSearchParams({
+        create: 'true',
+        strategy: strategy.id,
+        name: strategy.name,
+        minDeposit: strategy.minDeposit.toString()
+      })
+      window.location.href = `/dashboard?${params.toString()}`
+    } catch (error) {
+      console.error('Error handling invest click:', error)
+      alert('Error preparing vault creation. Please try again.')
+    }
   }
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case 'low': return 'text-green-400 bg-green-400/20'
-      case 'medium': return 'text-yellow-400 bg-yellow-400/20'
-      case 'high': return 'text-red-400 bg-red-400/20'
+  const getRiskColor = (riskLevel: number) => {
+    switch (riskLevel) {
+      case 1: return 'text-green-400 bg-green-400/20'
+      case 2: return 'text-yellow-400 bg-yellow-400/20'
+      case 3: return 'text-red-400 bg-red-400/20'
       default: return 'text-gray-400 bg-gray-400/20'
+    }
+  }
+
+  const getRiskLabel = (riskLevel: number) => {
+    switch (riskLevel) {
+      case 1: return 'LOW'
+      case 2: return 'MEDIUM'
+      case 3: return 'HIGH'
+      default: return 'UNKNOWN'
     }
   }
 
@@ -245,6 +200,20 @@ export default function VaultsPage() {
       case 'arbitrage': return <Zap className="w-4 h-4" />
       default: return <Shield className="w-4 h-4" />
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-300">Loading strategies from blockchain...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -263,43 +232,53 @@ export default function VaultsPage() {
               Vault Strategies
             </h1>
             <p className="text-xl text-gray-300 mb-6">
-              Choose from proven DeFi strategies and create your own autonomous vault
+              Choose from proven DeFi strategies powered by Flow blockchain smart contracts
             </p>
             
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
               <div className="flex items-center space-x-2 text-blue-400 mb-2">
                 <Shield className="w-5 h-5" />
-                <span className="font-semibold">Strategy Templates</span>
+                <span className="font-semibold">Real Blockchain Strategies</span>
               </div>
               <p className="text-sm text-blue-300">
-                These are proven DeFi strategies available for vault creation. Click "Invest Now" to create your own vault using any strategy.
-                {!isConnected && " Connect your wallet to get started."}
+                All strategies are powered by deployed smart contracts on Flow Testnet. Each strategy implements real DeFi logic with MEV protection and automated execution.
+                {!isConnected && " Connect your wallet to create vaults with these strategies."}
               </p>
             </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
+                <div className="flex items-center space-x-2 text-red-400 mb-2">
+                  <Shield className="w-5 h-5" />
+                  <span className="font-semibold">Error Loading Strategies</span>
+                </div>
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div className="glass p-4 rounded-xl">
                 <div className="text-2xl font-bold text-white">
-                  {formatCurrency(mockVaultStrategies.reduce((sum, v) => sum + v.tvl, 0))}
+                  {formatCurrency(strategies.reduce((sum, v) => sum + v.tvl, 0))}
                 </div>
                 <div className="text-sm text-gray-400">Total Value Locked</div>
               </div>
               <div className="glass p-4 rounded-xl">
                 <div className="text-2xl font-bold text-white">
-                  {mockVaultStrategies.length}
+                  {strategies.length}
                 </div>
                 <div className="text-sm text-gray-400">Available Strategies</div>
               </div>
               <div className="glass p-4 rounded-xl">
                 <div className="text-2xl font-bold text-blue-400">
-                  {mockVaultStrategies.reduce((sum, v) => sum + v.participants, 0).toLocaleString()}
+                  {strategies.reduce((sum, v) => sum + v.participants, 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-400">Total Users</div>
               </div>
               <div className="glass p-4 rounded-xl">
                 <div className="text-2xl font-bold text-purple-400">
-                  {Math.max(...mockVaultStrategies.map(v => v.apy)).toFixed(1)}%
+                  {strategies.length > 0 ? Math.max(...strategies.map(v => v.expectedAPY)).toFixed(1) : '0'}%
                 </div>
                 <div className="text-sm text-gray-400">Highest APY</div>
               </div>
@@ -363,8 +342,8 @@ export default function VaultsPage() {
             </div>
           </motion.div>
 
-          {/* Featured Vaults */}
-          {filteredVaults.some(v => v.featured) && (
+          {/* Featured Strategies */}
+          {filteredStrategies.some(v => v.featured) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -373,9 +352,9 @@ export default function VaultsPage() {
             >
               <h2 className="text-2xl font-bold text-white mb-4">Featured Strategies</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredVaults.filter(vault => vault.featured).map((vault, index) => (
+                {filteredStrategies.filter(strategy => strategy.featured).map((strategy, index) => (
                   <motion.div
-                    key={vault.id}
+                    key={strategy.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + index * 0.1 }}
@@ -384,46 +363,46 @@ export default function VaultsPage() {
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-blue-500/20 rounded-lg">
-                            {getCategoryIcon(vault.category)}
+                            {getCategoryIcon(strategy.category)}
                           </div>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <h3 className="text-lg font-semibold text-white">{vault.name}</h3>
-                              {vault.verified && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
+                              <h3 className="text-lg font-semibold text-white">{strategy.name}</h3>
+                              {strategy.verified && <Star className="w-4 h-4 text-yellow-400 fill-current" />}
                             </div>
-                            <p className="text-sm text-gray-400">{vault.creator}</p>
+                            <p className="text-sm text-gray-400">{strategy.creator}</p>
                           </div>
                         </div>
-                        <Badge className={getRiskColor(vault.risk)}>
-                          {vault.risk.toUpperCase()}
+                        <Badge className={getRiskColor(strategy.riskLevel)}>
+                          {getRiskLabel(strategy.riskLevel)}
                         </Badge>
                       </div>
 
-                      <p className="text-gray-300 mb-4">{vault.description}</p>
+                      <p className="text-gray-300 mb-4">{strategy.description}</p>
 
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div>
                           <div className="text-2xl font-bold text-green-400">
-                            {vault.apy.toFixed(1)}%
+                            {strategy.expectedAPY.toFixed(1)}%
                           </div>
                           <div className="text-xs text-gray-400">APY</div>
                         </div>
                         <div>
                           <div className="text-lg font-semibold text-white">
-                            {formatCurrency(vault.tvl)}
+                            {formatCurrency(strategy.tvl)}
                           </div>
                           <div className="text-xs text-gray-400">TVL</div>
                         </div>
                         <div>
                           <div className="text-lg font-semibold text-blue-400">
-                            {vault.participants.toLocaleString()}
+                            {strategy.participants.toLocaleString()}
                           </div>
                           <div className="text-xs text-gray-400">Users</div>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {vault.features.slice(0, 3).map(feature => (
+                        {strategy.features.slice(0, 3).map(feature => (
                           <Badge key={feature} variant="outline" className="text-xs">
                             {feature}
                           </Badge>
@@ -432,13 +411,11 @@ export default function VaultsPage() {
 
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-gray-400">
-                          Min: {vault.minDeposit} FLOW
+                          Min: {strategy.minDeposit} FLOW
                         </div>
-                        <Button size="sm">
-                          <span onClick={() => handleInvestClick(vault)}>
-                            Invest Now
-                            <ArrowUpRight className="w-4 h-4 ml-1" />
-                          </span>
+                        <Button size="sm" onClick={() => handleInvestClick(strategy)}>
+                          {isConnected ? 'Create Vault' : 'Connect Wallet'}
+                          <ArrowUpRight className="w-4 h-4 ml-1" />
                         </Button>
                       </div>
                     </Card>
@@ -448,7 +425,7 @@ export default function VaultsPage() {
             </motion.div>
           )}
 
-          {/* All Vaults */}
+          {/* All Strategies */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -456,9 +433,9 @@ export default function VaultsPage() {
           >
             <h2 className="text-2xl font-bold text-white mb-4">All Strategies</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredVaults.filter(vault => !vault.featured).map((vault, index) => (
+              {filteredStrategies.filter(strategy => !strategy.featured).map((strategy, index) => (
                 <motion.div
-                  key={vault.id}
+                  key={strategy.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + index * 0.05 }}
@@ -467,33 +444,33 @@ export default function VaultsPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-2">
                         <div className="p-1.5 bg-blue-500/20 rounded">
-                          {getCategoryIcon(vault.category)}
+                          {getCategoryIcon(strategy.category)}
                         </div>
                         <div>
                           <div className="flex items-center space-x-1">
-                            <h3 className="font-semibold text-white">{vault.name}</h3>
-                            {vault.verified && <Star className="w-3 h-3 text-yellow-400 fill-current" />}
+                            <h3 className="font-semibold text-white">{strategy.name}</h3>
+                            {strategy.verified && <Star className="w-3 h-3 text-yellow-400 fill-current" />}
                           </div>
-                          <p className="text-xs text-gray-400">{vault.creator}</p>
+                          <p className="text-xs text-gray-400">{strategy.creator}</p>
                         </div>
                       </div>
-                      <Badge className={getRiskColor(vault.risk)} size="sm">
-                        {vault.risk.toUpperCase()}
+                      <Badge className={getRiskColor(strategy.riskLevel)}>
+                        {getRiskLabel(strategy.riskLevel)}
                       </Badge>
                     </div>
 
-                    <p className="text-sm text-gray-300 mb-4 line-clamp-2">{vault.description}</p>
+                    <p className="text-sm text-gray-300 mb-4 line-clamp-2">{strategy.description}</p>
 
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       <div>
                         <div className="text-xl font-bold text-green-400">
-                          {vault.apy.toFixed(1)}%
+                          {strategy.expectedAPY.toFixed(1)}%
                         </div>
                         <div className="text-xs text-gray-400">APY</div>
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-white">
-                          {formatCurrency(vault.tvl)}
+                          {formatCurrency(strategy.tvl)}
                         </div>
                         <div className="text-xs text-gray-400">TVL</div>
                       </div>
@@ -502,13 +479,13 @@ export default function VaultsPage() {
                     <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
                       <div className="flex items-center">
                         <Users className="w-3 h-3 mr-1" />
-                        {vault.participants.toLocaleString()}
+                        {strategy.participants.toLocaleString()}
                       </div>
-                      <div>Min: {vault.minDeposit} FLOW</div>
+                      <div>Min: {strategy.minDeposit} FLOW</div>
                     </div>
 
-                    <Button size="sm" className="w-full" onClick={() => handleInvestClick(vault)}>
-                      View Details
+                    <Button size="sm" className="w-full" onClick={() => handleInvestClick(strategy)}>
+                      {isConnected ? 'Create Vault' : 'Connect Wallet'}
                     </Button>
                   </Card>
                 </motion.div>
@@ -516,9 +493,14 @@ export default function VaultsPage() {
             </div>
           </motion.div>
 
-          {filteredVaults.length === 0 && (
+          {filteredStrategies.length === 0 && !loading && (
             <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">No strategies found matching your criteria</div>
+              <div className="text-gray-400 mb-4">
+                {strategies.length === 0 
+                  ? 'No strategies available. Please check your blockchain connection.'
+                  : 'No strategies found matching your criteria'
+                }
+              </div>
               <Button onClick={() => {
                 setSearchTerm('')
                 setSelectedCategory('all')

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import * as fcl from '@onflow/fcl'
-import { useAccount } from 'wagmi'
+import { useAccount, useDisconnect } from 'wagmi'
 
 // Configure FCL for Flow Testnet
 fcl.config({
@@ -42,6 +42,7 @@ export function FlowProvider({ children }: { children: ReactNode }) {
   
   // EVM wallet connection
   const { address: evmAddress, isConnected: evmConnected } = useAccount()
+  const { disconnect: disconnectEvm } = useDisconnect()
 
   // Check if any wallet is connected
   const isConnected = user.loggedIn || evmConnected
@@ -63,24 +64,44 @@ export function FlowProvider({ children }: { children: ReactNode }) {
     if (evmConnected && evmAddress && !walletType) {
       setWalletType('evm')
     }
+    if (!evmConnected && walletType === 'evm') {
+      setWalletType(null)
+    }
     setLoading(false)
   }, [evmConnected, evmAddress, walletType])
 
+  // Handle Flow wallet disconnection
+  useEffect(() => {
+    if (!user.loggedIn && walletType === 'flow') {
+      setWalletType(null)
+    }
+  }, [user.loggedIn, walletType])
+
   const logIn = () => {
     setLoading(true)
-    if (walletType === 'flow') {
-      fcl.authenticate()
+    if (walletType === 'flow' || !walletType) {
+      setWalletType('flow')
+      fcl.authenticate().finally(() => setLoading(false))
+    } else {
+      setLoading(false)
     }
     // EVM login is handled by RainbowKit
   }
 
-  const logOut = () => {
+  const logOut = async () => {
     setLoading(true)
-    if (walletType === 'flow') {
-      fcl.unauthenticate()
+    try {
+      if (walletType === 'flow') {
+        await fcl.unauthenticate()
+      } else if (walletType === 'evm') {
+        disconnectEvm()
+      }
+      setWalletType(null)
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      setLoading(false)
     }
-    // EVM logout is handled by RainbowKit
-    setWalletType(null)
   }
 
   // Create a unified user object

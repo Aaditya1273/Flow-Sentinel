@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { useVaultData } from 'hooks/useVaultData'
@@ -23,7 +23,6 @@ export function PortfolioChart() {
       return []
     }
 
-    const currentBalance = vaultData.balance
     const totalDeposits = vaultData.totalDeposits
     const pnl = performance.pnl || 0
 

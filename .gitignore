@@ -46,3 +46,4 @@ private-keys/
 
 # Logs
 *.log
+emulator-account.pkey

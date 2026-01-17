@@ -3,32 +3,32 @@
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { formatCurrency, formatPercentage } from 'lib/utils'
+import { CheckCircle } from 'lucide-react'
 
 const stats = [
   {
-    label: 'Total Value Locked',
+    label: 'Assets Under Management',
     value: 2500000,
     suffix: 'FLOW',
-    description: 'Secured in autonomous vaults'
+    description: 'Total value secured'
   },
   {
     label: 'Average APY',
     value: 12.5,
     suffix: '%',
-    description: 'Automated yield generation'
+    description: 'Automated returns'
   },
   {
     label: 'Active Vaults',
     value: 1247,
     suffix: '',
-    description: 'Self-managing portfolios'
+    description: 'Self-managing protocols'
   },
   {
-    label: 'MEV Protected',
+    label: 'Protection Rate',
     value: 99.8,
     suffix: '%',
-    description: 'Transactions shielded'
+    description: 'MEV attacks prevented'
   }
 ]
 
@@ -37,78 +37,85 @@ export function Stats() {
   const isInView = useInView(ref, { once: true })
 
   return (
-    <section ref={ref} className="py-20 bg-black/20 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section ref={ref} className="py-24 border-y border-border">
+      <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          transition={{ duration: 0.6 }}
+          className="section-header"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Trusted by DeFi Users Worldwide
+          <h2 className="section-title">
+            Trusted by DeFi Professionals
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Join thousands of users who have automated their wealth management with Flow Sentinel
+          <p className="section-subtitle">
+            Autonomous protocols managing capital with mathematical precision and institutional-grade reliability
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="stats-grid">
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.8, delay: index * 0.1 }}
-              className="glass p-8 rounded-xl text-center hover:bg-white/10 transition-all duration-300"
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="tool-card p-8 text-center"
             >
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2">
+              <div className="text-4xl md:text-5xl font-bold mb-3 financial-number">
                 {stat.suffix === 'FLOW' ? (
-                  <span className="gradient-text">
+                  <span>
                     {(stat.value / 1000000).toFixed(1)}M
                   </span>
                 ) : stat.suffix === '%' ? (
-                  <span className="text-green-400">
+                  <span className="status-active">
                     {stat.value}%
                   </span>
                 ) : (
-                  <span className="text-blue-400">
+                  <span>
                     {stat.value.toLocaleString()}
                   </span>
                 )}
               </div>
-              <div className="text-lg font-semibold text-white mb-2">
+              <div className="text-xl font-semibold mb-2">
                 {stat.label}
               </div>
-              <div className="text-sm text-gray-400">
+              <div className="text-muted-foreground">
                 {stat.description}
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Live Activity Feed */}
+        {/* Enhanced System Status */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="mt-16 glass p-6 rounded-xl"
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-16 tool-card p-8"
         >
-          <h3 className="text-xl font-semibold text-white mb-4 text-center">
-            🔴 Live Activity
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-300">Vault #1247 executed rebalance</span>
-              <span className="text-green-400">+2.3% yield</span>
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-2xl font-semibold">
+              System Status
+            </h3>
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-5 h-5 status-active" />
+              <span className="text-muted-foreground font-medium">All systems operational</span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-300">MEV attack blocked on Vault #892</span>
-              <span className="text-blue-400">Protected</span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-6 bg-accent rounded-lg">
+              <div className="text-sm text-muted-foreground mb-2">Autonomous rebalancing executed</div>
+              <div className="status-active font-semibold text-xl financial-number">+2.34% yield</div>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-300">Emergency pause triggered by user</span>
-              <span className="text-yellow-400">Instant</span>
+            <div className="text-center p-6 bg-accent rounded-lg">
+              <div className="text-sm text-muted-foreground mb-2">MEV protection activated</div>
+              <div className="font-semibold text-xl">Transaction secured</div>
+            </div>
+            <div className="text-center p-6 bg-accent rounded-lg">
+              <div className="text-sm text-muted-foreground mb-2">Emergency controls verified</div>
+              <div className="text-muted-foreground font-semibold text-xl">System ready</div>
             </div>
           </div>
         </motion.div>

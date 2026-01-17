@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   TrendingUp, 
@@ -23,11 +23,18 @@ import { useVaultData } from 'hooks/useVaultData'
 import { formatCurrency, formatPercentage } from 'lib/utils'
 
 export default function DashboardPage() {
-  const { user, logIn } = useFlow()
+  const { user, logIn, isConnected } = useFlow()
   const { vaultData, performance, flowBalance, loading, error } = useVaultData()
   const [showCreateModal, setShowCreateModal] = useState(false)
 
-  if (!user.loggedIn) {
+  // Redirect to home if wallet is disconnected
+  useEffect(() => {
+    if (!isConnected && !loading) {
+      window.location.href = '/'
+    }
+  }, [isConnected, loading])
+
+  if (!isConnected) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <Navbar />

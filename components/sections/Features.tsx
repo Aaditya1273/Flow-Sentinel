@@ -3,65 +3,28 @@
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { 
-  Shield, 
-  Zap, 
-  Lock, 
-  TrendingUp, 
-  Clock, 
-  Smartphone,
-  Bot,
-  DollarSign
-} from 'lucide-react'
+import { Shield, Zap, Lock, Activity, X, Check } from 'lucide-react'
 
 const features = [
   {
     icon: Zap,
-    title: 'Forte Scheduled Transactions',
-    description: 'Self-executing vault that automatically rebalances every 24 hours using Flow\'s native scheduler. No external bots or servers required.',
-    color: 'text-yellow-400',
-    bgColor: 'bg-yellow-400/10',
-    borderColor: 'border-yellow-400/20'
+    title: 'Autonomous Operation',
+    description: 'Self-executing protocols that operate continuously without human intervention, ensuring optimal performance through all market conditions with mathematical precision.',
   },
   {
     icon: Shield,
-    title: 'Native VRF MEV Protection',
-    description: 'On-chain randomness prevents front-running attacks by adding unpredictable timing jitter to all automated trades.',
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-400/10',
-    borderColor: 'border-blue-400/20'
-  },
-  {
-    icon: Smartphone,
-    title: 'Passkey Emergency Controls',
-    description: 'Instant pause via FaceID/TouchID using Flow\'s Account Abstraction. No seed phrases needed for emergency stops.',
-    color: 'text-green-400',
-    bgColor: 'bg-green-400/10',
-    borderColor: 'border-green-400/20'
-  },
-  {
-    icon: TrendingUp,
-    title: 'Automated Yield Strategies',
-    description: 'Intelligent portfolio rebalancing across IncrementFi, Flowty, and other Flow DeFi protocols for optimal returns.',
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-400/10',
-    borderColor: 'border-purple-400/20'
+    title: 'MEV Protection',
+    description: 'Advanced shielding mechanisms protect against front-running and sandwich attacks, preserving transaction integrity through cryptographic security.',
   },
   {
     icon: Lock,
-    title: 'Security First Design',
-    description: 'Multi-layered security with emergency pause, time-locked withdrawals, and comprehensive audit trail.',
-    color: 'text-red-400',
-    bgColor: 'bg-red-400/10',
-    borderColor: 'border-red-400/20'
+    title: 'Emergency Controls',
+    description: 'Instant pause capabilities with biometric authentication provide immediate control when market conditions require human intervention and oversight.',
   },
   {
-    icon: DollarSign,
-    title: 'High Precision Math',
-    description: 'UFix64 precision calculations ensure accurate yield distribution and fee calculations down to the smallest unit.',
-    color: 'text-cyan-400',
-    bgColor: 'bg-cyan-400/10',
-    borderColor: 'border-cyan-400/20'
+    icon: Activity,
+    title: 'On-Chain Automation',
+    description: 'Native blockchain scheduling eliminates external dependencies, ensuring reliable execution of strategies without third-party risks.',
   }
 ]
 
@@ -70,86 +33,122 @@ export function Features() {
   const isInView = useInView(ref, { once: true })
 
   return (
-    <section id="features" ref={ref} className="py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="features" ref={ref} className="py-24">
+      <div className="section-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          transition={{ duration: 0.6 }}
+          className="section-header"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Revolutionary DeFi Features
+          <h2 className="section-title">
+            Professional DeFi Architecture
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Built with Flow's cutting-edge Forte upgrade, Flow Sentinel introduces 
-            features impossible on other blockchains
+          <p className="section-subtitle">
+            Built for reliability and precision, delivering enterprise-grade tools for autonomous wealth management 
+            with institutional security standards.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="feature-grid">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.8, delay: index * 0.1 }}
-              className={`glass p-8 rounded-xl border ${feature.borderColor} hover:bg-white/5 transition-all duration-300 group`}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="tool-card p-6"
             >
-              <div className={`w-16 h-16 ${feature.bgColor} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                <feature.icon className={`w-8 h-8 ${feature.color}`} />
+              <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center mb-6">
+                <feature.icon className="w-6 h-6" />
               </div>
               
-              <h3 className="text-xl font-semibold text-white mb-4">
+              <h3 className="text-lg font-semibold mb-4">
                 {feature.title}
               </h3>
               
-              <p className="text-gray-300 leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed text-sm">
                 {feature.description}
               </p>
             </motion.div>
           ))}
         </div>
 
-        {/* Technical Comparison */}
+        {/* Enhanced Comparison Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="mt-20 glass p-8 rounded-xl"
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-20 tool-card p-10"
         >
-          <h3 className="text-2xl font-bold text-white mb-8 text-center">
-            Why Flow Sentinel is Unique
+          <h3 className="text-3xl font-semibold mb-12 text-center">
+            Why Choose Flow Sentinel
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <div className="text-center">
-              <div className="text-red-400 font-semibold mb-2">Ethereum/Solana</div>
-              <div className="text-gray-400 text-sm">
-                ❌ Relies on external bots<br/>
-                ❌ MEV vulnerable<br/>
-                ❌ Complex seed phrases<br/>
-                ❌ High gas fees
+              <div className="status-error font-semibold mb-6 text-xl">Traditional DeFi</div>
+              <div className="space-y-4">
+                <div className="flex items-center text-muted-foreground">
+                  <X className="w-5 h-5 status-error mr-3 flex-shrink-0" />
+                  <span>External bot dependencies</span>
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                  <X className="w-5 h-5 status-error mr-3 flex-shrink-0" />
+                  <span>MEV vulnerability exposure</span>
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                  <X className="w-5 h-5 status-error mr-3 flex-shrink-0" />
+                  <span>Complex key management</span>
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                  <X className="w-5 h-5 status-error mr-3 flex-shrink-0" />
+                  <span>Unpredictable gas costs</span>
+                </div>
               </div>
             </div>
             
             <div className="text-center">
-              <div className="text-blue-400 font-semibold mb-2">Flow Sentinel</div>
-              <div className="text-gray-300 text-sm">
-                ✅ Native blockchain automation<br/>
-                ✅ Built-in MEV protection<br/>
-                ✅ Passkey authentication<br/>
-                ✅ Predictable low fees
+              <div className="status-active font-semibold mb-6 text-xl">Flow Sentinel</div>
+              <div className="space-y-4">
+                <div className="flex items-center text-foreground">
+                  <Check className="w-5 h-5 status-active mr-3 flex-shrink-0" />
+                  <span>Native blockchain automation</span>
+                </div>
+                <div className="flex items-center text-foreground">
+                  <Check className="w-5 h-5 status-active mr-3 flex-shrink-0" />
+                  <span>Built-in MEV protection</span>
+                </div>
+                <div className="flex items-center text-foreground">
+                  <Check className="w-5 h-5 status-active mr-3 flex-shrink-0" />
+                  <span>Biometric authentication</span>
+                </div>
+                <div className="flex items-center text-foreground">
+                  <Check className="w-5 h-5 status-active mr-3 flex-shrink-0" />
+                  <span>Predictable fee structure</span>
+                </div>
               </div>
             </div>
             
             <div className="text-center">
-              <div className="text-green-400 font-semibold mb-2">Result</div>
-              <div className="text-gray-300 text-sm">
-                🚀 100% autonomous operation<br/>
-                🛡️ Maximum security<br/>
-                📱 Consumer-friendly UX<br/>
-                💰 Optimal returns
+              <div className="font-semibold mb-6 text-xl">Professional Result</div>
+              <div className="space-y-4">
+                <div className="flex items-center text-foreground">
+                  <Check className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <span>100% autonomous operation</span>
+                </div>
+                <div className="flex items-center text-foreground">
+                  <Check className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <span>Maximum security assurance</span>
+                </div>
+                <div className="flex items-center text-foreground">
+                  <Check className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <span>Enterprise-grade interface</span>
+                </div>
+                <div className="flex items-center text-foreground">
+                  <Check className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <span>Optimal risk-adjusted returns</span>
+                </div>
               </div>
             </div>
           </div>

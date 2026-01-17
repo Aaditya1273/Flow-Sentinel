@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Menu, X, Shield, Wallet, ChevronDown } from 'lucide-react'
+import { Menu, X, Wallet, ChevronDown } from 'lucide-react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useFlow } from 'lib/flow'
 import { Button } from 'components/ui/button'
@@ -18,27 +18,49 @@ import {
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
-  const [walletType, setWalletType] = useState<'flow' | 'evm' | null>(null)
-  const { user, logIn, logOut } = useFlow()
+  const [mounted, setMounted] = useState(false)
+  const { user, logIn, logOut, walletType, setWalletType, isConnected } = useFlow()
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const navItems = [
     { name: 'Vaults', href: '/vaults' },
-    { name: 'Analytics', href: '/analytics' },
     { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Analytics', href: '/analytics' },
     { name: 'Docs', href: '/docs' },
   ]
 
+  const handleDisconnect = () => {
+    logOut()
+    setTimeout(() => {
+      window.location.href = '/'
+    }, 500)
+  }
+
+  const handleConnect = () => {
+    logIn()
+  }
+
+  const handleConnectEVM = () => {
+    setWalletType('evm')
+    // EVM connection is handled by RainbowKit ConnectButton
+  }
+
   return (
-    <nav className="fixed top-0 w-full z-50 glass border-b">
+    <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="relative">
-              <Shield className="h-8 w-8 text-primary" />
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
-            </div>
-            <span className="text-xl font-bold gradient-text">
+          <Link href="/" className="logo-container">
+            <img 
+              src="/logo.png" 
+              alt="Flow Sentinel" 
+              className="logo-image"
+            />
+            <span className="text-xl font-semibold">
               Flow Sentinel
             </span>
           </Link>
@@ -49,7 +71,7 @@ export function Navbar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-muted-foreground hover:text-foreground transition-colors duration-200"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 {item.name}
               </Link>
@@ -58,24 +80,29 @@ export function Navbar() {
 
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center space-x-4">
-            {!user.loggedIn && !walletType ? (
+            {!mounted ? (
+              <Button variant="outline" disabled>
+                <Wallet className="w-4 h-4 mr-2" />
+                Loading...
+              </Button>
+            ) : !isConnected && !walletType ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="default">
+                  <Button variant="outline">
                     <Wallet className="w-4 h-4 mr-2" />
                     Connect Wallet
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => setWalletType('flow')}>
+                  <DropdownMenuItem onClick={handleConnect}>
                     <div className="flex flex-col items-start">
                       <span className="font-medium">Flow Wallet</span>
                       <span className="text-xs text-muted-foreground">Native Flow blockchain</span>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setWalletType('evm')}>
+                  <DropdownMenuItem onClick={handleConnectEVM}>
                     <div className="flex flex-col items-start">
                       <span className="font-medium">EVM Wallet</span>
                       <span className="text-xs text-muted-foreground">MetaMask, WalletConnect</span>
@@ -83,40 +110,41 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : walletType === 'flow' ? (
-              <div className="flex items-center space-x-2">
-                {!user.loggedIn ? (
-                  <Button onClick={logIn} variant="default">
-                    Connect Flow
-                  </Button>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="success">
-                      Flow: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                    </Badge>
-                    <Button onClick={logOut} variant="ghost" size="sm">
-                      Disconnect
-                    </Button>
-                  </div>
-                )}
-                <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
-                  Switch
-                </Button>
-              </div>
-            ) : walletType === 'evm' ? (
+            ) : walletType === 'evm' && !isConnected ? (
               <div className="flex items-center space-x-2">
                 <ConnectButton />
                 <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
-                  Switch
+                  Back
                 </Button>
               </div>
-            ) : user.loggedIn ? (
+            ) : walletType === 'flow' && !isConnected ? (
               <div className="flex items-center space-x-2">
-                <Badge variant="success">
-                  Flow: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                </Badge>
-                <Button onClick={logOut} variant="ghost" size="sm">
+                <Button onClick={handleConnect} variant="outline">
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Connect Flow Wallet
+                </Button>
+                <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                  Back
+                </Button>
+              </div>
+            ) : isConnected ? (
+              <div className="flex items-center space-x-3">
+                {walletType === 'flow' ? (
+                  <Badge variant="outline" className="status-active">
+                    Flow: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                  </Badge>
+                ) : walletType === 'evm' ? (
+                  <ConnectButton />
+                ) : (
+                  <Badge variant="outline" className="status-active">
+                    {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                  </Badge>
+                )}
+                <Button onClick={handleDisconnect} variant="ghost" size="sm">
                   Disconnect
+                </Button>
+                <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
+                  Switch
                 </Button>
               </div>
             ) : null}
@@ -147,7 +175,7 @@ export function Navbar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   {item.name}
@@ -155,34 +183,57 @@ export function Navbar() {
               ))}
               
               <div className="pt-4 border-t border-border space-y-3">
-                <div className="text-sm text-muted-foreground">Choose Wallet Type:</div>
+                <div className="text-sm text-muted-foreground">Wallet Connection</div>
                 
-                {/* Flow Wallet Mobile */}
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">Flow Blockchain</div>
-                  {!user.loggedIn ? (
-                    <Button onClick={logIn} className="w-full" size="sm">
+                {!mounted ? (
+                  <Button variant="outline" disabled className="w-full">
+                    Loading...
+                  </Button>
+                ) : !isConnected && !walletType ? (
+                  <div className="space-y-2">
+                    <Button onClick={handleConnect} className="w-full justify-start" variant="outline">
+                      <div className="text-left">
+                        <div className="font-medium">Flow Wallet</div>
+                        <div className="text-xs text-muted-foreground">Native Flow blockchain</div>
+                      </div>
+                    </Button>
+                    <Button onClick={handleConnectEVM} className="w-full justify-start" variant="outline">
+                      <div className="text-left">
+                        <div className="font-medium">EVM Wallet</div>
+                        <div className="text-xs text-muted-foreground">MetaMask, WalletConnect</div>
+                      </div>
+                    </Button>
+                  </div>
+                ) : walletType === 'evm' && !isConnected ? (
+                  <div className="space-y-2">
+                    <ConnectButton />
+                    <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
+                      Back to Wallet Selection
+                    </Button>
+                  </div>
+                ) : walletType === 'flow' && !isConnected ? (
+                  <div className="space-y-2">
+                    <Button onClick={handleConnect} variant="outline" className="w-full">
+                      <Wallet className="w-4 h-4 mr-2" />
                       Connect Flow Wallet
                     </Button>
-                  ) : (
-                    <div className="space-y-2">
-                      <Badge variant="success" className="w-full justify-center">
-                        {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                      </Badge>
-                      <Button onClick={logOut} variant="outline" size="sm" className="w-full">
-                        Disconnect Flow
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* EVM Wallet Mobile */}
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">EVM Compatible</div>
-                  <div className="w-full">
-                    <ConnectButton />
+                    <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
+                      Back to Wallet Selection
+                    </Button>
                   </div>
-                </div>
+                ) : isConnected ? (
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="w-full justify-center status-active">
+                      {walletType === 'flow' ? 'Flow' : 'EVM'}: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                    </Badge>
+                    <Button onClick={handleDisconnect} variant="outline" size="sm" className="w-full">
+                      Disconnect Wallet
+                    </Button>
+                    <Button onClick={() => setWalletType(null)} variant="ghost" size="sm" className="w-full">
+                      Switch Wallet Type
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </div>
           </motion.div>

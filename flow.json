@@ -1,53 +1,88 @@
 {
-  "version": "1.0",
-  "networks": {
-    "emulator": "127.0.0.1:3569",
-    "testnet": "https://rest-testnet.onflow.org",
-    "mainnet": "https://rest-mainnet.onflow.org"
-  },
-  "accounts": {
-    "emulator-account": {
-      "address": "f8d6e0586b0a20c7",
-      "key": "2eae2f31cb5b756151fa11d82949c634b8f28796a711d7eb1e52cc301ed11111"
-    },
-    "testnet-account": {
-      "address": "0x136b642d0aa31ca9",
-      "key": {
-        "type": "file",
-        "location": "./testnet-private-key.pem",
-        "signatureAlgorithm": "ECDSA_secp256k1",
-        "hashAlgorithm": "SHA2_256"
-      }
-    }
-  },
-  "contracts": {
-    "SentinelVault": {
-      "source": "./contracts/SentinelVault.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "0x136b642d0aa31ca9"
-      }
-    },
-    "SentinelInterfaces": {
-      "source": "./contracts/SentinelInterfaces.cdc",
-      "aliases": {
-        "emulator": "f8d6e0586b0a20c7",
-        "testnet": "0x136b642d0aa31ca9"
-      }
-    }
-  },
-  "deployments": {
-    "emulator": {
-      "emulator-account": [
-        "SentinelVault",
-        "SentinelInterfaces"
-      ]
-    },
-    "testnet": {
-      "testnet-account": [
-        "SentinelVault", 
-        "SentinelInterfaces"
-      ]
-    }
-  }
+	"contracts": {
+		"ArbitrageStrategy": {
+			"source": "./contracts/strategies/ArbitrageStrategy.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "136b642d0aa31ca9"
+			}
+		},
+		"LiquidStakingStrategy": {
+			"source": "./contracts/strategies/LiquidStakingStrategy.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "136b642d0aa31ca9"
+			}
+		},
+		"SentinelInterfaces": {
+			"source": "./contracts/SentinelInterfaces.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "136b642d0aa31ca9"
+			}
+		},
+		"SentinelVault": {
+			"source": "./contracts/SentinelVault.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "136b642d0aa31ca9"
+			}
+		},
+		"StrategyRegistry": {
+			"source": "./contracts/StrategyRegistry.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "136b642d0aa31ca9"
+			}
+		},
+		"YieldFarmingStrategy": {
+			"source": "./contracts/strategies/YieldFarmingStrategy.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "136b642d0aa31ca9"
+			}
+		}
+	},
+	"networks": {
+		"emulator": "127.0.0.1:3569",
+		"mainnet": "https://rest-mainnet.onflow.org",
+		"testnet": "access-testnet.onflow.org:9000"
+	},
+	"accounts": {
+		"emulator-account": {
+			"address": "f8d6e0586b0a20c7",
+			"key": "2eae2f31cb5b756151fa11d82949c634b8f28796a711d7eb1e52cc301ed11111"
+		},
+		"testnet-account": {
+			"address": "136b642d0aa31ca9",
+			"key": {
+				"type": "file",
+				"signatureAlgorithm": "ECDSA_secp256k1",
+				"hashAlgorithm": "SHA2_256",
+				"location": "./testnet-private-key.pem"
+			}
+		}
+	},
+	"deployments": {
+		"emulator": {
+			"emulator-account": [
+				"SentinelInterfaces",
+				"SentinelVault",
+				"LiquidStakingStrategy",
+				"YieldFarmingStrategy",
+				"ArbitrageStrategy",
+				"StrategyRegistry"
+			]
+		},
+		"testnet": {
+			"testnet-account": [
+				"SentinelInterfaces",
+				"SentinelVault",
+				"LiquidStakingStrategy",
+				"YieldFarmingStrategy",
+				"ArbitrageStrategy",
+				"StrategyRegistry"
+			]
+		}
+	}
 }
