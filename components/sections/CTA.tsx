@@ -4,8 +4,8 @@ import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef } from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from 'components/ui/button'
+import { Card, CardContent } from 'components/ui/card'
 import { ArrowRight, Shield, Zap, Lock } from 'lucide-react'
 
 export function CTA() {

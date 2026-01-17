@@ -3,8 +3,8 @@
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from 'components/ui/card'
+import { Badge } from 'components/ui/badge'
 import { Star } from 'lucide-react'
 
 const testimonials = [
