@@ -27,6 +27,7 @@ import { formatCurrency, formatPercentage } from 'lib/utils'
 import { FlowService } from 'lib/flow-service'
 import { VaultActionModal } from './VaultActionModal'
 import { useVaultData } from 'hooks/useVaultData'
+import { useTransactions } from 'lib/transactions'
 import Link from 'next/link'
 
 interface Vault {
@@ -74,6 +75,8 @@ export function VaultCard({ vault }: VaultCardProps) {
     }
   }
 
+  const { setTxState } = useTransactions()
+
   const handlePause = async () => {
     try {
       setLoading(true)
@@ -86,16 +89,25 @@ export function VaultCard({ vault }: VaultCardProps) {
         setBiometricChallenge('success')
         await new Promise(resolve => setTimeout(resolve, 500))
 
-        await FlowService.pauseVault(vault.id)
+        setTxState({ status: 'executing', txId: null, error: null, title: 'Pausing Vault' })
+        const { transactionId, sealed } = await FlowService.pauseVault(vault.id)
+        setTxState({ status: 'pending', txId: transactionId, error: null, title: 'Pausing Vault' })
+        await sealed
+        setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Vault Paused' })
       } else {
-        await FlowService.resumeVault(vault.id)
+        setTxState({ status: 'executing', txId: null, error: null, title: 'Resuming Vault' })
+        const { transactionId, sealed } = await FlowService.resumeVault(vault.id)
+        setTxState({ status: 'pending', txId: transactionId, error: null, title: 'Resuming Vault' })
+        await sealed
+        setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Vault Resumed' })
       }
 
       refetch()
       setBiometricChallenge('idle')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling vault status:', error)
       setBiometricChallenge('failed')
+      setTxState({ status: 'error', txId: null, error: error.message || 'Transaction failed', title: 'Error' })
     } finally {
       setLoading(false)
     }
@@ -104,10 +116,15 @@ export function VaultCard({ vault }: VaultCardProps) {
   const handleManualStrategy = async () => {
     try {
       setLoading(true)
-      await FlowService.triggerStrategy(vault.id)
+      setTxState({ status: 'executing', txId: null, error: null, title: 'Triggering Strategy' })
+      const { transactionId, sealed } = await FlowService.triggerStrategy(vault.id)
+      setTxState({ status: 'pending', txId: transactionId, error: null, title: 'Executing Strategy' })
+      await sealed
+      setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Strategy Executed' })
       refetch()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error triggering strategy:', error)
+      setTxState({ status: 'error', txId: null, error: error.message || 'Strategy execution failed', title: 'Error' })
     } finally {
       setLoading(false)
     }

@@ -24,7 +24,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           })}
         >
           <FlowProvider>
-            {children}
+            <TransactionProvider>
+              {children}
+            </TransactionProvider>
           </FlowProvider>
         </RainbowKitProvider>
       </QueryClientProvider>

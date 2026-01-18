@@ -21,10 +21,12 @@ import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
 import { useVaultData } from 'hooks/useVaultData'
 import { FlowService } from 'lib/flow-service'
+import { useTransactions } from 'lib/transactions'
 import { formatCurrency } from 'lib/utils'
 
 interface CreateVaultModalProps {
   onClose: () => void
+  onSuccess?: () => void
   preselectedStrategy?: string
 }
 
@@ -41,7 +43,7 @@ interface Strategy {
   verified: boolean
 }
 
-export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultModalProps) {
+export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: CreateVaultModalProps) {
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(preselectedStrategy || null)
   const [depositAmount, setDepositAmount] = useState('')
@@ -102,27 +104,34 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
     }
   }, [preselectedStrategy, strategies])
 
+  const { setTxState } = useTransactions()
+
   const handleCreateVault = async () => {
     if (!selectedStrategyData || !vaultName || !depositAmount) return
 
     try {
       setStep(4) // Show loading step
+      setTxState({ status: 'executing', txId: null, error: null, title: 'Launching Sentinel' })
 
-      await FlowService.createVaultWithStrategy(
+      const { transactionId, sealed } = await FlowService.createVaultWithStrategy(
         selectedStrategyData.id,
         vaultName,
         Number(depositAmount)
       )
 
+      setTxState({ status: 'pending', txId: transactionId, error: null, title: 'Deploying Protocol' })
       onClose()
-      // Refresh the page data without a full reload
-      setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 500)
-    } catch (error) {
-      console.error('Failed to create vault:', error)
-      setError('Failed to create vault on blockchain. Please check your wallet.')
+
+      await sealed
+      setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Sentinel Deployed' })
+
+      if (onSuccess) onSuccess()
+    } catch (err: any) {
+      console.error('Failed to create vault:', err)
+      const errorMessage = err.message || 'Failed to create vault on blockchain.'
+      setError(errorMessage)
       setStep(3)
+      setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Deployment Failed' })
     }
   }
 

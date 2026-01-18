@@ -108,13 +108,26 @@ transaction(strategyId: String, vaultName: String, initialDeposit: UFix64) {
     let flowVault: @{FungibleToken.Vault}
     
     prepare(signer: auth(BorrowValue, Storage, Capabilities) &Account) {
+        // Safe check for existing collection to avoid type mismatch errors
+        if let existing = signer.storage.type(at: SentinelVaultFinal.VaultCollectionStoragePath) {
+            if existing != Type<@SentinelVaultFinal.Collection>() {
+                // Wipe old incompatible collection
+                let old <- signer.storage.load<@AnyResource>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+                destroy old
+                // Also unpublish old capability to avoid conflicts
+                signer.capabilities.unpublish(SentinelVaultFinal.VaultCollectionPublicPath)
+            }
+        }
+
         if signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath) == nil {
             let collection <- SentinelVaultFinal.createEmptyCollection()
             signer.storage.save(<-collection, to: SentinelVaultFinal.VaultCollectionStoragePath)
-            
-            let cap = signer.capabilities.storage.issue<&{SentinelVaultFinal.CollectionPublic}>(SentinelVaultFinal.VaultCollectionStoragePath)
-            signer.capabilities.publish(cap, at: SentinelVaultFinal.VaultCollectionPublicPath)
         }
+        
+        // ALWAYS re-publish capability to ensure it points to the correct contract/interface version
+        signer.capabilities.unpublish(SentinelVaultFinal.VaultCollectionPublicPath)
+        let cap = signer.capabilities.storage.issue<&{SentinelVaultFinal.CollectionPublic}>(SentinelVaultFinal.VaultCollectionStoragePath)
+        signer.capabilities.publish(cap, at: SentinelVaultFinal.VaultCollectionPublicPath)
         
         self.collectionRef = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
             ?? panic("Could not borrow collection reference")
@@ -134,6 +147,20 @@ transaction(strategyId: String, vaultName: String, initialDeposit: UFix64) {
         
         self.collectionRef.deposit(vault: <-vault)
         StrategyRegistry.updateStrategyTVL(strategyId: strategyId, amount: initialDeposit, isDeposit: true)
+    }
+}
+`
+
+export const CLEANUP_STORAGE = `
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+
+transaction() {
+    prepare(signer: auth(Storage, Capabilities) &Account) {
+        let old <- signer.storage.load<@AnyResource>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+        destroy old
+        
+        // Also cleanup public paths
+        signer.capabilities.unpublish(SentinelVaultFinal.VaultCollectionPublicPath)
     }
 }
 `
@@ -405,6 +432,10 @@ export class FlowService {
 
   static async triggerStrategy(vaultId: string) {
     return this.mutate(TRIGGER_STRATEGY, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+  }
+
+  static async cleanupIncompatibleStorage() {
+    return this.mutate(CLEANUP_STORAGE, () => [])
   }
 
   static async getUserFlowBalance(address: string) {

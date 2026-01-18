@@ -30,7 +30,7 @@ import { Badge } from 'components/ui/badge'
 
 export default function DashboardPage() {
   const { user, logIn, isConnected } = useFlow()
-  const { vaults, performance, flowBalance, loading, error } = useVaultData()
+  const { vaults, performance, flowBalance, loading, error, refetch } = useVaultData()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
@@ -151,6 +151,7 @@ export default function DashboardPage() {
           {showCreateModal && (
             <CreateVaultModal
               onClose={() => setShowCreateModal(false)}
+              onSuccess={() => refetch()}
               preselectedStrategy={searchParams.get('strategy') || undefined}
             />
           )}
@@ -411,6 +412,7 @@ export default function DashboardPage() {
         {showCreateModal && (
           <CreateVaultModal
             onClose={() => setShowCreateModal(false)}
+            onSuccess={() => refetch()}
             preselectedStrategy={searchParams.get('strategy') || undefined}
           />
         )}

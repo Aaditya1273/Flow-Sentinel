@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from 'components/ui/button'
 import { FlowService } from 'lib/flow-service'
+import { useTransactions } from 'lib/transactions'
 import { formatCurrency } from 'lib/utils'
 
 interface VaultActionModalProps {
@@ -41,6 +42,8 @@ export function VaultActionModal({
     const isDeposit = type === 'deposit'
     const maxAmount = isDeposit ? availableFlow : balance
 
+    const { setTxState } = useTransactions()
+
     const handleAction = async () => {
         if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
             setError('Please enter a valid amount')
@@ -56,20 +59,27 @@ export function VaultActionModal({
             setLoading(true)
             setError(null)
 
-            if (isDeposit) {
-                await FlowService.deposit(vaultId, Number(amount))
-            } else {
-                await FlowService.withdraw(vaultId, Number(amount))
-            }
+            const actionTitle = isDeposit ? 'Capital Injection' : 'Funds Extraction'
+            setTxState({ status: 'executing', txId: null, error: null, title: actionTitle })
+
+            const result = isDeposit
+                ? await FlowService.deposit(vaultId, Number(amount))
+                : await FlowService.withdraw(vaultId, Number(amount))
+
+            const { transactionId, sealed } = result
+            setTxState({ status: 'pending', txId: transactionId, error: null, title: actionTitle })
 
             onClose()
-            // Refresh the page data without a full reload
-            setTimeout(() => {
-                window.location.href = '/dashboard'
-            }, 500)
+
+            await sealed
+            setTxState({ status: 'sealed', txId: transactionId, error: null, title: isDeposit ? 'Injection Successful' : 'Extraction Successful' })
+
+            // Trigger a silent refresh if needed or trust the dashboard refetch
         } catch (err: any) {
             console.error(`Error during ${type}:`, err)
-            setError(err.message || `Failed to ${type}. Please try again.`)
+            const errorMessage = err.message || `Failed to ${type}. Please try again.`
+            setError(errorMessage)
+            setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Transaction Failed' })
         } finally {
             setLoading(false)
         }

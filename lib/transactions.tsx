@@ -14,6 +14,7 @@ import {
     Activity
 } from 'lucide-react'
 import { Button } from 'components/ui/button'
+import { Badge } from 'components/ui/badge'
 
 type TransactionStatus = 'idle' | 'executing' | 'pending' | 'sealed' | 'error'
 
@@ -124,7 +125,7 @@ function TransactionModal() {
                                         txState.status === 'sealed' ? 'Protocol Sealed' : 'Transmission Failed'}
                             </h3>
                             <p className="text-muted-foreground font-medium px-4">
-                                {txState.status === 'executing' ? 'Waiting for secure biometric signature...' :
+                                {txState.status === 'executing' ? 'Waiting for secure wallet authorization...' :
                                     txState.status === 'pending' ? 'Transaction broadcasted to Flow network.' :
                                         txState.status === 'sealed' ? 'Success. Your sentinel protocols have been updated on-chain.' :
                                             txState.error || 'The secure link was interrupted. Please try again.'}
