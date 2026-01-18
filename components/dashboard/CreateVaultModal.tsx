@@ -110,11 +110,15 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
 
       await FlowService.createVaultWithStrategy(
         selectedStrategyData.id,
+        vaultName,
         Number(depositAmount)
       )
 
       onClose()
-      window.location.reload()
+      // Refresh the page data without a full reload
+      setTimeout(() => {
+        window.location.href = '/dashboard'
+      }, 500)
     } catch (error) {
       console.error('Failed to create vault:', error)
       setError('Failed to create vault on blockchain. Please check your wallet.')

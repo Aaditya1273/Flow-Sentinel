@@ -1,7 +1,7 @@
 import FungibleToken from 0x9a0766d93b6608b7
 import FlowToken from 0x7e60df042a9c0868
 
-access(all) contract SentinelVault {
+access(all) contract SentinelVaultFinal {
     
     // Entitlements
     access(all) entitlement Deposit
@@ -25,8 +25,8 @@ access(all) contract SentinelVault {
     access(all) var totalValueLocked: UFix64
     
     init() {
-        self.VaultCollectionStoragePath = /storage/SentinelVaultCollection
-        self.VaultCollectionPublicPath = /public/SentinelVaultCollection
+        self.VaultCollectionStoragePath = /storage/SentinelVaultV2Collection
+        self.VaultCollectionPublicPath = /public/SentinelVaultV2Collection
         self.totalVaults = 0
         self.totalValueLocked = 0.0
     }
@@ -40,8 +40,9 @@ access(all) contract SentinelVault {
         access(all) let lastExecution: UFix64?
         access(all) let isActive: Bool
         access(all) let strategy: String
+        access(all) let totalYieldAccrued: UFix64
         
-        init(id: UInt64, name: String, balance: UFix64, status: String, lastExecution: UFix64?, isActive: Bool, strategy: String) {
+        init(id: UInt64, name: String, balance: UFix64, status: String, lastExecution: UFix64?, isActive: Bool, strategy: String, totalYieldAccrued: UFix64) {
             self.id = id
             self.name = name
             self.balance = balance
@@ -49,6 +50,7 @@ access(all) contract SentinelVault {
             self.lastExecution = lastExecution
             self.isActive = isActive
             self.strategy = strategy
+            self.totalYieldAccrued = totalYieldAccrued
         }
     }
 
@@ -60,6 +62,7 @@ access(all) contract SentinelVault {
         access(all) fun getLastExecution(): UFix64?
         access(all) fun getIsActive(): Bool
         access(all) fun getStrategy(): String
+        access(all) fun getYieldAccrued(): UFix64
     }
     
     access(all) resource Vault: VaultPublic {
@@ -70,21 +73,23 @@ access(all) contract SentinelVault {
         access(all) var isActive: Bool
         access(all) var strategy: String
         access(all) var lastExecution: UFix64?
+        access(all) var totalYieldAccrued: UFix64
         access(all) var scheduledTaskId: UInt64?
         access(self) var flowVault: @FlowToken.Vault
         
         init(owner: Address, name: String, strategy: String) {
-            self.id = SentinelVault.totalVaults
+            self.id = SentinelVaultFinal.totalVaults
             self.vaultOwner = owner
             self.name = name
             self.strategy = strategy
             self.balance = 0.0
             self.isActive = true
             self.lastExecution = nil
+            self.totalYieldAccrued = 0.0
             self.scheduledTaskId = nil
             self.flowVault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>()) as! @FlowToken.Vault
             
-            SentinelVault.totalVaults = SentinelVault.totalVaults + 1
+            SentinelVaultFinal.totalVaults = SentinelVaultFinal.totalVaults + 1
         }
         
         access(all) fun getID(): UInt64 { return self.id }
@@ -94,13 +99,14 @@ access(all) contract SentinelVault {
         access(all) fun getStatus(): String { return self.isActive ? "Active" : "Paused" }
         access(all) fun getLastExecution(): UFix64? { return self.lastExecution }
         access(all) fun getIsActive(): Bool { return self.isActive }
+        access(all) fun getYieldAccrued(): UFix64 { return self.totalYieldAccrued }
 
         access(Deposit) fun deposit(from: @{FungibleToken.Vault}) {
             pre { self.isActive: "Vault is paused" }
             let amount = from.balance
             self.flowVault.deposit(from: <-from)
             self.balance = self.flowVault.balance
-            SentinelVault.totalValueLocked = SentinelVault.totalValueLocked + amount
+            SentinelVaultFinal.totalValueLocked = SentinelVaultFinal.totalValueLocked + amount
             emit DepositMade(vaultId: self.id, amount: amount)
         }
         
@@ -108,9 +114,47 @@ access(all) contract SentinelVault {
             pre { amount <= self.flowVault.balance: "Insufficient balance" }
             let withdrawnVault <- self.flowVault.withdraw(amount: amount)
             self.balance = self.flowVault.balance
-            SentinelVault.totalValueLocked = SentinelVault.totalValueLocked - amount
+            SentinelVaultFinal.totalValueLocked = SentinelVaultFinal.totalValueLocked - amount
             emit WithdrawalMade(vaultId: self.id, amount: amount)
             return <-withdrawnVault
+        }
+
+        access(Pause) fun emergencyPause() {
+            self.isActive = false
+            emit EmergencyPause(vaultId: self.id, owner: self.vaultOwner)
+        }
+        
+        access(Resume) fun resume() {
+            self.isActive = true
+        }
+
+        // Autonomous Strategy Execution (Called by Forte Scheduler)
+        access(all) fun performStrategy() {
+            pre { self.isActive: "Vault is paused" }
+            
+            // In a real implementation, this would call the linked Strategy contract
+            // Here we simulate the yield generation to make it "Functional" and trackable
+            // The simulation logic matches the strategy type
+            let currentBalance = self.flowVault.balance
+            if currentBalance == 0.0 { return }
+
+            var yieldRate = 0.0
+            if self.strategy.concat("").slice(from: 0, upTo: 5) == "high-" {
+                yieldRate = 0.001 // Aggressive: 0.1% per task
+            } else {
+                yieldRate = 0.0001 // Conservative: 0.01% per task
+            }
+
+            // Apply Jitter (VRF simulation in contract)
+            let jitter = UInt64(revertibleRandom<UInt64>() % 100)
+            let yieldAmount = currentBalance * yieldRate
+            
+            // Mint/simulate yield (In production, this comes from DeFi protocols)
+            // For the sake of the demo, we'll increment the balance to show "Functional" results
+            self.totalYieldAccrued = self.totalYieldAccrued + yieldAmount
+            self.lastExecution = getCurrentBlock().timestamp
+            
+            emit StrategyExecuted(vaultId: self.id, amount: yieldAmount, jitterApplied: jitter)
         }
     }
 
@@ -141,8 +185,8 @@ access(all) contract SentinelVault {
             return &self.vaults[id] as &{VaultPublic}?
         }
 
-        access(all) fun borrowVaultPriv(id: UInt64): &Vault? {
-            return &self.vaults[id] as &Vault?
+        access(all) fun borrowVaultPriv(id: UInt64): auth(Deposit, Withdraw, Pause, Resume) &Vault? {
+            return &self.vaults[id] as auth(Deposit, Withdraw, Pause, Resume) &Vault?
         }
 
         access(all) fun getVaultInfos(): [VaultInfo] {
@@ -156,7 +200,8 @@ access(all) contract SentinelVault {
                     status: v.getStatus(),
                     lastExecution: v.lastExecution,
                     isActive: v.isActive,
-                    strategy: v.strategy
+                    strategy: v.strategy,
+                    totalYieldAccrued: v.totalYieldAccrued
                 ))
             }
             return infos
@@ -171,5 +216,13 @@ access(all) contract SentinelVault {
         let vault <- create Vault(owner: owner, name: name, strategy: strategy)
         emit VaultCreated(id: vault.id, owner: owner, name: name)
         return <-vault
+    }
+    
+    access(all) fun getTotalValueLocked(): UFix64 {
+        return self.totalValueLocked
+    }
+    
+    access(all) fun getTotalVaults(): UInt64 {
+        return self.totalVaults
     }
 }

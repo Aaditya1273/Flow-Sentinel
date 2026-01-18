@@ -28,6 +28,13 @@
 				"testnet": "136b642d0aa31ca9"
 			}
 		},
+		"SentinelVaultFinal": {
+			"source": "./contracts/SentinelVaultV2.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "136b642d0aa31ca9"
+			}
+		},
 		"StrategyRegistry": {
 			"source": "./contracts/StrategyRegistry.cdc",
 			"aliases": {
@@ -77,7 +84,7 @@
 		"testnet": {
 			"testnet-account": [
 				"SentinelInterfaces",
-				"SentinelVault",
+				"SentinelVaultFinal",
 				"LiquidStakingStrategy",
 				"YieldFarmingStrategy",
 				"ArbitrageStrategy",

@@ -30,7 +30,7 @@ import { Badge } from 'components/ui/badge'
 
 export default function DashboardPage() {
   const { user, logIn, isConnected } = useFlow()
-  const { vaultData, performance, flowBalance, loading, error } = useVaultData()
+  const { vaults, performance, flowBalance, loading, error } = useVaultData()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
@@ -104,7 +104,7 @@ export default function DashboardPage() {
   }
 
   // Show create vault interface if no vault exists
-  if (!vaultData && !loading) {
+  if (vaults.length === 0 && !loading) {
     return (
       <div className="min-h-screen bg-background relative overflow-hidden">
         <div className="absolute top-[20%] right-[-5%] w-[40%] h-[40%] bg-primary/5 blur-[100px] rounded-full" />
@@ -134,7 +134,7 @@ export default function DashboardPage() {
                 <div className="text-5xl font-black text-white mb-2 tracking-tighter financial-number">
                   {formatCurrency(flowBalance)}
                 </div>
-                <div className="text-xs font-bold text-muted-foreground uppercase opacity-50">Flow Token (Mainnet)</div>
+                <div className="text-xs font-bold text-muted-foreground uppercase opacity-50">Flow Token (Testnet)</div>
               </div>
             </div>
 
@@ -211,9 +211,9 @@ export default function DashboardPage() {
           >
             {[
               {
-                label: 'NET ASSET VALUE',
-                value: formatCurrency(vaultData?.balance || 0),
-                sub: performance?.pnlPercent ? formatPercentage(performance.pnlPercent) : '+0%',
+                label: 'TOTAL NET ASSET VALUE',
+                value: formatCurrency(performance?.totalBalance || 0),
+                sub: performance?.totalPnlPercent ? formatPercentage(performance.totalPnlPercent) : '+0%',
                 icon: DollarSign,
                 color: 'text-primary'
               },
@@ -225,16 +225,16 @@ export default function DashboardPage() {
                 color: 'text-secondary'
               },
               {
-                label: 'VAULT STATUS',
-                value: vaultData?.name || '---',
-                sub: vaultData?.isActive ? 'Secured & Active' : 'Operation Suspended',
+                label: 'MANAGED SENTINELS',
+                value: vaults.length.toString(),
+                sub: 'Secured & Active',
                 icon: Shield,
-                color: vaultData?.isActive ? 'text-primary' : 'text-warning'
+                color: 'text-primary'
               },
               {
-                label: 'TOTAL CAPTURED',
-                value: formatCurrency(vaultData?.totalDeposits || 0),
-                sub: `Since ${vaultData?.createdAt ? new Date(vaultData.createdAt).toLocaleDateString() : 'Initialization'}`,
+                label: 'TOTAL CAPTURED PNL',
+                value: formatCurrency(performance?.totalPnl || 0),
+                sub: 'Across All Vaults',
                 icon: Target,
                 color: 'text-white'
               }
@@ -276,20 +276,25 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {vaultData && (
-                  <VaultCard
-                    vault={{
-                      id: vaultData.id,
-                      name: vaultData.name,
-                      balance: vaultData.balance,
-                      apy: 8.5,
-                      status: vaultData.isActive ? 'active' : 'paused',
-                      lastExecution: new Date(vaultData.lastExecution * 1000),
-                      strategy: vaultData.strategy,
-                      risk: 'low' as const
-                    }}
-                  />
-                )}
+                <div className="grid grid-cols-1 gap-6">
+                  {vaults.map((v) => (
+                    <VaultCard
+                      key={v.id}
+                      vault={{
+                        id: v.id,
+                        name: v.name,
+                        balance: v.balance,
+                        apy: 8.5,
+                        status: v.isActive ? 'active' : 'paused',
+                        lastExecution: new Date(v.lastExecution * 1000),
+                        strategy: v.strategy,
+                        risk: 'low' as const,
+                        pnl: v.pnl,
+                        pnlPercent: v.pnlPercent
+                      }}
+                    />
+                  ))}
+                </div>
               </motion.div>
 
               {/* Portfolio Chart */}

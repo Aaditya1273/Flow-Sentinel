@@ -8,58 +8,70 @@ const FUNGIBLE_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS ||
 
 // Cadence Transactions & Scripts
 export const DEPOSIT_TO_VAULT = `
-import SentinelVault from ${SENTINEL_VAULT_ADDRESS}
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
 import FlowToken from ${FLOW_TOKEN_ADDRESS}
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
-transaction(amount: UFix64) {
+transaction(vaultId: UInt64, amount: UFix64) {
     let flowVault: @{FungibleToken.Vault}
+    let vaultRef: auth(SentinelVaultFinal.Deposit) &SentinelVaultFinal.Vault
     
-    prepare(signer: auth(Withdraw) &Account) {
+    prepare(signer: auth(FungibleToken.Withdraw, BorrowValue) &Account) {
         let flowVaultRef = signer.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
             ?? panic("Could not borrow Flow vault reference")
         self.flowVault <- flowVaultRef.withdraw(amount: amount)
+        
+        let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow collection reference")
+        self.vaultRef = collection.borrowVaultPriv(id: vaultId)
+            ?? panic("Could not borrow vault reference")
     }
     
     execute {
-        let vaultRef = signer.storage.borrow<auth(SentinelVault.Deposit) &SentinelVault.Vault>(from: /storage/SentinelVault)
-            ?? panic("Could not borrow vault reference")
-        vaultRef.deposit(from: <-self.flowVault)
+        self.vaultRef.deposit(from: <-self.flowVault)
     }
 }
 `
 
 export const WITHDRAW_FROM_VAULT = `
-import SentinelVault from ${SENTINEL_VAULT_ADDRESS}
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
 import FlowToken from ${FLOW_TOKEN_ADDRESS}
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
-transaction(amount: UFix64) {
-    let vaultRef: auth(SentinelVault.Withdraw) &SentinelVault.Vault
+transaction(vaultId: UInt64, amount: UFix64) {
+    let vaultResource: auth(SentinelVaultFinal.Withdraw) &SentinelVaultFinal.Vault
     let flowVaultRef: &{FungibleToken.Receiver}
     
     prepare(signer: auth(BorrowValue) &Account) {
-        self.vaultRef = signer.storage.borrow<auth(SentinelVault.Withdraw) &SentinelVault.Vault>(from: /storage/SentinelVault)
+        let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow collection reference")
+        self.vaultResource = collection.borrowVaultPriv(id: vaultId)
             ?? panic("Could not borrow vault reference")
+        
         self.flowVaultRef = signer.capabilities.borrow<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)
             ?? panic("Could not borrow Flow receiver")
     }
     
     execute {
-        let withdrawnTokens <- self.vaultRef.withdraw(amount: amount)
+        let withdrawnTokens <- self.vaultResource.withdraw(amount: amount)
         self.flowVaultRef.deposit(from: <-withdrawnTokens)
     }
 }
 `
 
 export const PAUSE_VAULT = `
-import SentinelVault from ${SENTINEL_VAULT_ADDRESS}
-transaction() {
-    let vaultRef: auth(SentinelVault.Pause) &SentinelVault.Vault
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+
+transaction(vaultId: UInt64) {
+    let vaultRef: auth(SentinelVaultFinal.Pause) &SentinelVaultFinal.Vault
+    
     prepare(signer: auth(BorrowValue) &Account) {
-        self.vaultRef = signer.storage.borrow<auth(SentinelVault.Pause) &SentinelVault.Vault>(from: /storage/SentinelVault)
+        let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow collection reference")
+        self.vaultRef = collection.borrowVaultPriv(id: vaultId)
             ?? panic("Could not borrow vault reference")
     }
+    
     execute {
         self.vaultRef.emergencyPause()
     }
@@ -67,13 +79,18 @@ transaction() {
 `
 
 export const RESUME_VAULT = `
-import SentinelVault from ${SENTINEL_VAULT_ADDRESS}
-transaction() {
-    let vaultRef: auth(SentinelVault.Resume) &SentinelVault.Vault
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+
+transaction(vaultId: UInt64) {
+    let vaultRef: auth(SentinelVaultFinal.Resume) &SentinelVaultFinal.Vault
+    
     prepare(signer: auth(BorrowValue) &Account) {
-        self.vaultRef = signer.storage.borrow<auth(SentinelVault.Resume) &SentinelVault.Vault>(from: /storage/SentinelVault)
+        let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow collection reference")
+        self.vaultRef = collection.borrowVaultPriv(id: vaultId)
             ?? panic("Could not borrow vault reference")
     }
+    
     execute {
         self.vaultRef.resume()
     }
@@ -81,25 +98,26 @@ transaction() {
 `
 
 export const CREATE_VAULT_WITH_STRATEGY = `
-import SentinelVault from ${SENTINEL_VAULT_ADDRESS}
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
 import StrategyRegistry from ${STRATEGY_REGISTRY_ADDRESS}
 import FlowToken from ${FLOW_TOKEN_ADDRESS}
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
-transaction(strategyId: String, initialDeposit: UFix64) {
-    let vaultRef: auth(SentinelVault.Deposit) &SentinelVault.Vault
+transaction(strategyId: String, vaultName: String, initialDeposit: UFix64) {
+    let collectionRef: &SentinelVaultFinal.Collection
     let flowVault: @{FungibleToken.Vault}
     
-    prepare(signer: auth(BorrowValue, IssueStorageCapabilityController, PublishCapability, SaveValue) &Account) {
-        if signer.storage.borrow<&SentinelVault.Vault>(from: /storage/SentinelVault) == nil {
-            let vault <- SentinelVault.createVault(owner: signer.address)
-            signer.storage.save(<-vault, to: /storage/SentinelVault)
-            let cap = signer.capabilities.storage.issue<&{SentinelVault.VaultPublic}>(/storage/SentinelVault)
-            signer.capabilities.publish(cap, at: /public/SentinelVault)
+    prepare(signer: auth(BorrowValue, Storage, Capabilities) &Account) {
+        if signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath) == nil {
+            let collection <- SentinelVaultFinal.createEmptyCollection()
+            signer.storage.save(<-collection, to: SentinelVaultFinal.VaultCollectionStoragePath)
+            
+            let cap = signer.capabilities.storage.issue<&{SentinelVaultFinal.CollectionPublic}>(SentinelVaultFinal.VaultCollectionStoragePath)
+            signer.capabilities.publish(cap, at: SentinelVaultFinal.VaultCollectionPublicPath)
         }
         
-        self.vaultRef = signer.storage.borrow<auth(SentinelVault.Deposit) &SentinelVault.Vault>(from: /storage/SentinelVault)
-            ?? panic("Could not borrow vault reference")
+        self.collectionRef = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow collection reference")
         
         let flowVaultRef = signer.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
             ?? panic("Could not borrow Flow vault reference")
@@ -108,26 +126,26 @@ transaction(strategyId: String, initialDeposit: UFix64) {
     }
     
     execute {
-        self.vaultRef.deposit(from: <-self.flowVault)
+        let strategyInfo = StrategyRegistry.getStrategy(strategyId: strategyId) ?? panic("Strategy not found")
+        let strategyName = strategyInfo["name"] as! String
+        
+        let vault <- SentinelVaultFinal.createVault(owner: self.collectionRef.owner!.address, name: vaultName, strategy: strategyName)
+        vault.deposit(from: <-self.flowVault)
+        
+        self.collectionRef.deposit(vault: <-vault)
         StrategyRegistry.updateStrategyTVL(strategyId: strategyId, amount: initialDeposit, isDeposit: true)
     }
 }
 `
 
-export const GET_VAULT_INFO = `
-import SentinelVault from ${SENTINEL_VAULT_ADDRESS}
-access(all) fun main(address: Address): {String: AnyStruct}? {
+export const GET_VAULT_LIST = `
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+access(all) fun main(address: Address): [SentinelVaultFinal.VaultInfo] {
     let account = getAccount(address)
-    if let vaultRef = account.capabilities.borrow<&{SentinelVault.VaultPublic}>(/public/SentinelVault) {
-        return {
-            "balance": vaultRef.getBalance(),
-            "status": vaultRef.getStatus(),
-            "isActive": vaultRef.getIsActive(),
-            "lastExecution": vaultRef.getLastExecution(),
-            "owner": vaultRef.getOwner()
-        }
+    if let collectionRef = account.capabilities.borrow<&{SentinelVaultFinal.CollectionPublic}>(SentinelVaultFinal.VaultCollectionPublicPath) {
+        return collectionRef.getVaultInfos()
     }
-    return nil
+    return []
 }
 `
 
@@ -138,22 +156,39 @@ access(all) fun main(): [{String: AnyStruct}] {
 }
 `
 
-export const GET_VAULT_PERFORMANCE = `
-import SentinelVault from ${SENTINEL_VAULT_ADDRESS}
-access(all) fun main(address: Address): {String: AnyStruct}? {
-    let account = getAccount(address)
-    if let vaultRef = account.capabilities.borrow<&{SentinelVault.VaultPublic}>(/public/SentinelVault) {
-        let balance = vaultRef.getBalance()
-        return {
-            "currentBalance": balance,
-            "totalDeposits": balance * 0.95,
-            "pnl": balance * 0.05,
-            "pnlPercent": 5.0
-        }
+export const TRIGGER_STRATEGY = `
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+
+transaction(vaultId: UInt64) {
+    let vaultRef: &SentinelVaultFinal.Vault
+    
+    prepare(signer: auth(BorrowValue) &Account) {
+        let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow collection reference")
+        self.vaultRef = collection.borrowVaultPriv(id: vaultId)
+            ?? panic("Could not borrow vault reference")
     }
-    return nil
+    
+    execute {
+        self.vaultRef.performStrategy()
+    }
 }
 `
+
+// Event types for tracking history
+export interface VaultEvent {
+  type: 'deposit' | 'withdraw' | 'created'
+  vaultId: string
+  amount: number
+  timestamp: number // Unix timestamp in seconds
+  blockHeight: number
+}
+
+export interface PerformanceDataPoint {
+  timestamp: number
+  balance: number
+  cumulativePnl: number
+}
 
 export class FlowService {
   static async query(cadence: string, args: any = () => []) {
@@ -187,35 +222,186 @@ export class FlowService {
     return result || []
   }
 
-  static async getVaultInfo(address: string) {
-    return await this.query(GET_VAULT_INFO, (arg: any, t: any) => [arg(address, t.Address)])
+  static async getVaultList(address: string) {
+    const result = await this.query(GET_VAULT_LIST, (arg: any, t: any) => [arg(address, t.Address)])
+    return result || []
   }
 
-  static async getVaultPerformance(address: string) {
-    return await this.query(GET_VAULT_PERFORMANCE, (arg: any, t: any) => [arg(address, t.Address)])
+  // Fetch vault events from blockchain using Access API
+  static async getVaultEvents(address: string): Promise<VaultEvent[]> {
+    try {
+      // Get the latest block to determine range
+      const latestBlock = await fcl.block({ sealed: true })
+      const latestHeight = latestBlock.height
+
+      // Query events from the last ~30 days worth of blocks (assuming ~1 block per second)
+      // Flow produces roughly 1 block per second, so 30 days ≈ 2,592,000 blocks
+      // We limit to last 100,000 blocks to avoid timeout
+      const startHeight = Math.max(0, latestHeight - 100000)
+
+      const eventTypes = [
+        `A.${SENTINEL_VAULT_ADDRESS.replace('0x', '')}.SentinelVaultFinal.VaultCreated`,
+        `A.${SENTINEL_VAULT_ADDRESS.replace('0x', '')}.SentinelVaultFinal.DepositMade`,
+        `A.${SENTINEL_VAULT_ADDRESS.replace('0x', '')}.SentinelVaultFinal.WithdrawalMade`
+      ]
+
+      const events: VaultEvent[] = []
+
+      for (const eventType of eventTypes) {
+        try {
+          const result = await fcl.send([
+            fcl.getEventsAtBlockHeightRange(eventType, startHeight, latestHeight)
+          ])
+
+          const decoded = await fcl.decode(result)
+
+          if (decoded && Array.isArray(decoded)) {
+            for (const event of decoded) {
+              const eventData = event.data
+
+              // Filter events for this user's vaults
+              if (eventData.owner === address || eventData.vaultId !== undefined) {
+                events.push({
+                  type: eventType.includes('Created') ? 'created' :
+                    eventType.includes('Deposit') ? 'deposit' : 'withdraw',
+                  vaultId: eventData.vaultId?.toString() || eventData.id?.toString() || '0',
+                  amount: parseFloat(eventData.amount || '0'),
+                  timestamp: event.blockTimestamp ? new Date(event.blockTimestamp).getTime() / 1000 : Date.now() / 1000,
+                  blockHeight: event.blockHeight || 0
+                })
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`Could not fetch events for ${eventType}:`, err)
+        }
+      }
+
+      // Sort by timestamp
+      events.sort((a, b) => a.timestamp - b.timestamp)
+
+      return events
+    } catch (error) {
+      console.error('Error fetching vault events:', error)
+      return []
+    }
   }
 
-  static async createVaultWithStrategy(strategyId: string, initialDeposit: number) {
+  // Calculate vault age in days based on first event
+  static getVaultAgeInDays(events: VaultEvent[]): number {
+    if (events.length === 0) return 0
+
+    const firstEventTime = events[0].timestamp * 1000 // Convert to milliseconds
+    const now = Date.now()
+    const ageMs = now - firstEventTime
+    const ageDays = ageMs / (1000 * 60 * 60 * 24)
+
+    return ageDays
+  }
+
+  // Build performance history from events
+  static buildPerformanceHistory(events: VaultEvent[], currentBalance: number): PerformanceDataPoint[] {
+    if (events.length === 0) return []
+
+    const history: PerformanceDataPoint[] = []
+    let runningBalance = 0
+    let totalDeposited = 0
+
+    for (const event of events) {
+      if (event.type === 'deposit' || event.type === 'created') {
+        runningBalance += event.amount
+        totalDeposited += event.amount
+      } else if (event.type === 'withdraw') {
+        runningBalance -= event.amount
+      }
+
+      history.push({
+        timestamp: event.timestamp,
+        balance: runningBalance,
+        cumulativePnl: runningBalance - totalDeposited
+      })
+    }
+
+    // Add current state as the latest point
+    history.push({
+      timestamp: Date.now() / 1000,
+      balance: currentBalance,
+      cumulativePnl: currentBalance - totalDeposited
+    })
+
+    return history
+  }
+
+  // Check if enough data is available for the selected timeframe
+  static hasEnoughDataForTimeframe(vaultAgeDays: number, timeframe: string): boolean {
+    const requiredDays: Record<string, number> = {
+      '1d': 1,
+      '7d': 7,
+      '30d': 30,
+      '90d': 90,
+      '1y': 365,
+      'all': 0 // All time always has enough data
+    }
+
+    return vaultAgeDays >= (requiredDays[timeframe] || 0)
+  }
+
+  // Get remaining time needed for timeframe
+  static getRemainingTimeForTimeframe(vaultAgeDays: number, timeframe: string): string {
+    const requiredDays: Record<string, number> = {
+      '1d': 1,
+      '7d': 7,
+      '30d': 30,
+      '90d': 90,
+      '1y': 365
+    }
+
+    const required = requiredDays[timeframe] || 0
+    const remaining = required - vaultAgeDays
+
+    if (remaining <= 0) return ''
+
+    if (remaining < 1) {
+      const hours = Math.ceil(remaining * 24)
+      return `${hours} hour${hours !== 1 ? 's' : ''}`
+    }
+
+    const days = Math.ceil(remaining)
+    return `${days} day${days !== 1 ? 's' : ''}`
+  }
+
+  static async createVaultWithStrategy(strategyId: string, vaultName: string, initialDeposit: number) {
     return await this.mutate(CREATE_VAULT_WITH_STRATEGY, (arg: any, t: any) => [
       arg(strategyId, t.String),
+      arg(vaultName, t.String),
       arg(initialDeposit.toFixed(8), t.UFix64)
     ])
   }
 
-  static async deposit(amount: number) {
-    return await this.mutate(DEPOSIT_TO_VAULT, (arg: any, t: any) => [arg(amount.toFixed(8), t.UFix64)])
+  static async deposit(vaultId: string, amount: number) {
+    return await this.mutate(DEPOSIT_TO_VAULT, (arg: any, t: any) => [
+      arg(vaultId, t.UInt64),
+      arg(amount.toFixed(8), t.UFix64)
+    ])
   }
 
-  static async withdraw(amount: number) {
-    return await this.mutate(WITHDRAW_FROM_VAULT, (arg: any, t: any) => [arg(amount.toFixed(8), t.UFix64)])
+  static async withdraw(vaultId: string, amount: number) {
+    return await this.mutate(WITHDRAW_FROM_VAULT, (arg: any, t: any) => [
+      arg(vaultId, t.UInt64),
+      arg(amount.toFixed(8), t.UFix64)
+    ])
   }
 
-  static async pauseVault() {
-    return await this.mutate(PAUSE_VAULT)
+  static async pauseVault(vaultId: string) {
+    return await this.mutate(PAUSE_VAULT, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
   }
 
-  static async resumeVault() {
-    return await this.mutate(RESUME_VAULT)
+  static async resumeVault(vaultId: string) {
+    return await this.mutate(RESUME_VAULT, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+  }
+
+  static async triggerStrategy(vaultId: string) {
+    return await this.mutate(TRIGGER_STRATEGY, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
   }
 
   static async getUserFlowBalance(address: string) {
