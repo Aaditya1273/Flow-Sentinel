@@ -63,7 +63,7 @@ function TransactionModal() {
 
     if (!isOpen) return null
 
-    const getExplorerUrl = (txId: string) => `https://testnet.flowscan.org/transaction/${txId}`
+    const getExplorerUrl = (txId: string) => `https://testnet.flowscan.io/tx/${txId}`
 
     return (
         <AnimatePresence>
