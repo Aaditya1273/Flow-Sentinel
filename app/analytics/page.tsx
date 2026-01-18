@@ -96,11 +96,17 @@ export default function AnalyticsPage() {
     const numPoints = 14
     const baseValue = vaultData.totalDeposits
     
+    // Use seeded random for consistent values
+    const seedRandom = (seed: number) => {
+      const x = Math.sin(seed) * 10000
+      return x - Math.floor(x)
+    }
+    
     for (let i = 0; i < numPoints; i++) {
       const progress = i / (numPoints - 1)
-      const value = baseValue + (pnl * progress) + (Math.random() - 0.5) * (pnl * 0.1)
+      const value = baseValue + (pnl * progress) + (seedRandom(i + 54321) - 0.5) * (pnl * 0.1)
       performanceHistory.push({
-        date: new Date(Date.now() - (numPoints - 1 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        date: new Date(1640995200000 - (numPoints - 1 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Use fixed base timestamp
         value: Math.max(value, baseValue * 0.95),
         pnl: Math.max(value - baseValue, baseValue * -0.05)
       })

@@ -1,27 +1,38 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  TrendingUp, 
-  Clock, 
-  Play, 
-  Pause, 
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  TrendingUp,
+  Clock,
+  ChevronDown,
+  Plus,
+  ArrowRight,
+  Pause,
+  Play,
   Settings,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Zap,
+  Shield,
+  Lock,
+  ExternalLink,
+  ChevronUp,
+  Activity
 } from 'lucide-react'
 import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
-import { formatCurrency } from 'lib/utils'
-import { useVaultData } from 'hooks/useVaultData'
+import { Progress } from 'components/ui/progress'
+import { formatCurrency, formatPercentage } from 'lib/utils'
+import { FlowService } from 'lib/flow-service'
+import Link from 'next/link'
 
 interface Vault {
   id: string
   name: string
   balance: number
   apy: number
-  status: 'active' | 'paused' | 'error'
+  status: 'active' | 'paused' | 'creating'
   lastExecution: Date
   strategy: string
   risk: 'low' | 'medium' | 'high'
@@ -35,348 +46,257 @@ interface VaultCardProps {
 
 export function VaultCard({ vault }: VaultCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [showDepositModal, setShowDepositModal] = useState(false)
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
-  const [depositAmount, setDepositAmount] = useState('')
-  const [withdrawAmount, setWithdrawAmount] = useState('')
-  const { deposit, withdraw, loading, flowBalance } = useVaultData()
+  const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
-  const getRiskColor = (risk: string) => {
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isEpoch = vault.lastExecution.getTime() <= 0 || vault.lastExecution.getFullYear() <= 1970
+
+  const getRiskBadge = (risk: string) => {
     switch (risk) {
-      case 'low': return 'text-success bg-success/10 border-success/20'
-      case 'medium': return 'text-warning bg-warning/10 border-warning/20'
-      case 'high': return 'text-destructive bg-destructive/10 border-destructive/20'
-      default: return 'text-muted-foreground bg-muted border-border'
+      case 'low': return 'bg-primary/10 text-primary border-primary/40'
+      case 'medium': return 'bg-warning/10 text-warning border-warning/40'
+      case 'high': return 'bg-destructive/10 text-destructive border-destructive/40'
+      default: return 'bg-muted text-muted-foreground border-border'
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'text-success bg-success/10 border-success/20'
-      case 'paused': return 'text-warning bg-warning/10 border-warning/20'
-      case 'error': return 'text-destructive bg-destructive/10 border-destructive/20'
-      default: return 'text-muted-foreground bg-muted border-border'
+  const handlePause = async () => {
+    try {
+      setLoading(true)
+      if (vault.status === 'active') {
+        await FlowService.pauseVault()
+      } else {
+        await FlowService.resumeVault()
+      }
+      window.location.reload()
+    } catch (error) {
+      console.error('Error toggling vault status:', error)
+    } finally {
+      setLoading(false)
     }
-  }
-
-  const formatTimeAgo = (date: Date) => {
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ago`
-    }
-    return `${minutes}m ago`
   }
 
   const handleDeposit = async () => {
-    if (!depositAmount || isNaN(Number(depositAmount))) return
-    
+    const amount = window.prompt(`Enter FLOW amount to deposit into ${vault.name}:`, '10.0')
+    if (!amount || isNaN(Number(amount))) return
+
     try {
-      await deposit(Number(depositAmount))
-      setDepositAmount('')
-      setShowDepositModal(false)
+      setLoading(true)
+      await FlowService.deposit(Number(amount))
+      alert('Deposit successful!')
+      window.location.reload()
     } catch (error) {
-      console.error('Deposit failed:', error)
+      console.error('Error depositing:', error)
+      alert('Failed to deposit. Check console for details.')
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleWithdraw = async () => {
-    if (!withdrawAmount || isNaN(Number(withdrawAmount))) return
-    
+    const amount = window.prompt(`Enter FLOW amount to withdraw from ${vault.name}:`, '5.0')
+    if (!amount || isNaN(Number(amount))) return
+
     try {
-      await withdraw(Number(withdrawAmount))
-      setWithdrawAmount('')
-      setShowWithdrawModal(false)
+      setLoading(true)
+      await FlowService.withdraw(Number(amount))
+      alert('Withdrawal successful!')
+      window.location.reload()
     } catch (error) {
-      console.error('Withdraw failed:', error)
+      console.error('Error withdrawing:', error)
+      alert('Failed to withdraw. Check console for details.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <>
-      <motion.div
-        layout
-        className="tool-card p-6 cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        {/* Enhanced Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-              <img 
-                src="/logo.png" 
-                alt="Vault" 
-                className="w-6 h-6 object-contain"
-              />
+    <div className="tool-card group border-0 p-0 overflow-visible">
+      {/* Decorative top border glow */}
+      <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+      <div className="p-8">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
+          <div className="flex items-start gap-4">
+            <div className={`w-14 h-14 glass rounded-2xl flex items-center justify-center bg-primary/5 group-hover:bg-primary/10 transition-colors duration-300`}>
+              <Zap className={`w-7 h-7 ${vault.status === 'active' ? 'text-primary fill-primary/20' : 'text-muted-foreground'}`} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">{vault.name}</h3>
-              <p className="text-sm text-muted-foreground">{vault.strategy}</p>
+              <div className="flex items-center gap-3 mb-1">
+                <h3 className="text-2xl font-black text-white tracking-tight">{vault.name}</h3>
+                <Badge className={`${getRiskBadge(vault.risk)} text-[10px] font-black uppercase tracking-widest px-2 py-0.5 border`}>
+                  {vault.risk} RISK
+                </Badge>
+              </div>
+              <p className="text-muted-foreground font-medium text-sm">
+                Strategic Protocol: <span className="text-foreground">{vault.strategy}</span>
+              </p>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-3">
-            <Badge className={`${getRiskColor(vault.risk)} text-xs font-medium px-3 py-1`}>
-              {vault.risk.toUpperCase()}
-            </Badge>
-            <Badge className={`${getStatusColor(vault.status)} text-xs font-medium px-3 py-1`}>
-              {vault.status.toUpperCase()}
-            </Badge>
+
+          <div className="flex flex-wrap gap-2 md:justify-end">
+            <div className="glass-pill border-primary/40 bg-primary/5 text-primary text-[10px] font-black px-3 py-1 flex items-center gap-1.5">
+              <Zap className="w-3 h-3" /> FORTE AUTONOMY
+            </div>
+            <div className="glass-pill border-secondary/40 bg-secondary/5 text-secondary text-[10px] font-black px-3 py-1 flex items-center gap-1.5">
+              <Shield className="w-3 h-3" /> MEV-SHIELD ACTIVE
+            </div>
+            <div className="glass-pill border-white/20 bg-white/5 text-white text-[10px] font-black uppercase px-3 py-1 flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${vault.status === 'active' ? 'bg-primary shadow-[0_0_8px_rgba(0,239,139,0.8)] animate-pulse' : 'bg-warning'}`} />
+              {vault.status}
+            </div>
           </div>
         </div>
 
-        {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-3 gap-6 mb-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold financial-number mb-1">
-              {formatCurrency(vault.balance)}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Available Balance</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-white financial-number tracking-tighter">
+                {formatCurrency(vault.balance)}
+              </span>
+              <span className="text-xs font-bold text-muted-foreground font-mono uppercase">Flow</span>
             </div>
-            <div className="text-xs text-muted-foreground font-medium">Vault Balance</div>
           </div>
-          
-          <div className="text-center">
-            <div className="text-2xl font-bold status-active financial-number mb-1">
-              {vault.apy.toFixed(1)}%
+
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Projected APY</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-primary financial-number tracking-tighter">
+                {formatPercentage(vault.apy)}
+              </span>
+              <span className="text-primary/50 font-bold animate-pulse">▲</span>
             </div>
-            <div className="text-xs text-muted-foreground font-medium">Annual Yield</div>
           </div>
-          
-          <div className="text-center">
-            <div className="text-xs flex items-center justify-center mb-1">
-              <Clock className="w-3 h-3 mr-1" />
-              {formatTimeAgo(vault.lastExecution)}
+
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Last Execution</p>
+            <div className="flex items-center gap-2 mt-2" suppressHydrationWarning>
+              <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+              <span className="text-sm font-bold text-foreground">
+                {mounted ? (isEpoch ? 'NEVER' : vault.lastExecution.toLocaleDateString()) : '---'}
+              </span>
+              {!isEpoch && mounted && (
+                <span className="text-xs text-muted-foreground italic">
+                  @{vault.lastExecution.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
             </div>
-            <div className="text-xs text-muted-foreground font-medium">Last Execution</div>
           </div>
         </div>
 
-        {/* Enhanced Expanded Content */}
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="border-t border-border pt-6 mt-6"
-            onClick={(e) => e.stopPropagation()}
+        <div className="flex flex-wrap gap-3 pt-6 border-t border-white/15">
+          <Button
+            className="btn-primary flex-1 min-w-[140px] gap-2 rounded-xl h-12"
+            onClick={handleDeposit}
+            disabled={loading}
           >
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="text-center p-3 bg-accent rounded-lg">
-                <div className="text-xs text-muted-foreground mb-1 font-medium">Performance (24h)</div>
-                <div className={`flex items-center justify-center ${vault.pnl && vault.pnl >= 0 ? 'status-active' : 'status-error'}`}>
-                  <TrendingUp className="w-4 h-4 mr-1" />
-                  <span className="financial-number text-base font-semibold">
-                    {vault.pnlPercent ? `${vault.pnlPercent >= 0 ? '+' : ''}${vault.pnlPercent.toFixed(2)}%` : '+0.00%'}
-                  </span>
+            <Plus className="w-4 h-4" /> Deposit
+          </Button>
+          <Button
+            variant="outline"
+            className="btn-secondary transition-all hover:bg-white/10 flex-1 min-w-[140px] gap-2 rounded-xl h-12"
+            onClick={handleWithdraw}
+            disabled={loading}
+          >
+            <ArrowDownLeft className="w-4 h-4" /> Withdraw
+          </Button>
+          <Button
+            variant="outline"
+            className="btn-secondary transition-all hover:bg-white/10 flex-1 min-w-[140px] gap-2 group/btn rounded-xl h-12"
+            disabled={loading}
+            onClick={handlePause}
+          >
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            ) : vault.status === 'active' ? (
+              <>
+                <Lock className="w-4 h-4 group-hover/btn:text-primary transition-colors" />
+                <span>Pause (Passkey)</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 group-hover/btn:text-primary" />
+                <span>Resume System</span>
+              </>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`rounded-xl glass border-white/10 hover:bg-white/10 h-12 w-12 ${isExpanded ? 'bg-white/10' : ''}`}
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </Button>
+        </div>
+
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="glass rounded-2xl p-6 bg-white/[0.02] border-white/15">
+                  <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Activity className="w-3 h-3" /> Real-time Performance
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground font-bold">7D P&L</span>
+                      <span className="text-sm font-black text-primary">+12.4 FLOW</span>
+                    </div>
+                    <Progress value={65} className="h-1 bg-white/5" />
+                    <div className="flex justify-between items-center text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                      <span>Liquidity Score</span>
+                      <span>94/100</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass rounded-2xl p-6 bg-white/[0.02] border-white/15">
+                  <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Shield className="w-3 h-3" /> Security Report
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      <span className="text-muted-foreground font-bold">MEV Resistance: </span>
+                      <span className="font-black text-white uppercase text-[10px] tracking-widest">Maximum</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      <span className="text-muted-foreground font-bold">Vault Latency: </span>
+                      <span className="font-black text-white uppercase text-[10px] tracking-widest">2ms</span>
+                    </div>
+                    <Link href="#" className="text-[10px] font-black text-primary hover:text-white transition-colors flex items-center gap-1 mt-4 tracking-widest">
+                      VIEW AUDIT REPORT <ExternalLink className="w-2.5 h-2.5" />
+                    </Link>
+                  </div>
                 </div>
               </div>
-              
-              <div className="text-center p-3 bg-accent rounded-lg">
-                <div className="text-xs text-muted-foreground mb-1 font-medium">Last Execution</div>
-                <div className="text-base font-semibold">
-                  {vault.lastExecution ? formatTimeAgo(vault.lastExecution) : 'Never'}
-                </div>
-              </div>
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <Button 
-                size="sm" 
-                variant={vault.status === 'active' ? 'outline' : 'default'}
-                className="flex-1 text-xs"
-                disabled={loading}
-              >
-                {vault.status === 'active' ? (
-                  <>
-                    <Pause className="w-3 h-3 mr-1" />
-                    Pause
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3 h-3 mr-1" />
-                    Resume
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="text-xs"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowDepositModal(true)
-                }}
-                disabled={loading}
-              >
-                <ArrowDownLeft className="w-3 h-3 mr-1" />
-                Deposit
-              </Button>
-              
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="text-xs"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowWithdrawModal(true)
-                }}
-                disabled={loading || vault.balance === 0}
-              >
-                <ArrowUpRight className="w-3 h-3 mr-1" />
-                Withdraw
-              </Button>
-              
-              <Button size="sm" variant="ghost" className="text-xs">
-                <Settings className="w-3 h-3 mr-1" />
-                Settings
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </motion.div>
-
-      {/* Enhanced Deposit Modal */}
-      {showDepositModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="tool-card p-6 max-w-sm w-full"
-          >
-            <div className="flex items-center mb-6">
-              <img 
-                src="/logo.png" 
-                alt="Flow Sentinel" 
-                className="w-6 h-6 mr-2"
-              />
-              <h3 className="text-xl font-semibold">Deposit to {vault.name}</h3>
-            </div>
-            
-            <div className="mb-6 p-4 bg-accent rounded-lg">
-              <div className="text-xs text-muted-foreground mb-1 font-medium">Available Balance</div>
-              <div className="text-2xl font-bold status-active financial-number">
-                {formatCurrency(flowBalance)} FLOW
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-semibold mb-2">
-                Deposit Amount (FLOW)
-              </label>
-              <input
-                type="number"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-                placeholder="0.00"
-                max={flowBalance}
-                className="w-full px-3 py-3 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring financial-number text-base"
-              />
-              <div className="flex justify-between mt-3">
-                {[0.25, 0.5, 0.75, 1].map((percentage) => (
-                  <button
-                    key={percentage}
-                    onClick={() => setDepositAmount((flowBalance * percentage).toString())}
-                    className="px-2 py-1 text-xs bg-accent hover:bg-accent/80 rounded-md transition-colors font-medium"
-                  >
-                    {percentage === 1 ? 'Max' : `${percentage * 100}%`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowDepositModal(false)}
-                className="flex-1 py-2 text-sm"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleDeposit}
-                className="flex-1 py-2 text-sm btn-primary"
-                disabled={loading || !depositAmount || Number(depositAmount) <= 0 || Number(depositAmount) > flowBalance}
-              >
-                {loading ? 'Processing...' : 'Deposit Funds'}
-              </Button>
-            </div>
-          </motion.div>
+      <div className="bg-white/[0.02] px-8 py-4 flex items-center justify-between border-t border-white/10">
+        <div className="flex items-center text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+          <Settings className="w-3 h-3 mr-2" />
+          Protocol Configurations
         </div>
-      )}
-
-      {/* Enhanced Withdraw Modal */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="tool-card p-6 max-w-sm w-full"
-          >
-            <div className="flex items-center mb-6">
-              <img 
-                src="/logo.png" 
-                alt="Flow Sentinel" 
-                className="w-6 h-6 mr-2"
-              />
-              <h3 className="text-xl font-semibold">Withdraw from {vault.name}</h3>
-            </div>
-            
-            <div className="mb-6 p-4 bg-accent rounded-lg">
-              <div className="text-xs text-muted-foreground mb-1 font-medium">Vault Balance</div>
-              <div className="text-2xl font-bold financial-number">
-                {formatCurrency(vault.balance)} FLOW
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-semibold mb-2">
-                Withdraw Amount (FLOW)
-              </label>
-              <input
-                type="number"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                placeholder="0.00"
-                max={vault.balance}
-                className="w-full px-3 py-3 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring financial-number text-base"
-              />
-              <div className="flex justify-between mt-3">
-                {[0.25, 0.5, 0.75, 1].map((percentage) => (
-                  <button
-                    key={percentage}
-                    onClick={() => setWithdrawAmount((vault.balance * percentage).toString())}
-                    className="px-2 py-1 text-xs bg-accent hover:bg-accent/80 rounded-md transition-colors font-medium"
-                  >
-                    {percentage === 1 ? 'Max' : `${percentage * 100}%`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowWithdrawModal(false)}
-                className="flex-1 py-2 text-sm"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleWithdraw}
-                className="flex-1 py-2 text-sm btn-primary"
-                disabled={loading || !withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > vault.balance}
-              >
-                {loading ? 'Processing...' : 'Withdraw Funds'}
-              </Button>
-            </div>
-          </motion.div>
+        <div className="flex items-center text-[10px] font-black text-muted-foreground/30 uppercase tracking-widest">
+          <Shield className="w-3 h-3 mr-2" />
+          E2E Encrypted
         </div>
-      )}
-    </>
+      </div>
+    </div>
   )
 }

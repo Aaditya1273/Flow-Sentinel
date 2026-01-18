@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Menu, X, Wallet, ChevronDown } from 'lucide-react'
+import { Menu, X, Wallet, ChevronDown, Zap } from 'lucide-react'
 import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit'
 import { useFlow } from 'lib/flow'
 import { Button } from 'components/ui/button'
@@ -19,14 +20,9 @@ import {
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const { user, logIn, logOut, walletType, setWalletType, isConnected } = useFlow()
   const { openConnectModal } = useConnectModal()
-
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const pathname = usePathname()
 
   const navItems = [
     { name: 'Vaults', href: '/vaults' },
@@ -56,30 +52,43 @@ export function Navbar() {
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link href="/" className="logo-container">
-            <img 
-              src="/logo.png" 
-              alt="Flow Sentinel" 
-              className="logo-image"
-            />
-            <span className="text-xl font-semibold">
+          <Link href="/" className="flex items-center gap-4 group">
+            <div className="w-14 h-14 glass rounded-[1.25rem] flex items-center justify-center bg-primary/5 border-primary/40 group-hover:bg-primary/10 transition-all overflow-hidden p-2.5">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <span className="text-2xl font-black text-white italic tracking-tighter uppercase">
               Flow Sentinel
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = pathname === item.href
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`relative text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                  {item.name}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute -bottom-[28px] left-0 right-0 h-[2px] bg-primary shadow-[0_0_15px_rgba(0,239,139,0.8)]"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              )
+            })}
           </div>
 
           {/* Wallet Connection */}
@@ -135,24 +144,29 @@ export function Navbar() {
                   </DropdownMenu>
                 )
               ) : (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-3">
                   {walletType === 'flow' ? (
-                    <Badge variant="outline" className="status-active">
-                      Flow: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                    </Badge>
+                    <div className="glass-pill border-primary/40 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-wider">
+                      <Zap className="w-3 h-3 fill-primary" />
+                      FLOW: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                    </div>
                   ) : walletType === 'evm' ? (
                     <ConnectButton />
                   ) : (
-                    <Badge variant="outline" className="status-active">
+                    <div className="glass-pill border-white/10 text-white/60 text-[10px] font-black uppercase tracking-wider">
                       {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                    </Badge>
+                    </div>
                   )}
-                  <Button onClick={handleDisconnect} variant="ghost" size="sm">
-                    Disconnect
-                  </Button>
-                  <Button onClick={() => setWalletType(null)} variant="ghost" size="sm">
-                    Switch
-                  </Button>
+
+                  <div className="flex items-center glass rounded-xl border-white/15 p-1">
+                    <Button onClick={handleDisconnect} variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest hover:text-primary">
+                      Disconnect
+                    </Button>
+                    <div className="w-[1px] h-4 bg-white/5 mx-1" />
+                    <Button onClick={() => setWalletType(null)} variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest hover:text-secondary">
+                      Switch
+                    </Button>
+                  </div>
                 </div>
               )}
             </ClientOnly>
@@ -179,71 +193,78 @@ export function Navbar() {
             className="md:hidden py-4 border-t border-border"
           >
             <div className="flex flex-col space-y-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
-              
+              {navItems.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`text-sm font-black uppercase tracking-widest transition-colors flex items-center justify-between ${isActive ? 'text-primary' : 'text-muted-foreground'
+                      }`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.name}
+                    {isActive && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,239,139,0.8)]" />}
+                  </Link>
+                )
+              })}
+
               <div className="pt-4 border-t border-border space-y-3">
                 <div className="text-sm text-muted-foreground">Wallet Connection</div>
-                
-                {!mounted ? (
+
+                <ClientOnly fallback={
                   <Button variant="outline" disabled className="w-full">
                     Loading...
                   </Button>
-                ) : !isConnected ? (
-                  walletType === 'evm' ? (
-                    <div className="space-y-2">
-                      <ConnectButton />
-                      <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
-                        Back to Wallet Selection
-                      </Button>
-                    </div>
-                  ) : walletType === 'flow' ? (
-                    <div className="space-y-2">
-                      <Button onClick={handleConnect} variant="outline" className="w-full">
-                        <Wallet className="w-4 h-4 mr-2" />
-                        Connect Flow Wallet
-                      </Button>
-                      <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
-                        Back to Wallet Selection
-                      </Button>
-                    </div>
+                }>
+                  {!isConnected ? (
+                    walletType === 'evm' ? (
+                      <div className="space-y-2">
+                        <ConnectButton />
+                        <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
+                          Back to Wallet Selection
+                        </Button>
+                      </div>
+                    ) : walletType === 'flow' ? (
+                      <div className="space-y-2">
+                        <Button onClick={handleConnect} variant="outline" className="w-full">
+                          <Wallet className="w-4 h-4 mr-2" />
+                          Connect Flow Wallet
+                        </Button>
+                        <Button onClick={() => setWalletType(null)} variant="outline" size="sm" className="w-full">
+                          Back to Wallet Selection
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Button onClick={handleConnect} className="w-full justify-start" variant="outline">
+                          <div className="text-left">
+                            <div className="font-medium">Flow Wallet</div>
+                            <div className="text-xs text-muted-foreground">Native Flow blockchain</div>
+                          </div>
+                        </Button>
+                        <Button onClick={handleConnectEVM} className="w-full justify-start" variant="outline">
+                          <div className="text-left">
+                            <div className="font-medium">EVM Wallet</div>
+                            <div className="text-xs text-muted-foreground">MetaMask, WalletConnect</div>
+                          </div>
+                        </Button>
+                      </div>
+                    )
                   ) : (
                     <div className="space-y-2">
-                      <Button onClick={handleConnect} className="w-full justify-start" variant="outline">
-                        <div className="text-left">
-                          <div className="font-medium">Flow Wallet</div>
-                          <div className="text-xs text-muted-foreground">Native Flow blockchain</div>
-                        </div>
+                      <Badge variant="outline" className="w-full justify-center status-active">
+                        {walletType === 'flow' ? 'Flow' : 'EVM'}: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
+                      </Badge>
+                      <Button onClick={handleDisconnect} variant="outline" size="sm" className="w-full">
+                        Disconnect Wallet
                       </Button>
-                      <Button onClick={handleConnectEVM} className="w-full justify-start" variant="outline">
-                        <div className="text-left">
-                          <div className="font-medium">EVM Wallet</div>
-                          <div className="text-xs text-muted-foreground">MetaMask, WalletConnect</div>
-                        </div>
+                      <Button onClick={() => setWalletType(null)} variant="ghost" size="sm" className="w-full">
+                        Switch Wallet Type
                       </Button>
                     </div>
-                  )
-                ) : isConnected ? (
-                  <div className="space-y-2">
-                    <Badge variant="outline" className="w-full justify-center status-active">
-                      {walletType === 'flow' ? 'Flow' : 'EVM'}: {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-                    </Badge>
-                    <Button onClick={handleDisconnect} variant="outline" size="sm" className="w-full">
-                      Disconnect Wallet
-                    </Button>
-                    <Button onClick={() => setWalletType(null)} variant="ghost" size="sm" className="w-full">
-                      Switch Wallet Type
-                    </Button>
-                  </div>
-                ) : null}
+                  )}
+                </ClientOnly>
               </div>
             </div>
           </motion.div>

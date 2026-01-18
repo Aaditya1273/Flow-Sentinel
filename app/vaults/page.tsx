@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Search, 
-  TrendingUp, 
-  Shield, 
-  Zap, 
+import { useRouter } from 'next/navigation'
+import {
+  Search,
+  TrendingUp,
+  Shield,
+  Zap,
   DollarSign,
   Users,
   Star,
@@ -50,6 +51,7 @@ export default function VaultsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { isConnected } = useFlow()
+  const router = useRouter()
 
   const categories = [
     { value: 'all', label: 'All Categories' },
@@ -79,10 +81,10 @@ export default function VaultsPage() {
       try {
         setLoading(true)
         setError(null)
-        
+
         // Fetch all strategies from the blockchain
         const blockchainStrategies = await FlowService.getAllStrategies()
-        
+
         if (blockchainStrategies && blockchainStrategies.length > 0) {
           // Transform blockchain data to match our interface
           const transformedStrategies: VaultStrategy[] = blockchainStrategies.map((strategy: any) => ({
@@ -104,7 +106,7 @@ export default function VaultsPage() {
             features: strategy.features || [],
             isActive: strategy.isActive !== false
           }))
-          
+
           setStrategies(transformedStrategies)
         } else {
           // Fallback to demo data if blockchain is not available
@@ -127,10 +129,10 @@ export default function VaultsPage() {
   useEffect(() => {
     let filtered = strategies.filter(strategy => {
       const matchesSearch = strategy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           strategy.description.toLowerCase().includes(searchTerm.toLowerCase())
+        strategy.description.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCategory = selectedCategory === 'all' || strategy.category === selectedCategory
       const matchesRisk = selectedRisk === 'all' || strategy.riskLevel.toString() === selectedRisk
-      
+
       return matchesSearch && matchesCategory && matchesRisk && strategy.isActive
     })
 
@@ -158,7 +160,7 @@ export default function VaultsPage() {
       alert('Please connect your wallet first')
       return
     }
-    
+
     try {
       // Redirect to dashboard with strategy selection
       const params = new URLSearchParams({
@@ -167,7 +169,7 @@ export default function VaultsPage() {
         name: strategy.name,
         minDeposit: strategy.minDeposit.toString()
       })
-      window.location.href = `/dashboard?${params.toString()}`
+      router.push(`/dashboard?${params.toString()}`)
     } catch (error) {
       console.error('Error handling invest click:', error)
       alert('Error preparing vault creation. Please try again.')
@@ -219,7 +221,7 @@ export default function VaultsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="pt-20 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -234,7 +236,7 @@ export default function VaultsPage() {
             <p className="text-xl text-muted-foreground mb-6">
               Choose from proven DeFi strategies powered by Flow blockchain smart contracts
             </p>
-            
+
             <div className="tool-card p-4 mb-6 border border-accent/20 bg-accent/5">
               <div className="flex items-center space-x-2 text-accent mb-2">
                 <Shield className="w-5 h-5" />
@@ -498,7 +500,7 @@ export default function VaultsPage() {
           {filteredStrategies.length === 0 && !loading && (
             <div className="text-center py-12">
               <div className="text-muted-foreground mb-4">
-                {strategies.length === 0 
+                {strategies.length === 0
                   ? 'No strategies available. Please check your blockchain connection.'
                   : 'No strategies found matching your criteria'
                 }

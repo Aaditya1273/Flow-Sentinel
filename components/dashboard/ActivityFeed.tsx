@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Shield, 
-  Zap, 
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  Shield,
+  Zap,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Activity as ActivityIcon
 } from 'lucide-react'
 import { useFlow } from 'lib/flow'
 import { useVaultData } from 'hooks/useVaultData'
+import { ClientOnly } from 'components/ClientOnly'
 import { formatCurrency } from 'lib/utils'
 
 interface Activity {
@@ -39,82 +41,62 @@ export function ActivityFeed() {
 
       try {
         setLoading(true)
-        
-        // Generate activities based on real vault data
         const realActivities: Activity[] = []
 
-        // Add vault creation activity
         if (vaultData.createdAt) {
           realActivities.push({
             id: 'vault-created',
             type: 'system',
-            description: `Vault "${vaultData.name}" created with ${vaultData.strategy} strategy`,
+            description: `Vault Protocol Initialized: ${vaultData.name}`,
             timestamp: new Date(vaultData.createdAt),
             status: 'completed'
           })
         }
 
-        // Add deposit activities based on total deposits
         if (vaultData.totalDeposits > 0) {
           realActivities.push({
             id: 'initial-deposit',
             type: 'deposit',
             amount: vaultData.totalDeposits,
-            description: 'Initial deposit to vault',
-            timestamp: new Date(vaultData.createdAt || Date.now()),
+            description: 'Capital Inflow Detected',
+            timestamp: new Date(vaultData.createdAt || 1640995200000),
             status: 'completed'
           })
         }
 
-        // Add yield generation activities if there's P&L
         if (performance?.pnl && performance.pnl > 0) {
           realActivities.push({
             id: 'yield-generated',
             type: 'yield',
             amount: performance.pnl,
-            description: 'Yield generated from strategy execution',
-            timestamp: new Date(vaultData.lastExecution ? vaultData.lastExecution * 1000 : Date.now()),
+            description: 'Autonomous Yield Harvested',
+            timestamp: new Date(vaultData.lastExecution ? vaultData.lastExecution * 1000 : 1640995200000),
             status: 'completed'
           })
         }
 
-        // Add strategy execution activity
         if (vaultData.lastExecution) {
           realActivities.push({
             id: 'strategy-executed',
             type: 'strategy',
-            description: `${vaultData.strategy} strategy executed successfully`,
+            description: `Forte Execution: ${vaultData.strategy}`,
             timestamp: new Date(vaultData.lastExecution * 1000),
             status: 'completed'
           })
         }
 
-        // Add system activities
         realActivities.push({
           id: 'mev-protection',
           type: 'system',
-          description: 'MEV protection activated for all transactions',
-          timestamp: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+          description: 'MEV-Shield active Monitoring',
+          timestamp: new Date(1640995200000 - 60 * 60 * 1000),
           status: 'completed'
         })
 
-        // Sort by timestamp (newest first)
         realActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-        
         setActivities(realActivities)
       } catch (error) {
         console.error('Error loading activities:', error)
-        
-        // Fallback to basic activities if real data fails
-        setActivities([
-          {
-            id: 'system-status',
-            type: 'system',
-            description: 'Connected to Flow Testnet',
-            timestamp: new Date(),
-            status: 'completed'
-          }
-        ])
       } finally {
         setLoading(false)
       }
@@ -125,58 +107,26 @@ export function ActivityFeed() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'deposit':
-        return <ArrowUpRight className="w-5 h-5 status-active" />
-      case 'withdrawal':
-        return <ArrowDownLeft className="w-5 h-5 status-error" />
-      case 'yield':
-        return <TrendingUp className="w-5 h-5 status-active" />
-      case 'strategy':
-        return <Zap className="w-5 h-5" />
-      case 'system':
-        return <Shield className="w-5 h-5" />
-      default:
-        return <Clock className="w-5 h-5" />
+      case 'deposit': return <ArrowUpRight className="w-5 h-5 text-primary" />
+      case 'withdrawal': return <ArrowDownLeft className="w-5 h-5 text-red-500" />
+      case 'yield': return <TrendingUp className="w-5 h-5 text-primary" />
+      case 'strategy': return <Zap className="w-5 h-5 text-secondary" />
+      case 'system': return <Shield className="w-5 h-5 text-white" />
+      default: return <Clock className="w-5 h-5" />
     }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'status-active'
-      case 'pending':
-        return 'status-warning'
-      case 'failed':
-        return 'status-error'
-      default:
-        return 'text-muted-foreground'
-    }
-  }
-
-  const formatTimeAgo = (timestamp: Date) => {
-    const now = new Date()
-    const diff = now.getTime() - timestamp.getTime()
-    const minutes = Math.floor(diff / (1000 * 60))
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-    if (days > 0) return `${days}d ago`
-    if (hours > 0) return `${hours}h ago`
-    if (minutes > 0) return `${minutes}m ago`
-    return 'Just now'
   }
 
   if (loading) {
     return (
-      <div className="tool-card p-6">
-        <h3 className="text-xl font-semibold mb-6">Recent Activity</h3>
-        <div className="space-y-4">
+      <div className="tool-card border-0 glass p-6">
+        <h3 className="text-xl font-black italic tracking-tighter mb-8">SECURE LOGS</h3>
+        <div className="space-y-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center space-x-4 animate-pulse">
-              <div className="w-10 h-10 bg-accent rounded-xl"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-accent rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-accent rounded w-1/2"></div>
+              <div className="w-12 h-12 glass rounded-2xl bg-white/5"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-white/5 rounded w-3/4"></div>
+                <div className="h-3 bg-white/5 rounded w-1/4"></div>
               </div>
             </div>
           ))}
@@ -186,97 +136,77 @@ export function ActivityFeed() {
   }
 
   return (
-    <div className="tool-card p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold">Recent Activity</h3>
-        <div className="flex items-center text-sm status-active font-medium">
-          <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-          Live Updates
-        </div>
-      </div>
-
-      {activities.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-accent rounded-xl flex items-center justify-center mx-auto mb-4">
-            <Clock className="w-8 h-8 text-muted-foreground" />
+    <ClientOnly>
+      <div className="tool-card border-0 glass p-6">
+        <div className="flex items-center justify-between mb-8">
+          <h3 className="text-xl font-black italic tracking-tighter uppercase">Activity Log</h3>
+          <div className="flex items-center text-[10px] font-black uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/40">
+            <ActivityIcon className="w-3 h-3 mr-2 animate-pulse" />
+            Live Sync
           </div>
-          <p className="text-muted-foreground mb-2 font-medium">No activity yet</p>
-          <p className="text-sm text-muted-foreground">
-            {!user.addr ? 'Connect your wallet to see activity' : 'Create a vault to start seeing activity'}
-          </p>
         </div>
-      ) : (
-        <div className="space-y-4 max-h-96 overflow-y-auto">
-          {activities.map((activity, index) => (
-            <motion.div
-              key={activity.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex items-start space-x-4 p-4 bg-accent rounded-lg hover:bg-accent/80 transition-colors"
-            >
-              <div className="flex-shrink-0 w-10 h-10 bg-card rounded-xl flex items-center justify-center">
-                {getActivityIcon(activity.type)}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium truncate">
-                    {activity.description}
-                  </p>
-                  <span className={`text-xs font-medium ${getStatusColor(activity.status)}`}>
-                    {activity.status.toUpperCase()}
-                  </span>
+
+        {activities.length === 0 ? (
+          <div className="text-center py-20 opacity-50">
+            <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-sm font-bold uppercase tracking-widest">No signals detected</p>
+          </div>
+        ) : (
+          <div className="space-y-4 max-h-[440px] overflow-y-auto pr-2 custom-scrollbar">
+            {activities.map((activity, index) => (
+              <motion.div
+                key={activity.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="flex items-start space-x-4 p-4 glass rounded-2xl border-white/10 transition-all duration-300 hover:border-white/30 hover:translate-x-1"
+              >
+                <div className="flex-shrink-0 w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/20">
+                  {getActivityIcon(activity.type)}
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {formatTimeAgo(activity.timestamp)}
-                  </span>
-                  {activity.amount && (
-                    <span className={`text-sm font-semibold financial-number ${
-                      activity.type === 'deposit' || activity.type === 'yield' 
-                        ? 'status-active' 
-                        : 'status-error'
-                    }`}>
-                      {activity.type === 'deposit' || activity.type === 'yield' ? '+' : '-'}
-                      {formatCurrency(activity.amount)}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-bold text-white tracking-tight uppercase">
+                      {activity.description}
+                    </p>
+                    <span className={`text-[10px] font-black tracking-widest uppercase ${activity.status === 'completed' ? 'text-primary' : 'text-warning'
+                      }`}>
+                      {activity.status}
                     </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tighter">
+                      {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  •  {new Date(activity.timestamp).toLocaleDateString()}
+                    </span>
+                    {activity.amount && (
+                      <span className={`text-base font-black financial-number tracking-tighter ${activity.type === 'deposit' || activity.type === 'yield'
+                        ? 'text-primary'
+                        : 'text-red-500'
+                        }`}>
+                        {activity.type === 'deposit' || activity.type === 'yield' ? '+' : '-'}
+                        {formatCurrency(activity.amount)}
+                      </span>
+                    )}
+                  </div>
+
+                  {activity.txHash && (
+                    <a
+                      href={`https://testnet.flowscan.io/tx/${activity.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-black text-primary/50 hover:text-primary mt-3 flex items-center gap-1 uppercase tracking-widest transition-colors"
+                    >
+                      Verify on Explorer ↗
+                    </a>
                   )}
                 </div>
-
-                {activity.txHash && (
-                  <a
-                    href={`https://testnet.flowscan.io/tx/${activity.txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-foreground mt-2 inline-block transition-colors"
-                  >
-                    View Transaction →
-                  </a>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Enhanced status footer */}
-      <div className="mt-6 pt-4 border-t border-border">
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <div className="flex items-center">
-            <img 
-              src="/logo.png" 
-              alt="Flow Sentinel" 
-              className="w-4 h-4 mr-2"
-            />
-            <span>Flow Testnet</span>
+              </motion.div>
+            ))}
           </div>
-          <span className="font-mono">
-            {user.addr?.slice(0, 6)}...{user.addr?.slice(-4)}
-          </span>
-        </div>
+        )}
       </div>
-    </div>
+    </ClientOnly>
   )
 }

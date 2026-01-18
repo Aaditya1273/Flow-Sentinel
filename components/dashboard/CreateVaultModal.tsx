@@ -1,12 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { X, Shield, AlertTriangle, DollarSign, TrendingUp, Zap } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  X,
+  Shield,
+  AlertTriangle,
+  DollarSign,
+  TrendingUp,
+  Zap,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  Lock,
+  ArrowRight,
+  Target,
+  Sparkles
+} from 'lucide-react'
 import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
 import { useVaultData } from 'hooks/useVaultData'
 import { FlowService } from 'lib/flow-service'
+import { formatCurrency } from 'lib/utils'
 
 interface CreateVaultModalProps {
   onClose: () => void
@@ -34,8 +49,8 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
   const [step, setStep] = useState(1) // 1: Select Strategy, 2: Configure, 3: Confirm, 4: Creating
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
-  const { createVault, flowBalance, loading: vaultLoading } = useVaultData()
+
+  const { flowBalance, loading: vaultLoading } = useVaultData()
   const selectedStrategyData = strategies.find(s => s.id === selectedStrategy)
 
   // Load strategies from blockchain
@@ -44,9 +59,9 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
       try {
         setLoading(true)
         setError(null)
-        
+
         const blockchainStrategies = await FlowService.getAllStrategies()
-        
+
         if (blockchainStrategies && blockchainStrategies.length > 0) {
           const transformedStrategies: Strategy[] = blockchainStrategies.map((strategy: any) => ({
             id: strategy.id,
@@ -60,7 +75,7 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
             creator: strategy.creator || 'Unknown',
             verified: strategy.verified === true
           }))
-          
+
           setStrategies(transformedStrategies)
         } else {
           setError('No strategies available. Please ensure contracts are deployed.')
@@ -76,46 +91,43 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
     loadStrategies()
   }, [])
 
+  // Auto-advance if strategy is pre-selected
+  useEffect(() => {
+    if (preselectedStrategy && strategies.length > 0) {
+      setStep(2)
+      const strategy = strategies.find(s => s.id === preselectedStrategy)
+      if (strategy && !vaultName) {
+        setVaultName(`${strategy.name.split(' ')[0]}-Vault-01`)
+      }
+    }
+  }, [preselectedStrategy, strategies])
+
   const handleCreateVault = async () => {
     if (!selectedStrategyData || !vaultName || !depositAmount) return
-    
+
     try {
       setStep(4) // Show loading step
-      
-      // Use the real FlowService to create vault with strategy
+
       await FlowService.createVaultWithStrategy(
         selectedStrategyData.id,
         Number(depositAmount)
       )
-      
-      console.log('Vault created successfully with strategy:', selectedStrategyData.id)
+
       onClose()
-      
-      // Refresh the page to show the new vault
       window.location.reload()
-      
     } catch (error) {
       console.error('Failed to create vault:', error)
-      alert('Failed to create vault. Please try again.')
-      setStep(3) // Go back to confirm step
+      setError('Failed to create vault on blockchain. Please check your wallet.')
+      setStep(3)
     }
   }
 
-  const getRiskColor = (riskLevel: number) => {
+  const getRiskBadge = (riskLevel: number) => {
     switch (riskLevel) {
-      case 1: return 'text-green-400 bg-green-400/20'
-      case 2: return 'text-yellow-400 bg-yellow-400/20'
-      case 3: return 'text-red-400 bg-red-400/20'
-      default: return 'text-gray-400 bg-gray-400/20'
-    }
-  }
-
-  const getRiskLabel = (riskLevel: number) => {
-    switch (riskLevel) {
-      case 1: return 'LOW'
-      case 2: return 'MEDIUM'
-      case 3: return 'HIGH'
-      default: return 'UNKNOWN'
+      case 1: return 'text-primary bg-primary/10 border-primary/40'
+      case 2: return 'text-warning bg-warning/10 border-warning/20'
+      case 3: return 'text-destructive bg-destructive/10 border-destructive/20'
+      default: return 'text-muted-foreground bg-white/5 border-white/10'
     }
   }
 
@@ -125,339 +137,329 @@ export function CreateVaultModal({ onClose, preselectedStrategy }: CreateVaultMo
       case 'yield-farming': return <TrendingUp className="w-5 h-5" />
       case 'lending': return <DollarSign className="w-5 h-5" />
       case 'arbitrage': return <Zap className="w-5 h-5" />
-      default: return <Shield className="w-5 h-5" />
+      default: return <Target className="w-5 h-5" />
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-background border border-border rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-background/80 backdrop-blur-xl"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="relative glass border-white/15 rounded-[40px] w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.5)]"
       >
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-[40%] h-[40%] bg-primary/5 blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[30%] h-[30%] bg-secondary/5 blur-[100px] pointer-events-none" />
+
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="p-10 pb-6 flex items-center justify-between relative z-10">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Create New Vault</h2>
-            <p className="text-muted-foreground">Deploy your autonomous DeFi strategy on Flow blockchain</p>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="flex items-center mb-8">
-          {[1, 2, 3, 4].map((stepNum) => (
-            <div key={stepNum} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step >= stepNum 
-                  ? 'bg-accent text-foreground' 
-                  : 'bg-muted text-muted-foreground'
-              }`}>
-                {stepNum === 4 && step === 4 ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-foreground"></div>
-                ) : (
-                  stepNum
-                )}
-              </div>
-              {stepNum < 4 && (
-                <div className={`w-12 h-0.5 mx-2 ${
-                  step > stepNum ? 'bg-accent' : 'bg-muted'
-                }`} />
-              )}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Step {step} of 4</span>
             </div>
-          ))}
+            <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">
+              {step === 1 && 'Select Strategy'}
+              {step === 2 && 'Configuration'}
+              {step === 3 && 'Final Verification'}
+              {step === 4 && 'Deploying Sentinel'}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-12 h-12 glass rounded-2xl flex items-center justify-center transition-all hover:bg-white/10 border-white/15"
+          >
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading strategies from blockchain...</p>
+        {/* Progress Bar Container */}
+        <div className="px-10 mb-8 relative z-10">
+          <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-primary shadow-[0_0_10px_rgba(0,239,139,0.5)]"
+              initial={{ width: 0 }}
+              animate={{ width: `${(step / 4) * 100}%` }}
+              transition={{ duration: 0.5 }}
+            />
           </div>
-        )}
+        </div>
 
-        {/* Error State */}
-        {error && (
-          <div className="text-center py-12">
-            <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Strategies</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </div>
-        )}
-
-        {/* Step 1: Select Strategy */}
-        {step === 1 && !loading && !error && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Choose Your Strategy
-            </h3>
-            
-            {strategies.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-400">No strategies available. Please ensure contracts are deployed.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {strategies.map((strategy) => (
-                  <motion.div
-                    key={strategy.id}
-                    whileHover={{ scale: 1.02 }}
-                    className={`tool-card p-6 cursor-pointer transition-all border-2 ${
-                      selectedStrategy === strategy.id
-                        ? 'border-accent bg-accent/10'
-                        : 'border-border hover:border-accent/50'
-                    }`}
-                    onClick={() => setSelectedStrategy(strategy.id)}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-3 bg-accent rounded-lg">
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto px-10 pb-10 custom-scrollbar relative z-10">
+          <AnimatePresence mode="wait">
+            {/* Step 1: Select Strategy */}
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              >
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="tool-card h-64 animate-pulse glass border-white/15" />
+                  ))
+                ) : (
+                  strategies.map((strategy) => (
+                    <div
+                      key={strategy.id}
+                      onClick={() => setSelectedStrategy(strategy.id)}
+                      className={`tool-card p-8 cursor-pointer border-2 transition-all group ${selectedStrategy === strategy.id
+                        ? 'border-primary bg-primary/5 shadow-[0_0_30px_rgba(0,239,139,0.05)]'
+                        : 'border-white/15 hover:border-white/20'
+                        }`}
+                    >
+                      <div className="flex justify-between items-start mb-6">
+                        <div className={`w-12 h-12 glass rounded-2xl flex items-center justify-center border-white/15 transition-all ${selectedStrategy === strategy.id ? 'bg-primary text-primary-foreground' : 'bg-white/5 group-hover:bg-white/10'
+                          }`}>
                           {getCategoryIcon(strategy.category)}
                         </div>
+                        <Badge className={`${getRiskBadge(strategy.riskLevel)} border text-[10px] uppercase font-black tracking-widest px-2 py-1`}>
+                          {strategy.riskLevel === 1 ? 'Low' : strategy.riskLevel === 2 ? 'Medium' : 'High'} Risk
+                        </Badge>
+                      </div>
+
+                      <h4 className="text-xl font-black text-white tracking-tighter uppercase italic mb-2">
+                        {strategy.name}
+                      </h4>
+                      <p className="text-xs text-muted-foreground mb-6 line-clamp-2 leading-relaxed">
+                        {strategy.description}
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-4 mb-6">
                         <div>
-                          <h4 className="text-xl font-semibold text-foreground">
-                            {strategy.name}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            by {strategy.creator}
-                          </p>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Expected APY</span>
+                          <span className="text-2xl font-black text-primary tracking-tighter financial-number">{strategy.expectedAPY}%</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Min. Deposit</span>
+                          <span className="text-lg font-black text-white tracking-tighter financial-number">{strategy.minDeposit} FLOW</span>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end space-y-2">
-                        <Badge className={`${getRiskColor(strategy.riskLevel)} font-medium`}>
-                          {getRiskLabel(strategy.riskLevel)} RISK
-                        </Badge>
-                        {strategy.verified && (
-                          <Badge variant="outline" className="text-xs status-active border-accent">
-                            VERIFIED
-                          </Badge>
-                        )}
+
+                      <div className="flex flex-wrap gap-2">
+                        {strategy.features.slice(0, 3).map(f => (
+                          <span key={f} className="text-[9px] font-black uppercase text-muted-foreground tracking-widest bg-white/5 px-2 py-1 rounded-lg border border-white/15 italic">
+                            {f}
+                          </span>
+                        ))}
                       </div>
                     </div>
-
-                    <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                      {strategy.description}
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-6 mb-4">
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1 font-medium">Expected APY</div>
-                        <div className="text-2xl font-bold status-active financial-number">
-                          {strategy.expectedAPY.toFixed(1)}%
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-1 font-medium">Min Deposit</div>
-                        <div className="text-lg font-semibold text-foreground financial-number">
-                          {strategy.minDeposit} FLOW
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {strategy.features.slice(0, 3).map((feature) => (
-                        <Badge key={feature} variant="outline" className="text-xs bg-accent/20 border-accent/30">
-                          {feature}
-                        </Badge>
-                      ))}
-                      {strategy.features.length > 3 && (
-                        <Badge variant="outline" className="text-xs bg-accent/20 border-accent/30">
-                          +{strategy.features.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                  ))
+                )}
+              </motion.div>
             )}
 
-            <div className="flex justify-end pt-4">
-              <Button 
-                onClick={() => setStep(2)}
-                disabled={!selectedStrategy}
+            {/* Step 2: Configure */}
+            {step === 2 && selectedStrategyData && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="max-w-2xl mx-auto space-y-10"
               >
-                Continue
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Configure */}
-        {step === 2 && selectedStrategyData && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-foreground">
-              Configure Your Vault
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Vault Name
-                </label>
-                <input
-                  type="text"
-                  value={vaultName}
-                  onChange={(e) => setVaultName(e.target.value)}
-                  placeholder={`My ${selectedStrategyData.name} Vault`}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Initial Deposit (FLOW)
-                </label>
-                <div className="relative">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-primary uppercase tracking-[0.3em] px-1">Vault Identifier</label>
                   <input
-                    type="number"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder={selectedStrategyData.minDeposit.toString()}
-                    min={selectedStrategyData.minDeposit}
-                    max={flowBalance}
-                    step="0.1"
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent"
+                    type="text"
+                    value={vaultName}
+                    onChange={(e) => setVaultName(e.target.value)}
+                    placeholder={`Sentinel-Alpha-01`}
+                    className="w-full bg-white/5 border-2 border-white/15 rounded-3xl p-6 text-2xl font-black tracking-tighter italic uppercase text-white placeholder:text-white/10 focus:outline-none focus:border-primary/50 transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)]"
                   />
-                  <DollarSign className="absolute right-3 top-2.5 w-4 h-4 text-muted-foreground" />
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Minimum: {selectedStrategyData.minDeposit} FLOW</span>
-                  <span>Available: {flowBalance.toFixed(2)} FLOW</span>
-                </div>
-              </div>
 
-              {/* Strategy Details */}
-              <div className="tool-card p-4 border border-border">
-                <h4 className="text-sm font-semibold text-foreground mb-3">Strategy Details</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Category:</span>
-                    <span className="text-foreground ml-2 capitalize">{selectedStrategyData.category.replace('-', ' ')}</span>
+                <div className="space-y-4">
+                  <div className="flex justify-between px-1">
+                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Capital Deployment (FLOW)</label>
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Available: {formatCurrency(flowBalance)}</span>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Expected APY:</span>
-                    <span className="text-accent ml-2 font-semibold">{selectedStrategyData.expectedAPY.toFixed(1)}%</span>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      placeholder={selectedStrategyData.minDeposit.toString()}
+                      className="w-full bg-white/5 border-2 border-white/15 rounded-3xl p-8 text-4xl font-black tracking-tight text-white placeholder:text-white/10 focus:outline-none focus:border-primary/50 transition-all financial-number"
+                    />
+                    <div className="absolute right-8 top-1/2 -translate-y-1/2 flex gap-2">
+                      <button
+                        onClick={() => setDepositAmount((flowBalance * 0.5).toFixed(1))}
+                        className="glass-pill border-white/10 hover:bg-white/10 px-4 py-2 text-[10px] font-black"
+                      >
+                        50%
+                      </button>
+                      <button
+                        onClick={() => setDepositAmount(flowBalance.toFixed(1))}
+                        className="glass-pill border-primary/40 bg-primary/10 text-primary px-4 py-2 text-[10px] font-black"
+                      >
+                        MAX
+                      </button>
+                    </div>
                   </div>
+                  <p className="px-4 text-[10px] font-bold text-muted-foreground italic">Minimum Required Capital: {selectedStrategyData.minDeposit} FLOW</p>
                 </div>
-                <div className="mt-3">
-                  <span className="text-muted-foreground text-sm">Features:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedStrategyData.features.map((feature) => (
-                      <Badge key={feature} variant="outline" className="text-xs">
-                        {feature}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={() => setStep(1)}>
-                Back
-              </Button>
-              <Button 
-                onClick={() => setStep(3)}
-                disabled={!vaultName || !depositAmount || Number(depositAmount) < selectedStrategyData.minDeposit || Number(depositAmount) > flowBalance}
+                <div className="glass p-8 rounded-[30px] border-white/15 bg-white/[0.02] flex items-center gap-6">
+                  <div className="w-16 h-16 glass rounded-2xl flex items-center justify-center bg-primary/5">
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  </div>
+                  <div>
+                    <h5 className="text-sm font-black text-white uppercase italic tracking-tighter">Optimization Enabled</h5>
+                    <p className="text-xs text-muted-foreground italic leading-relaxed">
+                      Your capital will be routed through the {selectedStrategyData.name} engine with real-time MEV protection active.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Confirm */}
+            {step === 3 && selectedStrategyData && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="max-w-3xl mx-auto"
               >
-                Review
-              </Button>
-            </div>
-          </div>
-        )}
+                <div className="tool-card p-10 border-white/15 glass bg-white/[0.02] rounded-[40px] relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-10 opacity-5">
+                    <Shield className="w-32 h-32" />
+                  </div>
 
-        {/* Step 3: Confirm */}
-        {step === 3 && selectedStrategyData && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-foreground">
-              Confirm Vault Creation
-            </h3>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-10">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                      <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Final Verification Required</span>
+                    </div>
 
-            <div className="tool-card p-4 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-foreground">
-                  {vaultName}
-                </h4>
-                <Badge className={getRiskColor(selectedStrategyData.riskLevel)}>
-                  {getRiskLabel(selectedStrategyData.riskLevel)} RISK
-                </Badge>
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+                      <div className="space-y-6">
+                        <div>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Target Name</span>
+                          <span className="text-2xl font-black text-white uppercase italic tracking-tighter">{vaultName}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Strategy Engine</span>
+                          <span className="text-xl font-black text-primary uppercase italic tracking-tighter">{selectedStrategyData.name}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-6">
+                        <div>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Capital Allocation</span>
+                          <span className="text-4xl font-black text-white tracking-tighter financial-number">{depositAmount} FLOW</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Security Fee (Est.)</span>
+                          <span className="text-lg font-black text-muted-foreground tracking-tighter financial-number">~0.001 FLOW</span>
+                        </div>
+                      </div>
+                    </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <div className="text-sm text-muted-foreground">Strategy</div>
-                  <div className="text-foreground">{selectedStrategyData.name}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Expected APY</div>
-                  <div className="text-accent font-semibold">
-                    {selectedStrategyData.expectedAPY.toFixed(1)}%
+                    <div className="p-6 rounded-2xl bg-destructive/5 border border-destructive/10">
+                      <div className="flex items-center gap-3 mb-3">
+                        <AlertTriangle className="w-4 h-4 text-destructive" />
+                        <span className="text-[10px] font-black text-destructive uppercase tracking-widest">Protocol Confirmation</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground font-medium italic leading-relaxed">
+                        Deployment to the blockchain is irreversible. Your capital will be managed autonomously by the Flow Sentinel protocol. By proceeding, you authorize the smart contract to execute transactions on your behalf.
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Initial Deposit</div>
-                  <div className="text-foreground financial-number">{depositAmount} FLOW</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Est. Gas Fee</div>
-                  <div className="text-foreground">~0.001 FLOW</div>
-                </div>
-              </div>
+              </motion.div>
+            )}
 
-              <div className="border-t border-border pt-4">
-                <div className="flex items-center text-accent mb-2">
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  <span className="text-sm font-medium">Important Notice</span>
+            {/* Step 4: Creating */}
+            {step === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="h-full flex flex-col items-center justify-center text-center py-20"
+              >
+                <div className="relative w-48 h-48 mb-12">
+                  <div className="absolute inset-0 border-8 border-primary/10 rounded-full" />
+                  <motion.div
+                    className="absolute inset-0 border-8 border-primary border-t-transparent rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  />
+                  <div className="absolute inset-4 border-2 border-secondary/40 rounded-full border-dashed animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Zap className="w-16 h-16 text-primary animate-pulse" />
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  By creating this vault, you acknowledge the risks associated with DeFi protocols. 
-                  Your funds will be managed autonomously according to the selected strategy deployed on Flow blockchain.
-                </p>
-              </div>
-            </div>
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={() => setStep(2)}>
-                Back
-              </Button>
-              <Button onClick={handleCreateVault} disabled={vaultLoading}>
-                <Shield className="w-4 h-4 mr-2" />
-                {vaultLoading ? 'Creating...' : 'Create Vault'}
-              </Button>
-            </div>
-          </div>
-        )}
+                <h3 className="text-3xl font-black text-white tracking-tighter uppercase italic mb-4">
+                  Deploying Intelligence
+                </h3>
+                <div className="flex items-center gap-2 mb-8">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce delay-0" />
+                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce delay-150" />
+                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce delay-300" />
+                </div>
+                <div className="max-w-md space-y-4">
+                  <p className="text-sm font-bold text-muted-foreground italic uppercase tracking-widest">
+                    Initializing Vault Registry...
+                  </p>
+                  <p className="text-[10px] font-black text-primary/50 uppercase tracking-[0.2em] animate-pulse">
+                    Finalizing on Flow Testnet. Do not close the link.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-        {/* Step 4: Creating */}
-        {step === 4 && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent mx-auto mb-6"></div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Creating Your Vault
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Deploying your vault with {selectedStrategyData?.name} strategy to Flow blockchain...
-            </p>
-            <div className="text-sm text-muted-foreground">
-              This may take a few moments. Do not close this window.
+        {/* Footer Actions */}
+        {step < 4 && (
+          <div className="p-10 pt-6 flex justify-between items-center border-t border-white/15 bg-black/20 relative z-10">
+            <button
+              onClick={() => step > 1 ? setStep(step - 1) : onClose()}
+              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {step === 1 ? 'Cancel Operation' : 'Reverse Step'}
+            </button>
+
+            <div className="flex gap-4">
+              {step < 3 ? (
+                <button
+                  onClick={() => setStep(step + 1)}
+                  disabled={step === 1 ? !selectedStrategy : (!vaultName || !depositAmount || Number(depositAmount) < (selectedStrategyData?.minDeposit || 0))}
+                  className="btn-primary px-10 py-4 rounded-xl flex items-center gap-3 font-black text-xs uppercase tracking-widest shadow-[0_10px_30px_rgba(0,239,139,0.2)] disabled:opacity-50 disabled:grayscale transition-all"
+                >
+                  Continue
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleCreateVault}
+                  disabled={vaultLoading}
+                  className="btn-primary px-12 py-5 rounded-xl flex items-center gap-4 font-black text-xs uppercase tracking-[0.2em] shadow-[0_10px_40px_rgba(0,239,139,0.3)] hover:shadow-[0_10px_50px_rgba(0,239,139,0.5)] transition-all"
+                >
+                  <Lock className="w-5 h-5" />
+                  Finalize Deployment
+                </button>
+              )}
             </div>
           </div>
         )}
       </motion.div>
-    </motion.div>
+    </div>
   )
 }

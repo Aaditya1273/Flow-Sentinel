@@ -60,7 +60,7 @@ export function useVaultData() {
           lastExecution: parseInt(vaultInfo.lastExecution || '0'),
           totalDeposits: parseFloat(vaultInfo.balance || '0'), // Use balance as total deposits for now
           totalWithdrawals: 0, // Not tracked in current contract
-          createdAt: Date.now() // Use current time as default
+          createdAt: 1640995200000 // Use fixed timestamp instead of Date.now()
         }
         setVaultData(vault)
 

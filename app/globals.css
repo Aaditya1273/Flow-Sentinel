@@ -4,35 +4,45 @@
 
 @layer base {
   :root {
-    /* Enhanced Black & White System with Better Contrast */
-    --background: 0 0% 4%;           /* Deeper black background */
-    --foreground: 0 0% 98%;          /* Brighter white text */
-    --card: 0 0% 8%;                 /* Darker cards with more contrast */
+    /* Premium Flow-Inspired Dark Theme */
+    --background: 222 47% 2%;
+    /* Very dark navy/black */
+    --foreground: 0 0% 98%;
+    /* Crisp white */
+
+    --card: 222 47% 4%;
+    /* Slightly lighter navy */
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 8%;
+
+    --popover: 222 47% 4%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;             /* Bright white for primary actions */
-    --primary-foreground: 0 0% 4%;   /* Deep black text on white */
-    --secondary: 0 0% 12%;           /* More defined gray surfaces */
+
+    --primary: 153 100% 50%;
+    /* Flow Electric Green */
+    --primary-foreground: 222 47% 2%;
+
+    --secondary: 199 89% 48%;
+    /* Electric Cyan */
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 65%;    /* Higher contrast gray text */
-    --accent: 0 0% 16%;              /* More visible accent */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 85% 65%;        /* Brighter red for visibility */
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 16%;              /* More visible borders */
-    --input: 0 0% 8%;
-    --ring: 0 0% 98%;
-    --radius: 0.5rem;                /* Slightly larger radius for modern look */
-    
-    /* Enhanced Success/Positive */
-    --success: 142 85% 45%;          /* Brighter green for better visibility */
-    --success-foreground: 0 0% 98%;
-    
-    /* Enhanced Warning */
-    --warning: 38 95% 55%;           /* More vibrant orange */
-    --warning-foreground: 0 0% 4%;
+
+    --muted: 222 47% 12%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 153 100% 50%;
+    --accent-foreground: 222 47% 2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 25%;
+    --input: 217.2 32.6% 25%;
+    --ring: 153 100% 50%;
+
+    --radius: 1rem;
+
+    /* Flow Gradients */
+    --gradient-flow: linear-gradient(135deg, #00EF8B 0%, #00CCFF 100%);
+    --gradient-overlay: radial-gradient(circle at top center, rgba(0, 239, 139, 0.15) 0%, transparent 70%);
   }
 }
 
@@ -40,172 +50,146 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
-    /* Clean black background */
-    background: hsl(var(--background));
+    background:
+      var(--gradient-overlay),
+      hsl(var(--background));
     min-height: 100vh;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-feature-settings: 'tnum' 1; /* Tabular numbers for financial data */
+    background-attachment: fixed;
   }
 }
 
-/* Clean scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+/* Global Scrollbar Hide */
+* {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
 }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+*::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground));
-  border-radius: 3px;
+/* Glassmorphism Classes */
+.glass {
+  background: rgba(4, 11, 20, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--foreground));
+.glass-pill {
+  @apply glass rounded-full px-4 py-1 flex items-center gap-2;
 }
 
-/* Enhanced card styling with better contrast */
+/* Glowing Border Card */
 .tool-card {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: calc(var(--radius));
-  transition: all 0.2s ease-in-out;
+  @apply glass rounded-2xl p-6 transition-all duration-300;
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(0, 239, 139, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.tool-card:hover::before {
+  transform: translateX(100%);
 }
 
 .tool-card:hover {
-  background: hsl(var(--accent));
-  border-color: hsl(var(--muted-foreground) / 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px hsl(var(--background) / 0.5);
+  @apply border-primary/40;
+  box-shadow: 0 0 30px rgba(0, 239, 139, 0.1);
+  transform: translateY(-2px);
 }
 
-/* Enhanced financial number styling */
-.financial-number {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-  letter-spacing: -0.02em;
-  font-weight: 600;
+/* Glow Effects */
+.text-glow {
+  text-shadow: 0 0 10px rgba(0, 239, 139, 0.5);
 }
 
-/* Enhanced status indicators with better contrast */
-.status-active {
-  color: hsl(var(--success));
-  font-weight: 500;
+.bg-glow {
+  box-shadow: 0 0 15px rgba(0, 239, 139, 0.3);
 }
 
-.status-inactive {
-  color: hsl(var(--muted-foreground));
-  font-weight: 500;
-}
-
-.status-error {
-  color: hsl(var(--destructive));
-  font-weight: 500;
-}
-
-.status-warning {
-  color: hsl(var(--warning));
-  font-weight: 500;
-}
-
-/* Enhanced button styles */
-.btn-primary {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border: 1px solid hsl(var(--primary));
-  font-weight: 500;
-  transition: all 0.2s ease-in-out;
-}
-
-.btn-primary:hover {
-  background: hsl(var(--primary) / 0.9);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: hsl(var(--foreground));
-  border: 1px solid hsl(var(--border));
-  font-weight: 500;
-  transition: all 0.2s ease-in-out;
-}
-
-.btn-secondary:hover {
-  background: hsl(var(--accent));
-  border-color: hsl(var(--muted-foreground) / 0.3);
-  transform: translateY(-1px);
-}
-
-/* Logo styling */
-.logo-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.logo-image {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-}
-
-/* Enhanced section spacing and alignment */
-.section-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
+/* Typography Enhancements */
 .section-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: hsl(var(--foreground));
-  margin-bottom: 1rem;
-  line-height: 1.2;
+  @apply text-4xl md:text-6xl font-bold tracking-tight mb-4;
+  background: linear-gradient(to bottom right, #fff 50%, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .section-subtitle {
-  font-size: 1.25rem;
-  color: hsl(var(--muted-foreground));
-  max-width: 48rem;
-  margin: 0 auto;
-  line-height: 1.6;
+  @apply text-lg text-muted-foreground max-w-2xl mx-auto mb-12;
 }
 
-/* Grid improvements */
+/* Buttons */
+.btn-primary {
+  @apply bg-primary text-primary-foreground font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] bg-glow;
+}
+
+.btn-secondary {
+  @apply glass hover:bg-white/5 text-foreground font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 border border-white/10 hover:border-white/20;
+}
+
+/* Financial Numbers (Tabular) */
+.financial-number {
+  font-family: inherit;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* Layout Helpers */
+.section-container {
+  @apply max-w-7xl mx-auto px-4;
+}
+
 .feature-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  margin-top: 3rem;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
 }
 
-@media (max-width: 768px) {
-  .feature-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+/* Animation Utilities */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+
+  100% {
+    transform: translateY(0px);
   }
 }
 
-@media (max-width: 480px) {
-  .feature-grid {
-    grid-template-columns: 1fr;
-  }
+/* Status Indicators */
+.status-active {
+  color: hsl(var(--primary));
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
+.status-warning {
+  color: #f59e0b;
+}
+
+.status-error {
+  color: #ef4444;
 }
