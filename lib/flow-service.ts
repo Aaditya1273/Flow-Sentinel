@@ -210,7 +210,10 @@ export class FlowService {
         authorizations: [fcl.currentUser],
         limit: 1000
       })
-      return await fcl.tx(transactionId).onceSealed()
+      return {
+        transactionId,
+        sealed: fcl.tx(transactionId).onceSealed()
+      }
     } catch (error) {
       console.error('FCL Mutation Error:', error)
       throw error
@@ -371,7 +374,7 @@ export class FlowService {
   }
 
   static async createVaultWithStrategy(strategyId: string, vaultName: string, initialDeposit: number) {
-    return await this.mutate(CREATE_VAULT_WITH_STRATEGY, (arg: any, t: any) => [
+    return this.mutate(CREATE_VAULT_WITH_STRATEGY, (arg: any, t: any) => [
       arg(strategyId, t.String),
       arg(vaultName, t.String),
       arg(initialDeposit.toFixed(8), t.UFix64)
@@ -379,29 +382,29 @@ export class FlowService {
   }
 
   static async deposit(vaultId: string, amount: number) {
-    return await this.mutate(DEPOSIT_TO_VAULT, (arg: any, t: any) => [
+    return this.mutate(DEPOSIT_TO_VAULT, (arg: any, t: any) => [
       arg(vaultId, t.UInt64),
       arg(amount.toFixed(8), t.UFix64)
     ])
   }
 
   static async withdraw(vaultId: string, amount: number) {
-    return await this.mutate(WITHDRAW_FROM_VAULT, (arg: any, t: any) => [
+    return this.mutate(WITHDRAW_FROM_VAULT, (arg: any, t: any) => [
       arg(vaultId, t.UInt64),
       arg(amount.toFixed(8), t.UFix64)
     ])
   }
 
   static async pauseVault(vaultId: string) {
-    return await this.mutate(PAUSE_VAULT, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+    return this.mutate(PAUSE_VAULT, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
   }
 
   static async resumeVault(vaultId: string) {
-    return await this.mutate(RESUME_VAULT, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+    return this.mutate(RESUME_VAULT, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
   }
 
   static async triggerStrategy(vaultId: string) {
-    return await this.mutate(TRIGGER_STRATEGY, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+    return this.mutate(TRIGGER_STRATEGY, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
   }
 
   static async getUserFlowBalance(address: string) {

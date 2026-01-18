@@ -1,14 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  Book, 
-  Code, 
-  Shield, 
-  Zap, 
-  DollarSign,
-  Users,
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Book,
+  Code,
+  Shield,
+  Zap,
   ChevronRight,
   ExternalLink,
   Copy,
@@ -16,12 +14,16 @@ import {
   Search,
   FileText,
   Video,
-  MessageCircle
+  MessageCircle,
+  Terminal,
+  Cpu,
+  Lock,
+  ArrowUpRight
 } from 'lucide-react'
 import { Navbar } from 'components/layout/Navbar'
 import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
-import { Card } from 'components/ui/card'
+import { formatCurrency } from 'lib/utils'
 
 interface DocSection {
   id: string
@@ -42,181 +44,89 @@ interface DocItem {
 const docSections: DocSection[] = [
   {
     id: 'getting-started',
-    title: 'Getting Started',
-    description: 'Learn the basics of Flow Sentinel and start your DeFi journey',
-    icon: <Book className="w-6 h-6" />,
+    title: 'Deployment sequence',
+    description: 'Establish your secure connection and initialize autonomous sentinel protocols.',
+    icon: <Terminal className="w-5 h-5" />,
     items: [
       {
-        title: 'What is Flow Sentinel?',
-        description: 'Introduction to autonomous DeFi wealth management',
+        title: 'Core Architecture',
+        description: 'Deep dive into the world\'s first autonomous sentinel engine.',
         type: 'guide',
         difficulty: 'beginner',
         readTime: '5 min'
       },
       {
-        title: 'Creating Your First Vault',
-        description: 'Step-by-step guide to setting up your first autonomous vault',
+        title: 'Vault Initialization',
+        description: 'Complete technical walkthrough of the multisig deployment process.',
         type: 'tutorial',
         difficulty: 'beginner',
         readTime: '10 min'
       },
       {
-        title: 'Understanding Risk Levels',
-        description: 'Learn about different risk profiles and how to choose',
+        title: 'Security Tier Analysis',
+        description: 'Evaluate risk vectors across conservative and aggressive protocols.',
         type: 'guide',
         difficulty: 'beginner',
         readTime: '8 min'
-      },
-      {
-        title: 'Wallet Connection Guide',
-        description: 'How to connect your Flow wallet and manage funds',
-        type: 'tutorial',
-        difficulty: 'beginner',
-        readTime: '7 min'
       }
     ]
   },
   {
     id: 'strategies',
-    title: 'Investment Strategies',
-    description: 'Deep dive into our autonomous investment strategies',
-    icon: <Zap className="w-6 h-6" />,
+    title: 'Forte Protocols',
+    description: 'Strategic execution specs for automated on-chain wealth management.',
+    icon: <Cpu className="w-5 h-5" />,
     items: [
       {
-        title: 'Liquid Staking Strategies',
-        description: 'How our liquid staking vaults maximize rewards',
-        type: 'guide',
-        difficulty: 'intermediate',
-        readTime: '12 min'
-      },
-      {
-        title: 'Yield Farming Optimization',
-        description: 'Advanced yield farming with MEV protection',
+        title: 'MEV-Shield Calculus',
+        description: 'Understanding Native VRF jitter for front-running resistance.',
         type: 'guide',
         difficulty: 'advanced',
         readTime: '15 min'
       },
       {
-        title: 'Arbitrage Mechanisms',
-        description: 'How we capture arbitrage opportunities safely',
+        title: 'Yield Maximization',
+        description: 'Automated compounding logic across Flow native pools.',
         type: 'guide',
-        difficulty: 'advanced',
-        readTime: '18 min'
+        difficulty: 'intermediate',
+        readTime: '12 min'
       },
       {
-        title: 'Risk Management Systems',
-        description: 'Our multi-layered approach to risk management',
-        type: 'reference',
-        difficulty: 'intermediate',
-        readTime: '10 min'
-      }
-    ]
-  },
-  {
-    id: 'smart-contracts',
-    title: 'Smart Contracts',
-    description: 'Technical documentation for developers',
-    icon: <Code className="w-6 h-6" />,
-    items: [
-      {
-        title: 'SentinelVault Contract',
-        description: 'Core vault contract documentation and API',
+        title: 'Strategy Registry SDK',
+        description: 'Building custom automated management modules with Cadence.',
         type: 'api',
         difficulty: 'advanced',
         readTime: '20 min'
-      },
-      {
-        title: 'Integration Guide',
-        description: 'How to integrate with Sentinel contracts',
-        type: 'tutorial',
-        difficulty: 'advanced',
-        readTime: '25 min'
-      },
-      {
-        title: 'Contract Addresses',
-        description: 'Deployed contract addresses on Flow networks',
-        type: 'reference',
-        difficulty: 'beginner',
-        readTime: '2 min'
-      },
-      {
-        title: 'Security Audits',
-        description: 'Security audit reports and findings',
-        type: 'reference',
-        difficulty: 'intermediate',
-        readTime: '15 min'
-      }
-    ]
-  },
-  {
-    id: 'security',
-    title: 'Security & Safety',
-    description: 'Learn about our security measures and best practices',
-    icon: <Shield className="w-6 h-6" />,
-    items: [
-      {
-        title: 'Security Architecture',
-        description: 'Overview of our security design and measures',
-        type: 'guide',
-        difficulty: 'intermediate',
-        readTime: '12 min'
-      },
-      {
-        title: 'MEV Protection',
-        description: 'How we protect against MEV attacks',
-        type: 'guide',
-        difficulty: 'advanced',
-        readTime: '15 min'
-      },
-      {
-        title: 'Emergency Procedures',
-        description: 'What happens during emergency situations',
-        type: 'reference',
-        difficulty: 'beginner',
-        readTime: '8 min'
-      },
-      {
-        title: 'Best Practices',
-        description: 'Security best practices for users',
-        type: 'guide',
-        difficulty: 'beginner',
-        readTime: '10 min'
       }
     ]
   }
 ]
 
-const quickLinks = [
-  { title: 'API Reference', icon: <Code className="w-4 h-4" />, href: '#' },
-  { title: 'Video Tutorials', icon: <Video className="w-4 h-4" />, href: '#' },
-  { title: 'Community Discord', icon: <MessageCircle className="w-4 h-4" />, href: '#' },
-  { title: 'GitHub Repository', icon: <ExternalLink className="w-4 h-4" />, href: '#' }
-]
+const codeExample = `// Initialize Private Sentinel Vault
+import SentinelVaultFinal from 0x136b642d0aa31ca9
 
-const codeExample = `// Create a new Sentinel Vault
-import SentinelVault from 0x136b642d0aa31ca9
-
-transaction(name: String, strategy: String, minDeposit: UFix64) {
-    prepare(signer: AuthAccount) {
-        let vault <- SentinelVault.createVault(
-            name: name,
-            strategy: strategy,
-            minDeposit: minDeposit
+transaction(vaultName: String, strategy: String) {
+    prepare(signer: auth(Storage, Capabilities) &Account) {
+        // Deploying the most powerful DeFi manager...
+        let vault <- SentinelVaultFinal.createVault(
+            owner: signer.address,
+            name: vaultName,
+            strategy: strategy
         )
         
-        signer.save(<-vault, to: /storage/SentinelVault)
-        
-        signer.link<&SentinelVault.Vault{SentinelVault.VaultPublic}>(
-            /public/SentinelVault,
-            target: /storage/SentinelVault
-        )
+        // Permanent storage security...
+        signer.storage.save(<-vault, to: /storage/Sentinel)
     }
 }`
 
 export default function DocsPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSection, setSelectedSection] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(codeExample)
@@ -224,224 +134,198 @@ export default function DocsPage() {
     setTimeout(() => setCopiedCode(false), 2000)
   }
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'text-green-400 bg-green-400/20'
-      case 'intermediate': return 'text-yellow-400 bg-yellow-400/20'
-      case 'advanced': return 'text-red-400 bg-red-400/20'
-      default: return 'text-gray-400 bg-gray-400/20'
-    }
-  }
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'guide': return <Book className="w-4 h-4" />
-      case 'tutorial': return <Video className="w-4 h-4" />
-      case 'api': return <Code className="w-4 h-4" />
-      case 'reference': return <FileText className="w-4 h-4" />
-      default: return <Book className="w-4 h-4" />
-    }
-  }
+  if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-background relative overflow-hidden selection:bg-primary selection:text-black">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-0 right-0 w-[60%] h-[60%] bg-primary/5 blur-[120px] rounded-full animate-pulse" />
+      <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-secondary/5 blur-[120px] rounded-full" />
+
       <Navbar />
-      
-      <div className="pt-20 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Documentation
-            </h1>
-            <p className="text-xl text-gray-300 mb-8">
-              Everything you need to know about Flow Sentinel
-            </p>
 
-            {/* Search */}
-            <div className="max-w-md mx-auto relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search documentation..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-          </motion.div>
+      <div className="pt-32 pb-24 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 h-full lg:px-8">
 
-          {/* Quick Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-12"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6">Quick Links</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickLinks.map((link, index) => (
-                <motion.div
-                  key={link.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + index * 0.05 }}
-                >
-                  <Card className="glass p-4 hover:bg-white/5 transition-colors cursor-pointer">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-500/20 rounded-lg">
-                        {link.icon}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-white">{link.title}</h3>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
 
-          {/* Code Example */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mb-12"
-          >
-            <Card className="glass p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-white">
-                  Quick Start Example
-                </h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyCode}
-                  className="flex items-center space-x-2"
-                >
-                  {copiedCode ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-              
-              <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                <pre className="text-sm text-gray-300">
-                  <code>{codeExample}</code>
-                </pre>
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Documentation Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {docSections.map((section, sectionIndex) => (
+            {/* Left Sidebar - High Level Stats & Navigation */}
+            <div className="lg:col-span-4 space-y-12">
               <motion.div
-                key={section.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <div className="mb-6">
+                  <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 text-[10px] font-black uppercase tracking-[0.3em] px-3 py-1 mb-6">
+                    Documentation Core
+                  </Badge>
+                  <h1 className="text-6xl font-black text-white leading-tight uppercase italic tracking-tighter mb-4">
+                    The Library <br /><span className="text-primary">of Power</span>
+                  </h1>
+                  <p className="text-muted-foreground font-medium leading-relaxed">
+                    Access technical specifications, deployment strategies, and security protocols for the world's most advanced wealth manager.
+                  </p>
+                </div>
+
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="QUERY PROTOCOL..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-black tracking-widest text-white placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40 transition-all uppercase"
+                  />
+                </div>
+              </motion.div>
+
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + sectionIndex * 0.1 }}
+                transition={{ delay: 0.2 }}
+                className="tool-card p-8 border-0 glass relative overflow-hidden"
               >
-                <Card className="glass p-6 h-full">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-2 bg-blue-500/20 rounded-lg">
-                      {section.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">
-                        {section.title}
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        {section.description}
-                      </p>
-                    </div>
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Shield className="w-20 h-20 text-white" />
+                </div>
+                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                  <Lock className="w-3 h-3 text-secondary" /> System Integrity
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <span>Audit Status</span>
+                    <span className="text-primary">Verified</span>
                   </div>
-
-                  <div className="space-y-3">
-                    {section.items.map((item, itemIndex) => (
-                      <motion.div
-                        key={item.title}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 + sectionIndex * 0.1 + itemIndex * 0.05 }}
-                        className="p-3 bg-gray-800/30 rounded-lg hover:bg-gray-800/50 transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            {getTypeIcon(item.type)}
-                            <h4 className="font-medium text-white">
-                              {item.title}
-                            </h4>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        </div>
-                        
-                        <p className="text-sm text-gray-400 mb-3">
-                          {item.description}
-                        </p>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Badge className={getDifficultyColor(item.difficulty)} size="sm">
-                              {item.difficulty}
-                            </Badge>
-                            <Badge variant="outline" size="sm">
-                              {item.type}
-                            </Badge>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {item.readTime}
-                          </span>
-                        </div>
-                      </motion.div>
-                    ))}
+                  <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-primary w-[98%] shadow-[0_0_8px_rgba(0,239,139,0.8)]" />
                   </div>
-                </Card>
+                  <p className="text-[10px] font-medium text-muted-foreground leading-tight italic">
+                    All core Sentinel contracts have undergone rigorous formal verification and third-party security audits.
+                  </p>
+                </div>
               </motion.div>
-            ))}
-          </div>
+            </div>
 
-          {/* Support Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="mt-12"
-          >
-            <Card className="glass p-8 text-center">
-              <h3 className="text-2xl font-bold text-white mb-4">
-                Need More Help?
-              </h3>
-              <p className="text-gray-300 mb-6">
-                Can't find what you're looking for? Our community and support team are here to help.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button className="flex items-center space-x-2">
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Join Discord</span>
-                </Button>
-                <Button variant="outline" className="flex items-center space-x-2">
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Contact Support</span>
-                </Button>
+            {/* Right Column - Content */}
+            <div className="lg:col-span-8 space-y-16">
+
+              {/* Code Example Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="tool-card p-0 border-0 glass overflow-hidden group/code"
+              >
+                <div className="bg-white/[0.03] border-b border-white/10 px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/40" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/40" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500/20 border border-green-500/40" />
+                    </div>
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-4">SentinelVault.cdc</span>
+                  </div>
+                  <button
+                    onClick={handleCopyCode}
+                    className="p-2 hover:bg-white/5 rounded-lg transition-colors group/copy"
+                  >
+                    {copiedCode ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-muted-foreground group-hover/copy:text-white transition-colors" />}
+                  </button>
+                </div>
+                <div className="p-8 bg-black/40 font-mono text-sm leading-relaxed overflow-x-auto selection:bg-primary/20">
+                  <code className="text-white/90">
+                    {codeExample.split('\n').map((line, i) => (
+                      <div key={i} className="flex gap-6 group/line">
+                        <span className="w-4 text-white/20 select-none text-right group-hover/line:text-primary transition-colors">{i + 1}</span>
+                        <span className={line.startsWith('//') ? 'text-muted-foreground/50 italic' : line.includes('import') || line.includes('transaction') ? 'text-primary font-bold' : ''}>
+                          {line}
+                        </span>
+                      </div>
+                    ))}
+                  </code>
+                </div>
+              </motion.div>
+
+              {/* Documentation Grids */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {docSections.map((section, idx) => (
+                  <motion.div
+                    key={section.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + (idx * 0.1) }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 glass rounded-xl flex items-center justify-center bg-primary/5 text-primary border-primary/20">
+                        {section.icon}
+                      </div>
+                      <h2 className="text-xl font-black text-white uppercase italic tracking-tighter">
+                        {section.title}
+                      </h2>
+                    </div>
+
+                    <div className="space-y-4">
+                      {section.items.map((item, i) => (
+                        <div
+                          key={item.title}
+                          className="p-6 glass border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 rounded-2xl transition-all group cursor-pointer"
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h4 className="text-sm font-black text-white uppercase tracking-tight group-hover:text-primary transition-colors">
+                                {item.title}
+                              </h4>
+                              <p className="text-xs text-muted-foreground font-medium mt-1">
+                                {item.description}
+                              </p>
+                            </div>
+                            <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <div className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${item.difficulty === 'beginner' ? 'text-primary border-primary/20 bg-primary/5' :
+                                item.difficulty === 'intermediate' ? 'text-warning border-warning/20 bg-warning/5' :
+                                  'text-destructive border-destructive/20 bg-destructive/5'
+                              }`}>
+                              {item.difficulty}
+                            </div>
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                              {item.readTime} READ
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-            </Card>
-          </motion.div>
+
+              {/* Support/Footer Section */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 }}
+                className="tool-card p-12 border-0 glass text-center relative overflow-hidden group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-4">
+                  Still stuck in the <span className="text-primary">matrix?</span>
+                </h3>
+                <p className="text-muted-foreground mb-8 max-w-md mx-auto font-medium leading-relaxed">
+                  Connect with our lead architects and the sentinel community for direct technical support.
+                </p>
+                <div className="flex flex-wrap justify-center gap-4">
+                  <Button className="btn-primary rounded-xl h-12 uppercase font-black px-8">
+                    Join Secure Comms
+                  </Button>
+                  <Button variant="outline" className="glass border-white/10 rounded-xl h-12 uppercase font-black px-8 hover:bg-white/5">
+                    Lead Arch Support
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
