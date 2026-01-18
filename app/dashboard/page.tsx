@@ -28,7 +28,9 @@ import { useVaultData } from 'hooks/useVaultData'
 import { formatCurrency, formatPercentage } from 'lib/utils'
 import { Badge } from 'components/ui/badge'
 
-export default function DashboardPage() {
+import { Suspense } from 'react'
+
+function DashboardContent() {
   const { user, logIn, isConnected } = useFlow()
   const { vaults, performance, flowBalance, loading, error, refetch } = useVaultData()
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -418,5 +420,26 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen pt-16">
+          <div className="text-center">
+            <div className="relative w-16 h-16 mx-auto mb-6">
+              <div className="absolute inset-0 border-4 border-primary/10 rounded-full" />
+              <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse">Initializing System...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   )
 }

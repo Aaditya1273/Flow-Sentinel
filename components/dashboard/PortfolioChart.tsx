@@ -8,7 +8,7 @@ import { formatCurrency } from 'lib/utils'
 
 export function PortfolioChart() {
   const [timeframe, setTimeframe] = useState('7d')
-  const { vaultData, performance, loading } = useVaultData()
+  const { vaults, performance, loading } = useVaultData()
 
   const timeframes = [
     { label: '24H', value: '1d' },
@@ -18,9 +18,11 @@ export function PortfolioChart() {
   ]
 
   const generateChartData = () => {
-    if (!vaultData || !performance) return []
-    const totalDeposits = vaultData.totalDeposits
-    const pnl = performance.pnl || 0
+    if (vaults.length === 0 || !performance) return []
+
+    // Aggregate total initial deposits
+    const totalDeposits = vaults.reduce((sum, v) => sum + v.totalDeposits, 0)
+    const totalPnl = performance.totalPnl || 0
     const numPoints = timeframe === '1d' ? 24 : timeframe === '7d' ? 7 : timeframe === '30d' ? 30 : 90
 
     const dataPoints = []
@@ -31,9 +33,10 @@ export function PortfolioChart() {
         return x - Math.floor(x)
       }
 
-      const value = totalDeposits + (pnl * progress) + (seedRandom(i + 12345) - 0.5) * (pnl * 0.1)
+      // Project growth from initial to current
+      const value = totalDeposits + (totalPnl * progress) + (seedRandom(i + 12345) - 0.5) * (totalPnl * 0.1)
       dataPoints.push({
-        date: new Date(1640995200000 - (numPoints - 1 - i) * (timeframe === '1d' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)),
+        date: new Date(Date.now() - (numPoints - 1 - i) * (timeframe === '1d' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)),
         value: Math.max(value, totalDeposits * 0.9)
       })
     }
@@ -106,8 +109,8 @@ export function PortfolioChart() {
               key={tf.value}
               onClick={() => setTimeframe(tf.value)}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${timeframe === tf.value
-                  ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(0,239,139,0.3)]'
-                  : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(0,239,139,0.3)]'
+                : 'text-muted-foreground hover:text-white hover:bg-white/5'
                 }`}
             >
               {tf.label}

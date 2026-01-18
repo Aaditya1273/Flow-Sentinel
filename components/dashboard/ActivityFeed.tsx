@@ -30,11 +30,12 @@ export function ActivityFeed() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useFlow()
-  const { vaultData, performance } = useVaultData()
+  const { vaults, performance } = useVaultData()
 
   useEffect(() => {
     const loadActivities = async () => {
-      if (!user.addr || !vaultData) {
+      // If the user isn't logged in, don't show specific data
+      if (!user.addr) {
         setLoading(false)
         return
       }
@@ -43,57 +44,75 @@ export function ActivityFeed() {
         setLoading(true)
         const realActivities: Activity[] = []
 
-        if (vaultData.createdAt) {
+        // If there are no vaults, just show general system logs
+        if (vaults.length === 0) {
           realActivities.push({
-            id: 'vault-created',
+            id: 'system-ready',
             type: 'system',
-            description: `Vault Protocol Initialized: ${vaultData.name}`,
-            timestamp: new Date(vaultData.createdAt),
+            description: 'Sentinel Network Ready',
+            timestamp: new Date(),
             status: 'completed'
           })
-        }
+        } else {
+          // Add logs for each vault
+          vaults.forEach((vault, idx) => {
+            // Vault creation log
+            realActivities.push({
+              id: `vault-active-${vault.id}`,
+              type: 'system',
+              description: `Protocol Active: ${vault.name}`,
+              timestamp: new Date(Date.now() - (idx + 1) * 3600000), // Simulated sequence
+              status: 'completed'
+            })
 
-        if (vaultData.totalDeposits > 0) {
-          realActivities.push({
-            id: 'initial-deposit',
-            type: 'deposit',
-            amount: vaultData.totalDeposits,
-            description: 'Capital Inflow Detected',
-            timestamp: new Date(vaultData.createdAt || 1640995200000),
-            status: 'completed'
+            // Initial deposit log
+            if (vault.totalDeposits > 0) {
+              realActivities.push({
+                id: `deposit-${vault.id}`,
+                type: 'deposit',
+                amount: vault.totalDeposits,
+                description: `Capital Inflow: ${vault.name}`,
+                timestamp: new Date(Date.now() - (idx + 2) * 3600000),
+                status: 'completed'
+              })
+            }
+
+            // Strategy execution log
+            if (vault.lastExecution > 0) {
+              realActivities.push({
+                id: `strategy-${vault.id}`,
+                type: 'strategy',
+                description: `Forte Execution: ${vault.strategy}`,
+                timestamp: new Date(vault.lastExecution * 1000),
+                status: 'completed'
+              })
+            }
           })
+
+          // Add aggregated yield log if total PnL is positive
+          if (performance?.totalPnl && performance.totalPnl > 0) {
+            realActivities.push({
+              id: 'total-yield',
+              type: 'yield',
+              amount: performance.totalPnl,
+              description: 'Aggregated Yield Harvested',
+              timestamp: new Date(),
+              status: 'completed'
+            })
+          }
         }
 
-        if (performance?.pnl && performance.pnl > 0) {
-          realActivities.push({
-            id: 'yield-generated',
-            type: 'yield',
-            amount: performance.pnl,
-            description: 'Autonomous Yield Harvested',
-            timestamp: new Date(vaultData.lastExecution ? vaultData.lastExecution * 1000 : 1640995200000),
-            status: 'completed'
-          })
-        }
-
-        if (vaultData.lastExecution) {
-          realActivities.push({
-            id: 'strategy-executed',
-            type: 'strategy',
-            description: `Forte Execution: ${vaultData.strategy}`,
-            timestamp: new Date(vaultData.lastExecution * 1000),
-            status: 'completed'
-          })
-        }
-
+        // Global system logs
         realActivities.push({
           id: 'mev-protection',
           type: 'system',
-          description: 'MEV-Shield active Monitoring',
-          timestamp: new Date(1640995200000 - 60 * 60 * 1000),
+          description: 'MEV-Shield Active Monitoring',
+          timestamp: new Date(Date.now() - 24 * 3600000),
           status: 'completed'
         })
 
         realActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        setActivities(realActivities.slice(0, 10)) // Keep only latest 10
         setActivities(realActivities)
       } catch (error) {
         console.error('Error loading activities:', error)
@@ -103,7 +122,7 @@ export function ActivityFeed() {
     }
 
     loadActivities()
-  }, [user.addr, vaultData, performance])
+  }, [user.addr, vaults, performance])
 
   const getActivityIcon = (type: string) => {
     switch (type) {

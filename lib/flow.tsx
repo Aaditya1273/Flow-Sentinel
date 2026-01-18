@@ -5,22 +5,29 @@ import * as fcl from '@onflow/fcl'
 import { useAccount, useDisconnect } from 'wagmi'
 
 // Configure FCL for Flow Testnet
-fcl.config({
-  'accessNode.api': process.env.NEXT_PUBLIC_FLOW_ACCESS_NODE || 'https://rest-testnet.onflow.org',
-  'discovery.wallet': 'https://fcl-discovery.onflow.org/testnet/authn',
-  'discovery.authn.endpoint': 'https://fcl-discovery.onflow.org/api/testnet/authn',
-  'walletconnect.projectId': process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'c4f79cc821944d9680842e34466bfb',
-  'app.detail.title': 'Flow Sentinel',
-  'app.detail.icon': '/logo.png',
-  'app.detail.description': 'Autonomous DeFi Wealth Manager',
-  '0xSentinelVault': process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0x136b642d0aa31ca9',
-  '0xSentinelInterfaces': process.env.NEXT_PUBLIC_SENTINEL_INTERFACES_ADDRESS || '0x136b642d0aa31ca9',
-  '0xFungibleToken': process.env.NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS || '0x9a0766d93b6608b7',
-  '0xFlowToken': process.env.NEXT_PUBLIC_FLOW_TOKEN_ADDRESS || '0x7e60df042a9c0868',
-})
+if (typeof window !== 'undefined') {
+  fcl.config({
+    'accessNode.api': process.env.NEXT_PUBLIC_FLOW_ACCESS_NODE || 'https://rest-testnet.onflow.org',
+    'discovery.wallet': 'https://fcl-discovery.onflow.org/testnet/authn',
+    'discovery.authn.endpoint': 'https://fcl-discovery.onflow.org/api/testnet/authn',
+    'walletconnect.projectId': process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'c4f79cc821944d9680842e34466bfb',
+    'app.detail.title': 'Flow Sentinel',
+    'app.detail.icon': '/logo.png',
+    'app.detail.description': 'Autonomous DeFi Wealth Manager',
+    '0xSentinelVault': process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0x136b642d0aa31ca9',
+    '0xSentinelVaultFinal': process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0x136b642d0aa31ca9',
+    '0xSentinelInterfaces': process.env.NEXT_PUBLIC_SENTINEL_INTERFACES_ADDRESS || '0x136b642d0aa31ca9',
+    '0xStrategyRegistry': process.env.NEXT_PUBLIC_STRATEGY_REGISTRY_ADDRESS || '0x136b642d0aa31ca9',
+    '0xLiquidStakingStrategy': process.env.NEXT_PUBLIC_LIQUID_STAKING_STRATEGY_ADDRESS || '0x136b642d0aa31ca9',
+    '0xYieldFarmingStrategy': process.env.NEXT_PUBLIC_YIELD_FARMING_STRATEGY_ADDRESS || '0x136b642d0aa31ca9',
+    '0xArbitrageStrategy': process.env.NEXT_PUBLIC_ARBITRAGE_STRATEGY_ADDRESS || '0x136b642d0aa31ca9',
+    '0xFungibleToken': process.env.NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS || '0x9a0766d93b6608b7',
+    '0xFlowToken': process.env.NEXT_PUBLIC_FLOW_TOKEN_ADDRESS || '0x7e60df042a9c0868',
+  })
+}
 
 interface FlowUser {
-  loggedIn: boolean
+  loggedIn?: boolean
   addr?: string
   cid?: string
 }
@@ -41,7 +48,7 @@ export function FlowProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FlowUser>({ loggedIn: false })
   const [loading, setLoading] = useState(true)
   const [walletType, setWalletType] = useState<'flow' | 'evm' | null>(null)
-  
+
   // EVM wallet connection
   const { address: evmAddress, isConnected: evmConnected } = useAccount()
   const { disconnect: disconnectEvm } = useDisconnect()
@@ -119,14 +126,14 @@ export function FlowProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <FlowContext.Provider value={{ 
-      user: unifiedUser, 
-      logIn, 
-      logOut, 
-      loading, 
-      walletType, 
+    <FlowContext.Provider value={{
+      user: unifiedUser,
+      logIn,
+      logOut,
+      loading,
+      walletType,
       setWalletType,
-      isConnected 
+      isConnected
     }}>
       {children}
     </FlowContext.Provider>
