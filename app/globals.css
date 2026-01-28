@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,23 +8,18 @@
   :root {
     /* Premium Flow-Inspired Dark Theme */
     --background: 222 47% 2%;
-    /* Very dark navy/black */
     --foreground: 0 0% 98%;
-    /* Crisp white */
 
     --card: 222 47% 4%;
-    /* Slightly lighter navy */
     --card-foreground: 0 0% 98%;
 
     --popover: 222 47% 4%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 153 100% 50%;
-    /* Flow Electric Green */
     --primary-foreground: 222 47% 2%;
 
     --secondary: 199 89% 48%;
-    /* Electric Cyan */
     --secondary-foreground: 0 0% 98%;
 
     --muted: 222 47% 12%;
@@ -40,7 +37,30 @@
 
     --radius: 1rem;
 
-    /* Flow Gradients */
+    /* Premium Immersive Design System Variables */
+    --flow-bg-primary: #030712;
+    --flow-bg-secondary: #0a0f1a;
+    --flow-bg-tertiary: #111827;
+    --flow-bg-card: rgba(17, 24, 39, 0.7);
+
+    --flow-cyan: #00f5d4;
+    --flow-cyan-glow: rgba(0, 245, 212, 0.4);
+    --flow-purple: #7c3aed;
+    --flow-purple-glow: rgba(124, 58, 237, 0.4);
+    --flow-blue: #3b82f6;
+    --flow-blue-glow: rgba(59, 130, 246, 0.4);
+    --flow-pink: #ec4899;
+    --flow-orange: #f97316;
+    --flow-green: #10b981;
+
+    --flow-text-primary: #f8fafc;
+    --flow-text-secondary: #94a3b8;
+    --flow-text-muted: #64748b;
+
+    /* Animation Timing */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Gradients */
     --gradient-flow: linear-gradient(135deg, #00EF8B 0%, #00CCFF 100%);
     --gradient-overlay: radial-gradient(circle at top center, rgba(0, 239, 139, 0.15) 0%, transparent 70%);
   }
@@ -81,10 +101,73 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    var(--shadow-card);
 }
 
 .glass-pill {
   @apply glass rounded-full px-4 py-1 flex items-center gap-2;
+}
+
+/* Premium Immersive Styles from helper-ui */
+.text-gradient {
+  @apply bg-clip-text text-transparent;
+  background-clip: text;
+  background-image: var(--gradient-primary);
+}
+
+.badge-premium {
+  @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2));
+  color: var(--flow-purple);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.badge-success {
+  @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+  color: var(--flow-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.canvas-container {
+  @apply absolute inset-0 z-0;
+}
+
+.canvas-container canvas {
+  @apply w-full h-full;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+@keyframes orb-float {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+
+  50% {
+    transform: translate(-20px, -50px) scale(0.9);
+  }
+
+  75% {
+    transform: translate(-40px, -20px) scale(1.05);
+  }
+}
+
+.animate-orb-float {
+  animation: orb-float 10s ease-in-out infinite;
 }
 
 /* Glowing Border Card */
@@ -130,6 +213,7 @@
   @apply text-4xl md:text-6xl font-bold tracking-tight mb-4;
   background: linear-gradient(to bottom right, #fff 50%, #94a3b8);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

@@ -1,9 +1,25 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Outfit, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Flow Sentinel - Autonomous DeFi Wealth Manager',
@@ -36,10 +52,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.variable} ${outfit.variable} ${spaceGrotesk.variable} font-sans antialiased`} suppressHydrationWarning>
+        <div className="noise-overlay" />
         <Providers>
-          {children}
+          <div className="flex flex-col min-h-screen relative z-10">
+            {children}
+          </div>
         </Providers>
+        <div className="fixed inset-0 bg-grid pointer-events-none opacity-30 z-0" />
       </body>
     </html>
   )
