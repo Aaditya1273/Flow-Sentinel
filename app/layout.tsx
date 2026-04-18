@@ -1,23 +1,24 @@
 import type { Metadata } from 'next'
-import { Inter, Outfit, Space_Grotesk } from 'next/font/google'
+import { Inter, Host_Grotesk, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 
-const inter = Inter({
+const usability = Inter({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-usability',
   display: 'swap',
 })
 
-const outfit = Outfit({
+const authority = Host_Grotesk({
   subsets: ['latin'],
-  variable: '--font-outfit',
+  variable: '--font-authority',
   display: 'swap',
 })
 
-const spaceGrotesk = Space_Grotesk({
+const trust = IBM_Plex_Mono({
+  weight: ['400', '600'],
   subsets: ['latin'],
-  variable: '--font-space',
+  variable: '--font-trust',
   display: 'swap',
 })
 
@@ -52,7 +53,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} ${spaceGrotesk.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${usability.variable} ${authority.variable} ${trust.variable} font-sans antialiased`} suppressHydrationWarning>
         <div className="noise-overlay" />
         <Providers>
           <div className="flex flex-col min-h-screen relative z-10">

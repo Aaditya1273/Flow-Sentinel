@@ -15,7 +15,6 @@ import {
   Sparkles,
   Trophy,
   Rocket,
-  Play,
   Activity
 } from "lucide-react";
 
@@ -39,9 +38,9 @@ import {
 import {
   MagneticButton,
   StaggerContainer,
-  CustomCursor,
   ScaleOnScroll
 } from "@/components/immersive/smooth-scroll";
+
 
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
@@ -103,7 +102,6 @@ export default function Home() {
 
   return (
     <div className="relative overflow-hidden bg-background">
-      <CustomCursor />
       <Navbar />
 
       {/* ===== HERO SECTION ===== */}
@@ -129,21 +127,6 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left: Text Content */}
             <div className="space-y-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex flex-wrap gap-3"
-              >
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-xs">
-                  <Zap className="w-3 h-3 text-primary" />
-                  <span className="text-white font-black italic tracking-tighter uppercase">Forte Powered Automation</span>
-                </span>
-                <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-secondary/10 border border-secondary/30 text-[10px]">
-                  <Shield className="w-2.5 h-2.5 text-secondary" />
-                  <span className="text-secondary font-black italic tracking-tighter uppercase">MEV Resistant</span>
-                </span>
-              </motion.div>
 
               <div>
                 <AnimatedWords
@@ -157,7 +140,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
-                className="text-lg md:text-xl text-muted-foreground font-medium italic leading-relaxed max-w-xl"
+                className="text-lg md:text-xl text-muted-foreground font-sans font-medium  leading-relaxed max-w-xl"
               >
                 Institutional-grade yield optimization with
                 <span className="text-foreground"> biological security </span>
@@ -175,17 +158,10 @@ export default function Home() {
                     <span className="absolute inset-0 rounded-2xl bg-primary blur-xl opacity-50 group-hover:opacity-100 transition-opacity animate-pulse" />
                     <span className="relative btn-primary text-base md:text-lg px-8 py-4 flex items-center gap-3 rounded-2xl bg-primary text-black hover:shadow-[0_0_60px_rgba(0,245,212,0.4)] transition-all duration-300">
                       <Rocket className="w-5 h-5" />
-                      <span className="font-black uppercase tracking-tighter italic">Enter Command Center</span>
+                      <span className="font-black uppercase tracking-tighter ">Enter Command Center</span>
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                     </span>
                   </Link>
-                </MagneticButton>
-
-                <MagneticButton>
-                  <button className="btn-secondary text-sm md:text-base px-8 py-4 flex items-center gap-3 hover:bg-white/5 transition-all rounded-2xl">
-                    <Play className="w-4 h-4 fill-white" />
-                    <span className="font-black uppercase tracking-tighter italic">Watch Demo</span>
-                  </button>
                 </MagneticButton>
               </motion.div>
             </div>
@@ -213,8 +189,8 @@ export default function Home() {
                     <TrendingUp className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-black italic tracking-tighter text-primary">+12.5%</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">REAL-TIME YIELD</p>
+                    <p className="text-2xl font-mono font-black  tracking-tighter text-primary">+12.5%</p>
+                    <p className="text-[10px] font-sans font-black uppercase tracking-widest text-muted-foreground">REAL-TIME YIELD</p>
                   </div>
                 </div>
               </motion.div>
@@ -229,7 +205,7 @@ export default function Home() {
                     <Shield className="w-5 h-5 text-secondary" />
                   </div>
                   <div>
-                    <p className="text-lg font-black italic tracking-tighter text-white">PROTECTED</p>
+                    <p className="text-lg font-black  tracking-tighter text-white">PROTECTED</p>
                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">MEV SHIELD ACTIVE</p>
                   </div>
                 </div>
@@ -249,7 +225,7 @@ export default function Home() {
                   <FadeInSection key={i} delay={i * 0.1} direction="up">
                     <div className="text-center group">
                       <p
-                        className="text-5xl md:text-7xl font-black italic tracking-tighter mb-2 transition-all duration-300 group-hover:scale-110"
+                        className="text-5xl md:text-7xl font-mono font-black  tracking-tighter mb-2 transition-all duration-300 group-hover:scale-110"
                         style={{
                           background: 'linear-gradient(to bottom, #fff 50%, #94a3b8)',
                           WebkitBackgroundClip: 'text',
@@ -263,7 +239,7 @@ export default function Home() {
                           decimals={stat.decimals || 1}
                         />
                       </p>
-                      <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">
+                      <p className="text-xs font-sans font-black uppercase tracking-[0.3em] text-muted-foreground">
                         {stat.label}
                       </p>
                     </div>
@@ -280,13 +256,13 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-20">
             <FadeInSection>
-              <span className="badge-premium mb-4 inline-block font-black italic uppercase tracking-widest">Core Architecture</span>
+              <span className="badge-premium mb-4 inline-block font-black  uppercase tracking-widest">Core Architecture</span>
             </FadeInSection>
-            <AnimatedWords className="text-5xl md:text-7xl font-black italic tracking-tighter text-white leading-none mb-6">
+            <AnimatedWords className="text-5xl md:text-7xl font-black  tracking-tighter text-white leading-none mb-6">
               BUILT FOR THE FUTURE OF ONCHAIN WEALTH
             </AnimatedWords>
             <FadeInSection delay={0.2}>
-              <p className="text-xl text-muted-foreground font-medium italic">
+              <p className="text-xl text-muted-foreground font-medium ">
                 We've combined Flow's native infrastructure with advanced automation to create a wealth manager that never sleeps.
               </p>
             </FadeInSection>
@@ -301,10 +277,10 @@ export default function Home() {
                       <feature.icon className="w-8 h-8 text-black" />
                     </div>
 
-                    <h3 className="text-2xl font-black italic tracking-tighter text-white mb-4 uppercase">
+                    <h3 className="text-2xl font-black  tracking-tighter text-white mb-4 uppercase">
                       {feature.title}
                     </h3>
-                    <p className="text-muted-foreground font-medium italic leading-relaxed text-lg">
+                    <p className="text-muted-foreground font-medium  leading-relaxed text-lg">
                       {feature.description}
                     </p>
                   </div>
@@ -329,12 +305,12 @@ export default function Home() {
                   <Sparkles className="w-16 h-16 text-primary mx-auto mb-10 animate-pulse" />
                 </FadeInSection>
 
-                <AnimatedWords className="text-6xl md:text-8xl font-black italic tracking-tighter leading-none mb-8 max-w-4xl mx-auto uppercase">
+                <AnimatedWords className="text-6xl md:text-8xl font-black  tracking-tighter leading-none mb-8 max-w-4xl mx-auto uppercase">
                   READY TO DELEGATE YOUR DEFI?
                 </AnimatedWords>
 
                 <FadeInSection delay={0.3}>
-                  <p className="text-2xl text-muted-foreground italic font-medium max-w-2xl mx-auto mb-12">
+                  <p className="text-2xl text-muted-foreground  font-medium max-w-2xl mx-auto mb-12">
                     Join the waitlist or start creating your first mission-critical vault on Flow.
                   </p>
                 </FadeInSection>
@@ -344,7 +320,7 @@ export default function Home() {
                     <MagneticButton>
                       <Link href="/dashboard" className="relative group block">
                         <span className="absolute inset-0 rounded-3xl bg-primary blur-2xl opacity-40 group-hover:opacity-100 transition-opacity" />
-                        <span className="relative flex items-center gap-4 px-16 py-8 text-2xl font-black italic tracking-tighter rounded-3xl bg-primary text-black transition-all duration-300">
+                        <span className="relative flex items-center gap-4 px-16 py-8 text-2xl font-black  tracking-tighter rounded-3xl bg-primary text-black transition-all duration-300">
                           INITIALIZE VAULT
                           <ArrowRight className="w-8 h-8 group-hover:translate-x-3 transition-transform" />
                         </span>

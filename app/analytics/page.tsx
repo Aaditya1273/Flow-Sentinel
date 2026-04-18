@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
                   ANALYTICS ACTIVE
                 </p>
-                <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter uppercase italic">
+                <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter uppercase ">
                   PORTFOLIO ANALYTICS
                 </h1>
                 <p className="text-muted-foreground mt-2 font-medium">
@@ -299,7 +299,7 @@ export default function AnalyticsPage() {
                   +{formatPercentage(analyticsData.totalPnLPercent)}
                 </Badge>
               </div>
-              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter italic financial-number">
+              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter  financial-number">
                 {formatCurrency(analyticsData.totalPortfolioValue)}
               </div>
               <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Total Portfolio Value</div>
@@ -315,7 +315,7 @@ export default function AnalyticsPage() {
                   24h
                 </Badge>
               </div>
-              <div className="text-3xl font-black text-accent mb-1 tracking-tighter italic financial-number">
+              <div className="text-3xl font-black text-accent mb-1 tracking-tighter  financial-number">
                 {formatCurrency(analyticsData.dailyPnL)}
               </div>
               <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Daily P&L</div>
@@ -331,7 +331,7 @@ export default function AnalyticsPage() {
                   Sharpe
                 </Badge>
               </div>
-              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter italic">
+              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter ">
                 {analyticsData.riskMetrics.sharpeRatio.toFixed(2)}
               </div>
               <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Sharpe Ratio</div>
@@ -347,7 +347,7 @@ export default function AnalyticsPage() {
                   Vol
                 </Badge>
               </div>
-              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter italic">
+              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter ">
                 {analyticsData.riskMetrics.volatility.toFixed(1)}%
               </div>
               <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Volatility</div>
@@ -367,7 +367,7 @@ export default function AnalyticsPage() {
               >
                 <Card className="tool-card p-6 border border-border">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-foreground uppercase italic tracking-tight">
+                    <h3 className="text-xl font-black text-foreground uppercase  tracking-tight">
                       PORTFOLIO PERFORMANCE
                     </h3>
 
@@ -388,7 +388,7 @@ export default function AnalyticsPage() {
                   </div>
 
                   <div className="mb-4">
-                    <div className="text-4xl font-black text-foreground tracking-tighter italic financial-number">
+                    <div className="text-4xl font-black text-foreground tracking-tighter  financial-number">
                       {formatCurrency(analyticsData.totalPortfolioValue)}
                     </div>
                     <div className="flex items-center text-accent">
@@ -523,7 +523,7 @@ export default function AnalyticsPage() {
                 className="mt-6"
               >
                 <Card className="tool-card p-6 border border-border">
-                  <h3 className="text-xl font-black text-foreground mb-4 uppercase italic tracking-tight">
+                  <h3 className="text-xl font-black text-foreground mb-4 uppercase  tracking-tight">
                     VAULT PERFORMANCE
                   </h3>
 
@@ -566,7 +566,7 @@ export default function AnalyticsPage() {
                 transition={{ delay: 0.3 }}
               >
                 <Card className="glass p-6">
-                  <h3 className="text-lg font-black text-white mb-4 uppercase italic tracking-tight">
+                  <h3 className="text-lg font-black text-white mb-4 uppercase  tracking-tight">
                     PORTFOLIO BREAKDOWN
                   </h3>
 
@@ -610,38 +610,38 @@ export default function AnalyticsPage() {
                 transition={{ delay: 0.4 }}
               >
                 <Card className="glass p-6">
-                  <h3 className="text-lg font-black text-white mb-4 uppercase italic tracking-tight">
+                  <h3 className="text-lg font-black text-white mb-4 uppercase  tracking-tight">
                     RISK METRICS
                   </h3>
 
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Sharpe Ratio</span>
-                      <span className="text-white font-black italic">
+                      <span className="text-white font-black ">
                         {analyticsData.riskMetrics.sharpeRatio.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Max Drawdown</span>
-                      <span className="text-red-400 font-black italic">
+                      <span className="text-red-400 font-black ">
                         {analyticsData.riskMetrics.maxDrawdown.toFixed(1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Volatility</span>
-                      <span className="text-yellow-400 font-black italic">
+                      <span className="text-yellow-400 font-black ">
                         {analyticsData.riskMetrics.volatility.toFixed(1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Beta</span>
-                      <span className="text-white font-black italic">
+                      <span className="text-white font-black ">
                         {analyticsData.riskMetrics.beta.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Alpha</span>
-                      <span className="text-green-400 font-black italic">
+                      <span className="text-green-400 font-black ">
                         {analyticsData.riskMetrics.alpha.toFixed(1)}%
                       </span>
                     </div>
@@ -656,7 +656,7 @@ export default function AnalyticsPage() {
                 transition={{ delay: 0.5 }}
               >
                 <Card className="glass p-6">
-                  <h3 className="text-lg font-black text-white mb-4 uppercase italic tracking-tight">
+                  <h3 className="text-lg font-black text-white mb-4 uppercase  tracking-tight">
                     RECENT ACTIVITY
                   </h3>
 
@@ -673,7 +673,7 @@ export default function AnalyticsPage() {
                         </div>
                         <div className="text-right">
                           {tx.amount > 0 && (
-                            <div className={`text-sm font-black italic ${tx.type === 'deposit' || tx.type === 'vault_created'
+                            <div className={`text-sm font-black  ${tx.type === 'deposit' || tx.type === 'vault_created'
                               ? 'text-green-400'
                               : 'text-red-400'
                               }`}>

@@ -70,7 +70,7 @@ function DashboardContent() {
             >
               <Shield className="w-10 h-10 text-primary" />
             </motion.div>
-            <h1 className="text-4xl font-black mb-4 tracking-tighter text-white uppercase italic">
+            <h1 className="text-4xl font-black mb-4 tracking-tighter text-white uppercase ">
               Authentication Required
             </h1>
             <p className="text-muted-foreground mb-10 leading-relaxed font-medium">
@@ -120,7 +120,7 @@ function DashboardContent() {
             >
               <Target className="w-10 h-10 text-primary" />
             </motion.div>
-            <h1 className="text-4xl font-black text-white mb-4 tracking-tighter uppercase italic">
+            <h1 className="text-4xl font-black text-white mb-4 tracking-tighter uppercase ">
               Deploy Your Sentinel
             </h1>
             <p className="text-muted-foreground mb-10 leading-relaxed font-medium">
@@ -184,7 +184,7 @@ function DashboardContent() {
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Protocol Active</span>
                 </div>
-                <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic leading-none">
+                <h1 className="text-5xl font-black text-white tracking-tighter uppercase  leading-none">
                   Command Center
                 </h1>
               </div>
@@ -271,7 +271,7 @@ function DashboardContent() {
                 transition={{ delay: 0.2 }}
               >
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-xl font-black text-white uppercase italic tracking-tighter">
+                  <h2 className="text-xl font-black text-white uppercase  tracking-tighter">
                     Managed Sentinels
                   </h2>
                   <div className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground tracking-widest">
@@ -309,7 +309,7 @@ function DashboardContent() {
               >
                 <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
                 <div className="flex items-center justify-between mb-10">
-                  <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">
+                  <h3 className="text-xl font-black text-white uppercase  tracking-tighter">
                     Strategic Projection
                   </h3>
                   <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black px-3 py-1">
@@ -339,7 +339,7 @@ function DashboardContent() {
                 className="tool-card p-8 border-0 glass relative overflow-hidden"
               >
                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-                <h3 className="text-xl font-black text-white uppercase italic tracking-tighter mb-8">
+                <h3 className="text-xl font-black text-white uppercase  tracking-tighter mb-8">
                   Fast Actions
                 </h3>
 

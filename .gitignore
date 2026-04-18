@@ -36,6 +36,8 @@ Thumbs.db
 
 # Flow CLI
 .flow/
+PLAN.md
+
 
 # Private keys (NEVER commit these!)
 *.pem

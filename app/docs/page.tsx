@@ -159,7 +159,7 @@ export default function DocsPage() {
                   <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 text-[10px] font-black uppercase tracking-[0.3em] px-3 py-1 mb-6">
                     Documentation Core
                   </Badge>
-                  <h1 className="text-6xl font-black text-white leading-tight uppercase italic tracking-tighter mb-4">
+                  <h1 className="text-6xl font-black text-white leading-tight uppercase  tracking-tighter mb-4">
                     The Library <br /><span className="text-primary">of Power</span>
                   </h1>
                   <p className="text-muted-foreground font-medium leading-relaxed">
@@ -199,7 +199,7 @@ export default function DocsPage() {
                   <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                     <div className="h-full bg-primary w-[98%] shadow-[0_0_8px_rgba(0,239,139,0.8)]" />
                   </div>
-                  <p className="text-[10px] font-medium text-muted-foreground leading-tight italic">
+                  <p className="text-[10px] font-medium text-muted-foreground leading-tight ">
                     All core Sentinel contracts have undergone rigorous formal verification and third-party security audits.
                   </p>
                 </div>
@@ -237,7 +237,7 @@ export default function DocsPage() {
                     {codeExample.split('\n').map((line, i) => (
                       <div key={i} className="flex gap-6 group/line">
                         <span className="w-4 text-white/20 select-none text-right group-hover/line:text-primary transition-colors">{i + 1}</span>
-                        <span className={line.startsWith('//') ? 'text-muted-foreground/50 italic' : line.includes('import') || line.includes('transaction') ? 'text-primary font-bold' : ''}>
+                        <span className={line.startsWith('//') ? 'text-muted-foreground/50 ' : line.includes('import') || line.includes('transaction') ? 'text-primary font-bold' : ''}>
                           {line}
                         </span>
                       </div>
@@ -260,7 +260,7 @@ export default function DocsPage() {
                       <div className="w-10 h-10 glass rounded-xl flex items-center justify-center bg-primary/5 text-primary border-primary/20">
                         {section.icon}
                       </div>
-                      <h2 className="text-xl font-black text-white uppercase italic tracking-tighter">
+                      <h2 className="text-xl font-black text-white uppercase  tracking-tighter">
                         {section.title}
                       </h2>
                     </div>
@@ -285,8 +285,8 @@ export default function DocsPage() {
 
                           <div className="flex items-center gap-4">
                             <div className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${item.difficulty === 'beginner' ? 'text-primary border-primary/20 bg-primary/5' :
-                                item.difficulty === 'intermediate' ? 'text-warning border-warning/20 bg-warning/5' :
-                                  'text-destructive border-destructive/20 bg-destructive/5'
+                              item.difficulty === 'intermediate' ? 'text-warning border-warning/20 bg-warning/5' :
+                                'text-destructive border-destructive/20 bg-destructive/5'
                               }`}>
                               {item.difficulty}
                             </div>
@@ -309,7 +309,7 @@ export default function DocsPage() {
                 className="tool-card p-12 border-0 glass text-center relative overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-4">
+                <h3 className="text-3xl font-black text-white uppercase  tracking-tighter mb-4">
                   Still stuck in the <span className="text-primary">matrix?</span>
                 </h3>
                 <p className="text-muted-foreground mb-8 max-w-md mx-auto font-medium leading-relaxed">

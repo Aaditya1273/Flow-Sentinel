@@ -6,12 +6,24 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { config } from 'lib/wagmi'
 import { FlowProvider } from 'lib/flow'
 import { TransactionProvider } from 'lib/transactions'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import '@rainbow-me/rainbowkit/styles.css'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Prevent initialization during SSR to avoid browser-API errors
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background" />
+    )
+  }
 
   return (
     <WagmiProvider config={config}>

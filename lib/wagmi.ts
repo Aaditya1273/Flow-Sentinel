@@ -1,5 +1,6 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
+import { createStorage, cookieStorage } from 'wagmi'
 
 // Custom Flow EVM chain
 const flowEVM = {
@@ -44,4 +45,7 @@ export const config = getDefaultConfig({
   projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'demo-project-id',
   chains: [flowTestnet, flowEVM, mainnet, polygon, optimism, arbitrum, base],
   ssr: true,
+  storage: createStorage({
+    storage: cookieStorage,
+  }),
 })

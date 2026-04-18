@@ -69,10 +69,11 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Outfit', 'serif'],
-        mono: ['Space Grotesk', 'monospace'],
+        sans: ['var(--font-usability)', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['var(--font-authority)', 'Host Grotesk', 'serif'],
+        mono: ['var(--font-trust)', 'IBM Plex Mono', 'monospace'],
       },
+
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

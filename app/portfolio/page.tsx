@@ -54,7 +54,7 @@ export default function PortfolioPage() {
             >
               <Shield className="w-10 h-10 text-primary" />
             </motion.div>
-            <h1 className="text-4xl font-black mb-4 tracking-tighter text-white uppercase italic">
+            <h1 className="text-4xl font-black mb-4 tracking-tighter text-white uppercase">
               Authentication Required
             </h1>
             <p className="text-muted-foreground mb-10 leading-relaxed font-medium">
