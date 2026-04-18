@@ -138,7 +138,7 @@ export function ActivityFeed() {
   if (loading) {
     return (
       <div className="tool-card border-0 glass p-6">
-        <h3 className="text-xl font-black italic tracking-tighter mb-8">SECURE LOGS</h3>
+        <h3 className="text-xl font-black tracking-tighter mb-8">SECURE LOGS</h3>
         <div className="space-y-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center space-x-4 animate-pulse">
@@ -158,7 +158,7 @@ export function ActivityFeed() {
     <ClientOnly>
       <div className="tool-card border-0 glass p-6">
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-xl font-black italic tracking-tighter uppercase">Activity Log</h3>
+          <h3 className="text-xl font-black tracking-tighter uppercase">Activity Log</h3>
           <div className="flex items-center text-[10px] font-black uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/40">
             <ActivityIcon className="w-3 h-3 mr-2 animate-pulse" />
             Live Sync

@@ -206,7 +206,7 @@ export function VaultCard({ vault }: VaultCardProps) {
                   {mounted ? (isEpoch ? 'NEVER' : vault.lastExecution.toLocaleDateString()) : '---'}
                 </span>
                 {!isEpoch && mounted && (
-                  <span className="text-xs text-muted-foreground italic">
+                  <span className="text-xs text-muted-foreground">
                     @{vault.lastExecution.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}

@@ -180,7 +180,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Step {step} of 4</span>
             </div>
-            <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">
+            <h2 className="text-3xl font-black text-white tracking-tighter uppercase">
               {step === 1 && 'Select Strategy'}
               {step === 2 && 'Configuration'}
               {step === 3 && 'Final Verification'}
@@ -243,7 +243,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                         </Badge>
                       </div>
 
-                      <h4 className="text-xl font-black text-white tracking-tighter uppercase italic mb-2">
+                      <h4 className="text-xl font-black text-white tracking-tighter uppercase mb-2">
                         {strategy.name}
                       </h4>
                       <p className="text-xs text-muted-foreground mb-6 line-clamp-2 leading-relaxed">
@@ -263,7 +263,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
 
                       <div className="flex flex-wrap gap-2">
                         {strategy.features.slice(0, 3).map(f => (
-                          <span key={f} className="text-[9px] font-black uppercase text-muted-foreground tracking-widest bg-white/5 px-2 py-1 rounded-lg border border-white/15 italic">
+                          <span key={f} className="text-[9px] font-black uppercase text-muted-foreground tracking-widest bg-white/5 px-2 py-1 rounded-lg border border-white/15">
                             {f}
                           </span>
                         ))}
@@ -290,7 +290,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                     value={vaultName}
                     onChange={(e) => setVaultName(e.target.value)}
                     placeholder={`Sentinel-Alpha-01`}
-                    className="w-full bg-white/5 border-2 border-white/15 rounded-3xl p-6 text-2xl font-black tracking-tighter italic uppercase text-white placeholder:text-white/10 focus:outline-none focus:border-primary/50 transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)]"
+                    className="w-full bg-white/5 border-2 border-white/15 rounded-3xl p-6 text-2xl font-black tracking-tighter uppercase text-white placeholder:text-white/10 focus:outline-none focus:border-primary/50 transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.2)]"
                   />
                 </div>
 
@@ -322,7 +322,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                       </button>
                     </div>
                   </div>
-                  <p className="px-4 text-[10px] font-bold text-muted-foreground italic">Minimum Required Capital: {selectedStrategyData.minDeposit} FLOW</p>
+                  <p className="px-4 text-[10px] font-bold text-muted-foreground">Minimum Required Capital: {selectedStrategyData.minDeposit} FLOW</p>
                 </div>
 
                 <div className="glass p-8 rounded-[30px] border-white/15 bg-white/[0.02] flex items-center gap-6">
@@ -330,8 +330,8 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                     <Sparkles className="w-8 h-8 text-primary" />
                   </div>
                   <div>
-                    <h5 className="text-sm font-black text-white uppercase italic tracking-tighter">Optimization Enabled</h5>
-                    <p className="text-xs text-muted-foreground italic leading-relaxed">
+                    <h5 className="text-sm font-black text-white uppercase tracking-tighter">Optimization Enabled</h5>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       Your capital will be routed through the {selectedStrategyData.name} engine with real-time MEV protection active.
                     </p>
                   </div>
@@ -363,11 +363,11 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                       <div className="space-y-6">
                         <div>
                           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Target Name</span>
-                          <span className="text-2xl font-black text-white uppercase italic tracking-tighter">{vaultName}</span>
+                          <span className="text-2xl font-black text-white uppercase tracking-tighter">{vaultName}</span>
                         </div>
                         <div>
                           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-2">Strategy Engine</span>
-                          <span className="text-xl font-black text-primary uppercase italic tracking-tighter">{selectedStrategyData.name}</span>
+                          <span className="text-xl font-black text-primary uppercase tracking-tighter">{selectedStrategyData.name}</span>
                         </div>
                       </div>
                       <div className="space-y-6">
@@ -387,7 +387,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                         <AlertTriangle className="w-4 h-4 text-destructive" />
                         <span className="text-[10px] font-black text-destructive uppercase tracking-widest">Protocol Confirmation</span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground font-medium italic leading-relaxed">
+                      <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
                         Deployment to the blockchain is irreversible. Your capital will be managed autonomously by the Flow Sentinel protocol. By proceeding, you authorize the smart contract to execute transactions on your behalf.
                       </p>
                     </div>
@@ -417,7 +417,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                   </div>
                 </div>
 
-                <h3 className="text-3xl font-black text-white tracking-tighter uppercase italic mb-4">
+                <h3 className="text-3xl font-black text-white tracking-tighter uppercase mb-4">
                   Deploying Intelligence
                 </h3>
                 <div className="flex items-center gap-2 mb-8">
@@ -426,7 +426,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                   <div className="w-2 h-2 rounded-full bg-primary animate-bounce delay-300" />
                 </div>
                 <div className="max-w-md space-y-4">
-                  <p className="text-sm font-bold text-muted-foreground italic uppercase tracking-widest">
+                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
                     Initializing Vault Registry...
                   </p>
                   <p className="text-[10px] font-black text-primary/50 uppercase tracking-[0.2em] animate-pulse">

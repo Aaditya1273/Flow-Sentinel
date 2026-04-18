@@ -99,7 +99,7 @@ export function Navbar() {
                                 </div>
                             </div>
                             <div className="hidden sm:flex flex-col">
-                                <span className="text-xl font-display font-black text-white italic tracking-tighter uppercase leading-none">Flow Sentinel</span>
+                                <span className="text-xl font-display font-black text-white tracking-tighter uppercase leading-none">Flow Sentinel</span>
                                 <span className="text-[10px] font-sans font-black tracking-[0.4em] uppercase text-primary/60">Autonomous Prime</span>
                             </div>
                         </div>
@@ -240,7 +240,7 @@ export function Navbar() {
                         <div className="flex flex-col gap-6">
                             <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-6">
                                 <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Navigation Menu</span>
-                                <Badge className="bg-primary/10 text-primary border-primary/20 italic">v1.2 PRIME</Badge>
+                                <Badge className="bg-primary/10 text-primary border-primary/20">v1.2 PRIME</Badge>
                             </div>
                             
                             {navItems.map((item) => {
@@ -250,7 +250,7 @@ export function Navbar() {
                                         <div className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${isActive ? 'bg-primary/10 border-primary/30 text-white' : 'border-transparent text-muted-foreground'}`}>
                                             <div className="flex items-center gap-4">
                                                 <item.icon className={`w-5 h-5 ${isActive ? 'text-primary' : ''}`} />
-                                                <span className="text-sm font-black uppercase tracking-widest italic">{item.name}</span>
+                                                <span className="text-sm font-black uppercase tracking-widest">{item.name}</span>
                                             </div>
                                             {isActive && <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(0,212,255,0.8)]" />}
                                         </div>
@@ -259,7 +259,7 @@ export function Navbar() {
                             })}
 
                             <div className="mt-6 pt-6 border-t border-white/5">
-                                <Button className="w-full h-14 rounded-2xl btn-primary text-xs uppercase tracking-[0.3em] font-black italic">
+                                <Button className="w-full h-14 rounded-2xl btn-primary text-xs uppercase tracking-[0.3em] font-black">
                                     <Zap className="w-4 h-4 mr-3" />
                                     Launch Enterprise Terminal
                                 </Button>

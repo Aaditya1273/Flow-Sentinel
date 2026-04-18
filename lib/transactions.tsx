@@ -119,7 +119,7 @@ function TransactionModal() {
 
                         {/* Title & Description */}
                         <div className="text-center mb-10">
-                            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-3">
+                            <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-3">
                                 {txState.status === 'executing' ? 'Requesting Auth' :
                                     txState.status === 'pending' ? 'Dispatching Sentinel' :
                                         txState.status === 'sealed' ? 'Protocol Sealed' : 'Transmission Failed'}

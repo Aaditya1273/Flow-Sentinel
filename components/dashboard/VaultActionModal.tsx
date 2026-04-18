@@ -113,7 +113,7 @@ export function VaultActionModal({
                                         {isDeposit ? <Plus className="w-6 h-6" /> : <ArrowDownLeft className="w-6 h-6" />}
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-black text-white uppercase italic tracking-tighter">
+                                        <h2 className="text-xl font-black text-white uppercase tracking-tighter">
                                             {isDeposit ? 'Capital Injection' : 'Funds Extraction'}
                                         </h2>
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{vaultName}</p>
@@ -170,7 +170,7 @@ export function VaultActionModal({
                                     <motion.div
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold italic flex items-center gap-3"
+                                        className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold flex items-center gap-3"
                                     >
                                         <Info className="w-4 h-4" />
                                         {error}
@@ -184,7 +184,7 @@ export function VaultActionModal({
                                     </div>
                                     <div className="p-4 glass rounded-2xl border-white/5 bg-white/[0.02]">
                                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Execution Speed</span>
-                                        <span className="text-xs font-bold text-primary italic uppercase">Instant <Zap className="w-2.5 h-2.5 inline ml-1" /></span>
+                                        <span className="text-xs font-bold text-primary uppercase">Instant <Zap className="w-2.5 h-2.5 inline ml-1" /></span>
                                     </div>
                                 </div>
 

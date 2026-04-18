@@ -111,7 +111,7 @@ export default function PortfolioPage() {
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Live Analytics</span>
                 </div>
-                <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic leading-none">
+                <h1 className="text-5xl font-black text-white tracking-tighter uppercase leading-none">
                   Portfolio Analytics
                 </h1>
               </div>
@@ -143,14 +143,14 @@ export default function PortfolioPage() {
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Total Managed Assets</div>
-                    <div className="text-6xl font-black text-white tracking-tighter mb-2 italic">
+                    <div className="text-6xl font-black text-white tracking-tighter mb-2">
                       {formatCurrency(performance?.totalBalance || 0)}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-1.5 text-primary mb-1 justify-end">
                       <TrendingUp className="w-4 h-4" />
-                      <span className="text-xl font-black italic tracking-tighter">
+                      <span className="text-xl font-black tracking-tighter">
                         {formatPercentage(performance?.totalPnlPercent || 8.42)}
                       </span>
                     </div>
@@ -180,10 +180,10 @@ export default function PortfolioPage() {
                   <div className="w-12 h-12 glass rounded-2xl flex items-center justify-center bg-secondary/10 text-secondary">
                     <Activity className="w-6 h-6" />
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-black tracking-widest border-secondary/20 text-secondary italic">OPTIMIZED</Badge>
+                  <Badge variant="outline" className="text-[10px] font-black tracking-widest border-secondary/20 text-secondary">OPTIMIZED</Badge>
                 </div>
                 <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Health Index</div>
-                <div className="text-4xl font-black text-white mb-2 tracking-tighter italic">98.4 / 100</div>
+                <div className="text-4xl font-black text-white mb-2 tracking-tighter">98.4 / 100</div>
                 <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Protocol Integrity Normal</div>
               </div>
 
@@ -192,10 +192,10 @@ export default function PortfolioPage() {
                   <div className="w-12 h-12 glass rounded-2xl flex items-center justify-center bg-primary/10 text-primary">
                     <Shield className="w-6 h-6" />
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-black tracking-widest border-primary/20 text-primary italic">SECURED</Badge>
+                  <Badge variant="outline" className="text-[10px] font-black tracking-widest border-primary/20 text-primary">SECURED</Badge>
                 </div>
                 <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Asset Exposure</div>
-                <div className="text-4xl font-black text-white mb-2 tracking-tighter italic">LOW RISK</div>
+                <div className="text-4xl font-black text-white mb-2 tracking-tighter">LOW RISK</div>
                 <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">VRF Jitter Enabled</div>
               </div>
             </div>
@@ -204,7 +204,7 @@ export default function PortfolioPage() {
           {/* Allocation Table */}
           <div className="tool-card p-10 border-0 glass overflow-hidden relative">
             <div className="flex items-center justify-between mb-10">
-              <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">
+              <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
                 Strategy Allocation
               </h3>
               <div className="flex items-center gap-4">
@@ -240,7 +240,7 @@ export default function PortfolioPage() {
                         </div>
                       </td>
                       <td className="py-8">
-                        <div className="text-lg font-black text-white tracking-tighter italic">{formatCurrency(vault.balance)}</div>
+                        <div className="text-lg font-black text-white tracking-tighter">{formatCurrency(vault.balance)}</div>
                       </td>
                       <td className="py-8">
                         <div className="flex items-center gap-2 text-primary">

@@ -279,3 +279,36 @@
 .status-error {
   color: #ef4444;
 }
+
+.bg-hex-grid {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.9998 12.0859L22.6597 17.0859V27.0859L13.9998 32.0859L5.33984 27.0859V17.0859L13.9998 12.0859ZM13.9998 1.41992L0.339844 9.30659V25.0799V40.8533L13.9998 48.7399L27.6597 40.8533V25.0799V9.30659L13.9998 1.41992Z' fill='white' fill-opacity='0.1'/%3E%3C/svg%3E");
+  background-size: 28px 49px;
+}
+
+@keyframes text-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-text-sweep {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: text-sweep 4s linear infinite;
+}
+
+@keyframes liquid-glow {
+  0% { filter: brightness(1) blur(20px); opacity: 0.5; }
+  50% { filter: brightness(1.5) blur(30px); opacity: 0.8; }
+  100% { filter: brightness(1) blur(20px); opacity: 0.5; }
+}
+
+.liquid-glow {
+  animation: liquid-glow 3s ease-in-out infinite;
+}
