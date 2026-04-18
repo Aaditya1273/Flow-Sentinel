@@ -5,7 +5,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15.1.2-black?style=for-the-badge&logo=next.js)
 ![Status](https://img.shields.io/badge/Status-LIVE_ON_TESTNET-green?style=for-the-badge)
 
-**Flow Sentinel** is a next-generation autonomous wealth manager built on the Flow Blockchain. It abstracts the complexities of DeFi yield optimization into secure, self-executing "Sentinels" that protect your capital while maximizing growth...
+**Flow Sentinel** is a next-generation autonomous wealth manager built on the Flow Blockchain. It abstracts the complexities of DeFi yield optimization into secure, self-executing "Sentinels" that protect your capital while maximizing growth.
 
 ---
 
