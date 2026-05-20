@@ -4,311 +4,502 @@
 
 @layer base {
   :root {
-    /* Premium Flow-Inspired Dark Theme */
-    --background: 222 47% 2%;
-    --foreground: 0 0% 98%;
+    /* ─────────────────────────────────────────
+       Flow brand design tokens (official)
+       Source: flow.com/mediakit
+    ───────────────────────────────────────── */
+    --w-tusk:         #FAF8F5;
+    --w-black:        #000000;
+    --w-midnight:     #0D0D0D;
+    --w-violet:       #00EF8B;   /* was purple — replaced with Flow Green */
+    --w-mint:         #37DDDF;   /* Flow Aqua */
+    --w-dark-100:     #111111;
+    --w-dark-150:     #1A1A1A;
+    --w-dark-200:     #222222;
+    --w-dark-300:     #333333;
+    --w-dark-400:     #555555;
+    --w-dark-500:     #888888;
+    --w-border:       rgba(250,248,245,0.10);
+    --w-border-hover: rgba(250,248,245,0.25);
 
-    --card: 222 47% 4%;
-    --card-foreground: 0 0% 98%;
+    /* ─────────────────────────────────────────
+       Flow Sentinel brand accent
+    ───────────────────────────────────────── */
+    --sen-green:      #00EF8B;   /* Flow Green */
+    --sen-cyan:       #37DDDF;   /* Flow Aqua */
+    --sen-green-glow: rgba(0,239,139,0.35);
+    --sen-cyan-glow:  rgba(55,221,223,0.35);
 
-    --popover: 222 47% 4%;
-    --popover-foreground: 0 0% 98%;
+    /* ─────────────────────────────────────────
+       ShadCN tokens
+    ───────────────────────────────────────── */
+    --background:             0 0% 0%;
+    --foreground:             0 0% 98%;
+    --card:                   0 0% 4%;
+    --card-foreground:        0 0% 98%;
+    --popover:                0 0% 4%;
+    --popover-foreground:     0 0% 98%;
+    --primary:                153 100% 47%;
+    --primary-foreground:     0 0% 0%;
+    --secondary:              178 68% 55%;   /* Flow Aqua hsl */
+    --secondary-foreground:   0 0% 0%;
+    --muted:                  0 0% 10%;
+    --muted-foreground:       0 0% 55%;
+    --accent:                 153 100% 47%;
+    --accent-foreground:      0 0% 0%;
+    --destructive:            0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border:                 0 0% 15%;
+    --input:                  0 0% 15%;
+    --ring:                   153 100% 47%;
+    --radius:                 1rem;
 
-    --primary: 153 100% 50%;
-    --primary-foreground: 222 47% 2%;
-
-    --secondary: 199 89% 48%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 222 47% 12%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 153 100% 50%;
-    --accent-foreground: 222 47% 2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 25%;
-    --input: 217.2 32.6% 25%;
-    --ring: 153 100% 50%;
-
-    --radius: 1rem;
-
-    /* Premium Immersive Design System Variables */
-    --flow-bg-primary: #030712;
-    --flow-bg-secondary: #0a0f1a;
-    --flow-bg-tertiary: #111827;
-    --flow-bg-card: rgba(17, 24, 39, 0.7);
-
-    --flow-cyan: #00f5d4;
-    --flow-cyan-glow: rgba(0, 245, 212, 0.4);
-    --flow-purple: #7c3aed;
-    --flow-purple-glow: rgba(124, 58, 237, 0.4);
-    --flow-blue: #3b82f6;
-    --flow-blue-glow: rgba(59, 130, 246, 0.4);
-    --flow-pink: #ec4899;
-    --flow-orange: #f97316;
-    --flow-green: #10b981;
-
-    --flow-text-primary: #f8fafc;
-    --flow-text-secondary: #94a3b8;
-    --flow-text-muted: #64748b;
-
-    /* Animation Timing */
-    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-
-    /* Gradients */
-    --gradient-flow: linear-gradient(135deg, #00EF8B 0%, #00CCFF 100%);
-    --gradient-overlay: radial-gradient(circle at top center, rgba(0, 239, 139, 0.15) 0%, transparent 70%);
+    /* ─────────────────────────────────────────
+       Legacy flow-* vars (dashboard uses these)
+    ───────────────────────────────────────── */
+    --flow-bg-primary:   #000000;
+    --flow-bg-secondary: #0a0a0a;
+    --flow-bg-tertiary:  #111111;
+    --flow-bg-card:      rgba(17,17,17,0.7);
+    --flow-cyan:         #37DDDF;   /* Flow Aqua */
+    --flow-cyan-glow:    rgba(55,221,223,0.4);
+    --flow-purple:       #00EF8B;   /* replaced purple with Flow Green */
+    --flow-purple-glow:  rgba(0,239,139,0.4);
+    --flow-blue:         #37DDDF;   /* replaced blue with Flow Aqua */
+    --flow-blue-glow:    rgba(55,221,223,0.4);
+    --flow-pink:         #02D87E;   /* Flow Green Dark */
+    --flow-orange:       #00EF8B;
+    --flow-green:        #00EF8B;
+    --flow-text-primary:   #FAF8F5;
+    --flow-text-secondary: #888888;
+    --flow-text-muted:     #555555;
+    --ease-out-expo:     cubic-bezier(0.16,1,0.3,1);
+    --gradient-flow:     linear-gradient(135deg,#00EF8B 0%,#37DDDF 100%);
+    --gradient-overlay:  radial-gradient(circle at top center,rgba(0,239,139,0.08) 0%,transparent 60%);
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
+
+  html { background: #000; color: #FAF8F5; }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    background:
-      var(--gradient-overlay),
-      hsl(var(--background));
-    min-height: 100vh;
-    background-attachment: fixed;
+    @apply font-sans antialiased;
+    background: #000;
+    color: #FAF8F5;
+    min-height: 100svh;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight text-white;
+    font-family: var(--font-authority), 'Host Grotesk', sans-serif;
+    color: #FAF8F5;
   }
 }
 
-/* Global Scrollbar Hide */
-* {
-  scrollbar-width: none;
-  /* Firefox */
-  -ms-overflow-style: none;
-  /* IE and Edge */
+/* ─────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────── */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; }
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT TYPOGRAPHY SCALE
+   Matches walrus.xyz font sizing exactly
+───────────────────────────────────────── */
+.text-display-2xl { font-size: clamp(3.5rem, 8vw, 7rem);   line-height: 0.95; letter-spacing: -0.03em; font-weight: 900; }
+.text-display-xl  { font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.0;  letter-spacing: -0.025em; font-weight: 900; }
+.text-display-lg  { font-size: clamp(2rem,   4vw, 3.5rem); line-height: 1.05; letter-spacing: -0.02em;  font-weight: 900; }
+.text-display-md  { font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.1;  letter-spacing: -0.015em; font-weight: 700; }
+.text-body-xl     { font-size: 1.25rem;  line-height: 1.5; letter-spacing: 0.01em; }
+.text-body-l      { font-size: 1.125rem; line-height: 1.6; letter-spacing: 0.01em; }
+.text-body-m      { font-size: 1rem;     line-height: 1.6; letter-spacing: 0.01em; }
+.text-body-s      { font-size: 0.875rem; line-height: 1.5; letter-spacing: 0.01em; }
+.text-label       { font-size: 0.75rem;  line-height: 1.4; letter-spacing: 0.05em; font-weight: 600; text-transform: uppercase; }
+.text-label-sm    { font-size: 0.6875rem;line-height: 1.4; letter-spacing: 0.06em; font-weight: 700; text-transform: uppercase; }
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT BUTTON SYSTEM
+───────────────────────────────────────── */
+
+/* Outline button — dark theme (white border, white text) */
+.w-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 30px;
+  border-radius: 26px;
+  border: 2px solid rgba(250,248,245,0.20);
+  background: transparent;
+  color: var(--w-tusk);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
 }
+.w-btn-outline:hover  { border-color: rgba(250,248,245,0.55); }
+.w-btn-outline:active { background: rgba(250,248,245,0.06); }
 
-*::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari and Opera */
+/* Solid button — tusk fill, black text */
+.w-btn-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 30px;
+  border-radius: 26px;
+  border: 2px solid transparent;
+  background: var(--w-tusk);
+  color: #000;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-decoration: none;
+  transition: background 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
 }
+.w-btn-solid:hover  { background: #e8e6e3; }
+.w-btn-solid:active { background: #d4d2cf; }
 
-/* Glassmorphism Classes */
-.glass {
-  background: rgba(4, 11, 20, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
-    var(--shadow-card);
+/* Violet solid */
+.w-btn-violet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 30px;
+  border-radius: 26px;
+  border: 2px solid transparent;
+  background: var(--w-violet);
+  color: #000;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-decoration: none;
+  transition: background 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
 }
+.w-btn-violet:hover { background: #b694ff; }
 
-.glass-pill {
-  @apply glass rounded-full px-4 py-1 flex items-center gap-2;
-}
-
-/* Premium Immersive Styles from helper-ui */
-.text-gradient {
-  @apply bg-clip-text text-transparent;
-  background-clip: text;
-  background-image: var(--gradient-primary);
-}
-
-.badge-premium {
-  @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-sans;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2));
-  color: var(--flow-purple);
-  border: 1px solid rgba(124, 58, 237, 0.3);
-}
-
-.badge-success {
-  @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-sans;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
-  color: var(--flow-green);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.canvas-container {
-  @apply absolute inset-0 z-0;
-}
-
-.canvas-container canvas {
-  @apply w-full h-full;
-}
-
-.bg-grid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-}
-
-@keyframes orb-float {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  25% {
-    transform: translate(30px, -30px) scale(1.1);
-  }
-
-  50% {
-    transform: translate(-20px, -50px) scale(0.9);
-  }
-
-  75% {
-    transform: translate(-40px, -20px) scale(1.05);
-  }
-}
-
-.animate-orb-float {
-  animation: orb-float 10s ease-in-out infinite;
-}
-
-/* Glowing Border Card */
-.tool-card {
-  @apply glass rounded-2xl p-6 transition-all duration-300;
+/* Glow button — Walrus rotating border glow */
+.w-glow-btn {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 26px;
+  padding: 2px;
   overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s var(--ease-out-expo);
 }
-
-.tool-card::before {
+.w-glow-btn::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent, rgba(0, 239, 139, 0.1), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.6s;
-}
-
-.tool-card:hover::before {
-  transform: translateX(100%);
-}
-
-.tool-card:hover {
-  @apply border-primary/40;
-  box-shadow: 0 0 30px rgba(0, 239, 139, 0.1);
-  transform: translateY(-2px);
-}
-
-/* Glow Effects */
-.text-glow {
-  text-shadow: 0 0 10px rgba(0, 239, 139, 0.5);
-}
-
-.bg-glow {
-  box-shadow: 0 0 15px rgba(0, 239, 139, 0.3);
-}
-
-/* Typography Enhancements */
-.section-title {
-  @apply text-4xl md:text-6xl font-display font-black tracking-tight mb-4;
-  background: linear-gradient(to bottom right, #fff 50%, #94a3b8);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.section-subtitle {
-  @apply text-lg text-muted-foreground font-sans max-w-2xl mx-auto mb-12;
-}
-
-/* Buttons */
-.btn-primary {
-  @apply bg-primary text-primary-foreground font-display font-black uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] bg-glow;
-}
-
-.btn-secondary {
-  @apply glass hover:bg-white/5 text-foreground font-sans font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 border border-white/10 hover:border-white/20;
-}
-
-/* Institutional Data (Tabular/Mono) */
-.financial-number {
-  @apply font-mono;
-  font-feature-settings: "tnum";
-  font-variant-numeric: tabular-nums;
-}
-
-
-/* Layout Helpers */
-.section-container {
-  @apply max-w-7xl mx-auto px-4;
-}
-
-.feature-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
-}
-
-/* Animation Utilities */
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-20px);
-  }
-
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-/* Status Indicators */
-.status-active {
-  color: hsl(var(--primary));
-}
-
-.status-warning {
-  color: #f59e0b;
-}
-
-.status-error {
-  color: #ef4444;
-}
-
-.bg-hex-grid {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.9998 12.0859L22.6597 17.0859V27.0859L13.9998 32.0859L5.33984 27.0859V17.0859L13.9998 12.0859ZM13.9998 1.41992L0.339844 9.30659V25.0799V40.8533L13.9998 48.7399L27.6597 40.8533V25.0799V9.30659L13.9998 1.41992Z' fill='white' fill-opacity='0.1'/%3E%3C/svg%3E");
-  background-size: 28px 49px;
-}
-
-@keyframes text-sweep {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.animate-text-sweep {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    rgba(255, 255, 255, 0) 100%
+  inset: -200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 20%,
+    var(--sen-green) 45%,
+    var(--sen-cyan)  55%,
+    transparent 80%
   );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: text-sweep 4s linear infinite;
+  animation: w-border-spin 3s linear infinite;
+  z-index: 0;
+}
+.w-glow-btn:hover { transform: scale(1.02); }
+.w-glow-btn-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 30px;
+  border-radius: 24px;
+  background: #000;
+  color: var(--w-tusk);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.w-glow-btn:hover .w-glow-btn-inner { background: #111; }
+
+/* Legacy glow-btn kept for dashboard */
+.glow-btn {
+  position: relative; overflow: hidden; background: transparent;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 12px; padding: 1px;
+  transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
+}
+.glow-btn::before {
+  content: ''; position: absolute; inset: -150%;
+  background: conic-gradient(from 0deg,transparent 30%,#00EF8B 48%,#00f5d4 52%,transparent 70%);
+  animation: w-border-spin 4s linear infinite; z-index: 0;
+}
+.glow-btn:hover { transform: scale(1.02); }
+.glow-btn-inner {
+  position: relative; z-index: 10; background: #030712;
+  border-radius: 11px; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.3s;
+}
+.glow-btn:hover .glow-btn-inner { background: rgba(17,24,39,0.85); }
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT CARD SYSTEM
+───────────────────────────────────────── */
+.w-card {
+  border-radius: 32px;
+  border: 1px solid var(--w-border);
+  background: var(--w-dark-100);
+  transition: border-color 0.25s;
+}
+.w-card:hover { border-color: var(--w-border-hover); }
+
+.w-card-dark {
+  border-radius: 32px;
+  border: 1px solid rgba(250,248,245,0.06);
+  background: #0a0a0a;
+  transition: border-color 0.25s;
+}
+.w-card-dark:hover { border-color: rgba(250,248,245,0.14); }
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT NAV
+───────────────────────────────────────── */
+.w-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: 26px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--w-tusk);
+  font-size: 1rem;
+  font-weight: 430;
+  letter-spacing: 0.045em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.w-nav-btn:hover { background: rgba(250,248,245,0.06); }
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT BANNER
+───────────────────────────────────────── */
+.w-banner {
+  background: linear-gradient(90deg, #00D4FF 0%, #00EF8B 100%);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 48px;
+  position: relative;
+}
+.w-banner-pill {
+  background: rgba(0,0,0,0.30);
+  border-radius: 9999px;
+  padding: 7px 20px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #fff;
+  white-space: nowrap;
+  transition: background 0.2s;
+  text-decoration: none;
+}
+.w-banner-pill:hover { background: rgba(0,0,0,0.45); }
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT DROPDOWN MEGA MENU
+───────────────────────────────────────── */
+.w-dropdown {
+  background: var(--w-tusk);
+  border-radius: 48px;
+  padding: 48px;
+  color: #000;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+}
+.w-dropdown-link {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  color: #000;
+  font-size: 1rem;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.w-dropdown-link:hover { color: #555; }
+.w-dropdown-label {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #00EF8B;
+  margin-bottom: 8px;
+  text-transform: none;
 }
 
+/* ─────────────────────────────────────────
+   WALRUS-EXACT SECTION SPACING
+───────────────────────────────────────── */
+.w-section { padding: 96px 0; }
+.w-section-lg { padding: 128px 0; }
+.w-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT MARQUEE
+───────────────────────────────────────── */
+.w-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: w-marquee-scroll 35s linear infinite;
+}
+.w-marquee-track:hover { animation-play-state: paused; }
+.w-marquee-content { flex-shrink: 0; }
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT POWER TABS (centered slider)
+───────────────────────────────────────── */
+.w-tab-bullet {
+  padding: 10px 20px;
+  border-radius: 9999px;
+  border: 1px solid rgba(250,248,245,0.12);
+  background: transparent;
+  color: rgba(250,248,245,0.55);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.w-tab-bullet:hover,
+.w-tab-bullet.active {
+  background: var(--w-tusk);
+  color: #000;
+  border-color: var(--w-tusk);
+}
+
+/* ─────────────────────────────────────────
+   WALRUS-EXACT HERO STAR ANIMATION
+───────────────────────────────────────── */
+.w-hero-star {
+  animation: w-star-fade var(--star-dur, 3s) var(--star-del, 0s) ease-in-out infinite;
+  opacity: 0;
+}
+
+/* ─────────────────────────────────────────
+   LEGACY CLASSES (dashboard compat)
+───────────────────────────────────────── */
+.glass {
+  background: rgba(4,11,20,0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.glass-pill { @apply glass rounded-full px-4 py-1 flex items-center gap-2; }
+.tool-card {
+  @apply glass rounded-2xl p-6 transition-all duration-300;
+  position: relative; overflow: hidden;
+}
+.tool-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(45deg,transparent,rgba(0,239,139,0.08),transparent);
+  transform: translateX(-100%); transition: transform 0.6s;
+}
+.tool-card:hover::before { transform: translateX(100%); }
+.tool-card:hover { border-color: rgba(0,239,139,0.3); box-shadow: 0 0 30px rgba(0,239,139,0.08); transform: translateY(-2px); }
+.btn-primary { @apply bg-primary text-primary-foreground font-display font-black uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]; }
+.btn-secondary { @apply hover:bg-white/5 text-foreground font-sans font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 border border-white/10 hover:border-white/20; }
+.badge-success {
+  @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-sans;
+  background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);
+}
+.badge-premium {
+  @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-sans;
+  background: rgba(124,58,237,0.15); color: #7c3aed; border: 1px solid rgba(124,58,237,0.3);
+}
+.financial-number { @apply font-mono; font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
+.text-glow { text-shadow: 0 0 10px rgba(0,239,139,0.5); }
+.bg-glow   { box-shadow: 0 0 15px rgba(0,239,139,0.3); }
+.status-active  { color: hsl(var(--primary)); }
+.status-warning { color: #f59e0b; }
+.status-error   { color: #ef4444; }
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
+  background-size: 50px 50px;
+}
+.section-container { @apply max-w-7xl mx-auto px-4; }
+.feature-grid { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6; }
+
+/* ─────────────────────────────────────────
+   KEYFRAMES
+───────────────────────────────────────── */
+@keyframes w-border-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes w-marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes w-star-fade {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 1; }
+}
+@keyframes w-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes w-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes orb-float {
+  0%,100% { transform: translate(0,0) scale(1); }
+  25%     { transform: translate(30px,-30px) scale(1.1); }
+  50%     { transform: translate(-20px,-50px) scale(0.9); }
+  75%     { transform: translate(-40px,-20px) scale(1.05); }
+}
+@keyframes star-twinkle {
+  0%,100% { opacity: 0.3; }
+  50%     { opacity: 1; }
+}
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-20px); }
+}
 @keyframes liquid-glow {
-  0% { filter: brightness(1) blur(20px); opacity: 0.5; }
-  50% { filter: brightness(1.5) blur(30px); opacity: 0.8; }
-  100% { filter: brightness(1) blur(20px); opacity: 0.5; }
+  0%,100% { filter: brightness(1) blur(20px); opacity: 0.5; }
+  50%     { filter: brightness(1.5) blur(30px); opacity: 0.8; }
 }
 
-.liquid-glow {
-  animation: liquid-glow 3s ease-in-out infinite;
-}
+/* ─────────────────────────────────────────
+   ANIMATION UTILITIES
+───────────────────────────────────────── */
+.animate-marquee      { display: inline-flex; gap: 2rem; animation: marquee 30s linear infinite; width: max-content; }
+.animate-orb-float    { animation: orb-float 10s ease-in-out infinite; }
+.star-sparkle         { animation: star-twinkle 3s ease-in-out infinite; }
+.animate-float        { animation: float 6s ease-in-out infinite; }
+.liquid-glow          { animation: liquid-glow 3s ease-in-out infinite; }
+.animate-w-fade-up    { animation: w-fade-up 0.7s var(--ease-out-expo) both; }
+.animate-w-fade-in    { animation: w-fade-in 0.5s ease both; }

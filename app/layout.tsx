@@ -60,7 +60,7 @@ export default function RootLayout({
             {children}
           </div>
         </Providers>
-        <div className="fixed inset-0 bg-grid pointer-events-none opacity-30 z-0" />
+        {/* bg-grid only for dashboard pages, not landing */}
       </body>
     </html>
   )

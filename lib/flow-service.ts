@@ -1,4 +1,6 @@
+import '@/lib/storage-polyfill'
 import * as fcl from '@onflow/fcl'
+
 
 // Contract addresses from environment
 const SENTINEL_VAULT_ADDRESS = process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0x136b642d0aa31ca9'

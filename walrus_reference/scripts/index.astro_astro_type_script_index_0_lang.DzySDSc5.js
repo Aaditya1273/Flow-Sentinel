@@ -1,0 +1,1 @@
+import{i as o}from"./heroScroll.D0so5jIG.js";import{o as r}from"./utils.DNdryj_K.js";import"./index.CB87Sc6I.js";import"./ScrollTrigger.Cv03IO65.js";r(()=>o({contentId:"hero-content",textId:"hero-text",auroraId:"hero-aurora",textEnd:"+=1200"}));

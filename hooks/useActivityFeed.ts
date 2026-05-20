@@ -1,6 +1,8 @@
+import '@/lib/storage-polyfill'
 import { useState, useEffect } from 'react'
 import { useFlow } from 'lib/flow'
 import * as fcl from '@onflow/fcl'
+
 
 export interface Activity {
   id: string

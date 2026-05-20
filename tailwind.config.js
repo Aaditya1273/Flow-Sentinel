@@ -49,7 +49,18 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Premium Palette from helper-ui
+        // Walrus-style design tokens
+        'w-tusk': '#FAF8F5',
+        'w-midnight': '#0D0D0D',
+        'w-violet': '#CAB1FF',
+        'w-mint': '#98EFDD',
+        'w-dark-100': '#111111',
+        'w-dark-150': '#1A1A1A',
+        'w-dark-200': '#222222',
+        'w-dark-300': '#333333',
+        'w-dark-400': '#444444',
+        'w-dark-500': '#666666',
+        // Flow Sentinel brand
         'flow-bg': {
           primary: 'var(--flow-bg-primary)',
           secondary: 'var(--flow-bg-secondary)',

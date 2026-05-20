@@ -1,7 +1,9 @@
 'use client'
 
+import '@/lib/storage-polyfill'
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import * as fcl from '@onflow/fcl'
+
 import { useAccount, useDisconnect } from 'wagmi'
 
 // Configure FCL for Flow Testnet
