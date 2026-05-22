@@ -57,7 +57,7 @@ function Banner() {
     }}>
       <div className="hidden md:flex" style={{ height: 52, alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 48px' }}>
         <p style={{ color: '#FAF8F5', fontSize: '0.9375rem', fontWeight: 500, margin: 0 }}>
-          Boosted SEN rewards on Flow Sentinel Pools!
+          Boosted FLOW rewards on Flow Sentinel Pools!
         </p>
         <Link href="/vaults" style={{
           flexShrink: 0, borderRadius: 9999, background: 'rgba(0,0,0,0.30)',
