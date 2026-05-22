@@ -127,7 +127,7 @@ export function TokenSection() {
               e.currentTarget.style.borderColor = '#00EF8B'
             }}
           >
-            Learn about SEN
+            Learn about Flow
           </Link>
         </motion.div>
       </div>

@@ -200,7 +200,7 @@ export function PartnersSection() {
                 color: '#FAF8F5',
               }}>
                 <p style={{ fontSize: 14, lineHeight: 1, fontWeight: 400, letterSpacing: '0.7px', textTransform: 'uppercase', margin: 0 }}>
-                  Partners
+                  Flow
                 </p>
               </div>
             </motion.div>

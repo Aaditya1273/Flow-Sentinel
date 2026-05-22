@@ -25,8 +25,9 @@ export function NoDowntimeSection() {
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             borderRadius: 4, padding: '8px 12px',
-            background: 'linear-gradient(87deg, rgba(25,31,40,0.10) 0%, rgba(25,31,40,0.35) 100%)',
-            color: 'rgba(250,248,245,0.55)',
+            background: 'rgba(0,239,139,0.08)',
+            border: '1px solid rgba(0,239,139,0.20)',
+            color: 'rgba(250,248,245,0.70)',
           }}>
             <p style={{
               fontSize: 14, lineHeight: 1, fontWeight: 400,

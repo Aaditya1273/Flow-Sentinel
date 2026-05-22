@@ -85,7 +85,7 @@ const DISCOVER_MENU = {
     ],
   },
   featured: {
-    image: '/images/USD-Pricing-Announcement-1.jpg',
+    image: '/images/nav1.png',
     tag: 'Product',
     title: 'Announcing Predictable Pricing on Flow Sentinel',
     href: '/docs',
@@ -109,7 +109,7 @@ const BUILD_MENU = {
     ],
   },
   featured: {
-    image: '/images/getting-started.DddBen-j_BUybW.webp',
+    image: '/images/nav2.png',
     tag: 'Getting Started Guide',
     title: 'Getting Started with Flow Sentinel SDK',
     desc: 'Learn to programmatically trigger safe-vault executions.',
@@ -133,7 +133,7 @@ const ECOSYSTEM_MENU = {
     ],
   },
   featured: {
-    image: '/images/sui-stack.BY_4m4E8_ZNHjPJ.webp',
+    image: '/images/nav3.png',
     tag: 'Featured Partner',
     title: 'Featured Partner: Baselight Integration',
     desc: 'Zero-downtime decentralized indexing nodes.',
@@ -326,18 +326,18 @@ export function LandingNavbar() {
 
           {/* Brand */}
           <div className="justify-self-start">
-            <Link href="/" aria-label="Home" className="inline-flex items-center gap-3 group">
-              <div className="w-8 h-8 rounded-xl bg-[var(--sen-green)]/10 border border-[var(--sen-green)]/20 flex items-center justify-center group-hover:bg-[var(--sen-green)]/20 transition-colors">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="var(--sen-green)" strokeWidth="1.5" fill="none"/>
-                  <path d="M8 5L11 6.75V10.25L8 12L5 10.25V6.75L8 5Z" fill="var(--sen-green)" opacity="0.6"/>
-                </svg>
-              </div>
+            <Link href="/" aria-label="Home" className="inline-flex items-center group">
               <span
-                className="text-[1.125rem] font-display font-black tracking-tight text-[var(--w-tusk)] leading-none"
-                style={{ fontFamily: 'var(--font-authority), Host Grotesk, sans-serif' }}
+                style={{
+                  fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif',
+                  fontSize: '1.125rem',
+                  fontWeight: 700, // Changed from 500 to 700 for bold
+                  letterSpacing: '-0.01em',
+                  color: '#FAF8F5',
+                  lineHeight: 1,
+                }}
               >
-                Flow Sentinel
+                Flow
               </span>
             </Link>
           </div>
