@@ -225,8 +225,8 @@ export function VaultPreviewCard({
                     </div>
 
                     <div className={`px-3 py-1 rounded-full text-xs font-bold ${riskScore.startsWith("Low") || riskScore === "A+"
-                        ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                        : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                        ? "bg-primary/15 text-primary border border-primary/30"
+                        : "bg-warning/15 text-warning border border-warning/30"
                         }`}>
                         {riskScore}
                     </div>
@@ -286,7 +286,7 @@ export function StatsCard({ label, value, icon, trend, className = "" }: StatsCa
                     {icon}
                 </div>
                 {trend && (
-                    <div className={`flex items-center gap-1 text-xs font-medium ${trend.positive ? "text-green-400" : "text-red-400"
+                    <div className={`flex items-center gap-1 text-xs font-medium ${trend.positive ? "text-primary" : "text-destructive"
                         }`}>
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path

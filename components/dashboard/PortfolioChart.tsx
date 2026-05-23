@@ -93,7 +93,7 @@ export function PortfolioChart() {
           <div className="text-3xl font-black tracking-tight text-white mb-1">
             {formatCurrency(currentValue)}
           </div>
-          <div className={`flex items-center text-sm font-bold ${change >= 0 ? 'text-primary' : 'text-red-400'}`}>
+          <div className={`flex items-center text-sm font-bold ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
             {change >= 0 ? (
               <TrendingUp className="w-4 h-4 mr-1.5" />
             ) : (

@@ -83,13 +83,28 @@ function ScrollLogoStrip() {
         <div
           ref={trackRef}
           style={{
-            display: 'flex', width: 'max-content',
-            willChange: 'transform',
-            transform: 'translate3d(0, 0, 0)',
+            display: 'flex', alignItems: 'center', width: 'max-content',
+            willChange: 'transform', transform: 'translate3d(0, 0, 0)',
           }}
         >
-          <img src="/images/marquee.C_1u6O2j.svg" alt="" style={{ display: 'block', flexShrink: 0 }} draggable={false} />
-          <img src="/images/marquee.C_1u6O2j.svg" alt="" style={{ display: 'block', flexShrink: 0 }} aria-hidden="true" draggable={false} />
+          {[0, 1].map(copy => (
+            <div key={copy} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <span style={{
+                fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif',
+                fontSize: 'clamp(3rem, 6vw, 5.5rem)',
+                fontWeight: 700, letterSpacing: '-0.03em',
+                color: 'rgba(250,248,245,0.55)',
+                whiteSpace: 'nowrap', lineHeight: 1,
+                paddingRight: '3rem',
+              }}>Flow Sentinel</span>
+              <span style={{
+                width: 16, height: 16, borderRadius: '50%',
+                background: 'rgba(250,248,245,0.55)',
+                flexShrink: 0, display: 'inline-block',
+                marginRight: '3rem',
+              }} />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -129,9 +144,28 @@ function MobileStrip() {
   }, [])
 
   return (
-    <div ref={trackRef} style={{ display: 'flex', width: 'max-content', willChange: 'transform', transform: 'translate3d(0, 0, 0)' }}>
-      <img src="/images/marquee-small.kV55nHGx.svg" alt="" style={{ display: 'block', flexShrink: 0 }} draggable={false} />
-      <img src="/images/marquee-small.kV55nHGx.svg" alt="" style={{ display: 'block', flexShrink: 0 }} aria-hidden="true" draggable={false} />
+    <div
+      ref={trackRef}
+      style={{ display: 'flex', alignItems: 'center', width: 'max-content', willChange: 'transform', transform: 'translate3d(0, 0, 0)' }}
+    >
+      {[0, 1].map(copy => (
+        <div key={copy} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <span style={{
+            fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif',
+            fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+            fontWeight: 700, letterSpacing: '-0.03em',
+            color: 'rgba(250,248,245,0.55)',
+            whiteSpace: 'nowrap', lineHeight: 1,
+            paddingRight: '2rem',
+          }}>Flow Sentinel</span>
+          <span style={{
+            width: 10, height: 10, borderRadius: '50%',
+            background: 'rgba(250,248,245,0.55)',
+            flexShrink: 0, display: 'inline-block',
+            marginRight: '2rem',
+          }} />
+        </div>
+      ))}
     </div>
   )
 }

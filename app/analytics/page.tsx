@@ -581,11 +581,11 @@ export default function AnalyticsPage() {
                             />
                             <span className="text-sm text-white">{item.name}</span>
                           </div>
-                          <span className="text-sm text-gray-400">
+                          <span className="text-sm text-muted-foreground">
                             {item.percentage.toFixed(1)}%
                           </span>
                         </div>
-                        <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div className="w-full bg-white/10 rounded-full h-2">
                           <div
                             className="h-2 rounded-full"
                             style={{
@@ -594,7 +594,7 @@ export default function AnalyticsPage() {
                             }}
                           />
                         </div>
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-muted-foreground">
                           {formatCurrency(item.value)}
                         </div>
                       </div>
@@ -623,13 +623,13 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Max Drawdown</span>
-                      <span className="text-red-400 font-black ">
+                      <span className="text-destructive font-black ">
                         {analyticsData.riskMetrics.maxDrawdown.toFixed(1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Volatility</span>
-                      <span className="text-yellow-400 font-black ">
+                      <span className="text-warning font-black ">
                         {analyticsData.riskMetrics.volatility.toFixed(1)}%
                       </span>
                     </div>
@@ -641,7 +641,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Alpha</span>
-                      <span className="text-green-400 font-black ">
+                      <span className="text-primary font-black ">
                         {analyticsData.riskMetrics.alpha.toFixed(1)}%
                       </span>
                     </div>
@@ -662,26 +662,26 @@ export default function AnalyticsPage() {
 
                   <div className="space-y-3">
                     {analyticsData.recentTransactions.map((tx, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
                         <div>
                           <div className="text-[10px] font-black text-primary uppercase tracking-wider">
                             {tx.type.replace('_', ' ')}
                           </div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-muted-foreground">
                             {tx.vault}
                           </div>
                         </div>
                         <div className="text-right">
                           {tx.amount > 0 && (
                             <div className={`text-sm font-black  ${tx.type === 'deposit' || tx.type === 'vault_created'
-                              ? 'text-green-400'
-                              : 'text-red-400'
+                              ? 'text-primary'
+                              : 'text-destructive'
                               }`}>
                               {tx.type === 'deposit' ? '+' : ''}
                               {tx.amount > 0 ? formatCurrency(tx.amount) : ''}
                             </div>
                           )}
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-muted-foreground">
                             {tx.timestamp}
                           </div>
                         </div>

@@ -127,7 +127,7 @@ export function ActivityFeed() {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'deposit': return <ArrowUpRight className="w-5 h-5 text-primary" />
-      case 'withdrawal': return <ArrowDownLeft className="w-5 h-5 text-red-500" />
+      case 'withdrawal': return <ArrowDownLeft className="w-5 h-5 text-destructive" />
       case 'yield': return <TrendingUp className="w-5 h-5 text-primary" />
       case 'strategy': return <Zap className="w-5 h-5 text-secondary" />
       case 'system': return <Shield className="w-5 h-5 text-white" />
@@ -202,7 +202,7 @@ export function ActivityFeed() {
                     {activity.amount && (
                       <span className={`text-base font-black financial-number tracking-tighter ${activity.type === 'deposit' || activity.type === 'yield'
                         ? 'text-primary'
-                        : 'text-red-500'
+                        : 'text-destructive'
                         }`}>
                         {activity.type === 'deposit' || activity.type === 'yield' ? '+' : '-'}
                         {formatCurrency(activity.amount)}
