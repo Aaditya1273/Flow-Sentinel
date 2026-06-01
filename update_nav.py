@@ -1,4 +1,6 @@
-'use client'
+import re
+
+content = """'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -229,3 +231,7 @@ export function Navbar() {
     </>
   )
 }
+"""
+
+with open('components/layout/Navbar.tsx', 'w') as f:
+    f.write(content)

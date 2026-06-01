@@ -1,28 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   TrendingUp,
-  TrendingDown,
   DollarSign,
-  PieChart,
   BarChart3,
   Activity,
-  Calendar,
-  Download,
-  Filter,
-  RefreshCw,
-  ArrowUpRight,
-  ArrowDownLeft,
-  Target,
   Shield,
   ChevronRight,
-  Info
+  Info,
+  Target
 } from 'lucide-react'
 import { Navbar } from 'components/layout/Navbar'
-import { Button } from 'components/ui/button'
-import { Badge } from 'components/ui/badge'
 import { useFlow } from 'lib/flow'
 import { useVaultData } from 'hooks/useVaultData'
 import { formatCurrency, formatPercentage } from 'lib/utils'
@@ -42,28 +32,22 @@ export default function PortfolioPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-background relative overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full" />
+      <div style={{ minHeight: '100vh', background: '#000', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(ellipse at center, rgba(0,239,139,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen pt-16 relative z-10">
-          <div className="text-center max-w-lg px-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-20 h-20 glass rounded-3xl flex items-center justify-center mx-auto mb-8 bg-primary/5 border-primary/20 shadow-[0_0_30px_rgba(0,239,139,0.1)]"
-            >
-              <Shield className="w-10 h-10 text-primary" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', paddingTop: 64, position: 'relative', zIndex: 10 }}>
+          <div style={{ textAlign: 'center', maxWidth: 480, padding: '0 16px' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+              style={{ width: 80, height: 80, borderRadius: 32, border: '1px solid rgba(0,239,139,0.2)', background: 'rgba(0,239,139,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' }}>
+              <Shield style={{ width: 40, height: 40, color: '#00EF8B' }} />
             </motion.div>
-            <h1 className="text-4xl font-black mb-4 tracking-tighter text-white uppercase">
+            <h1 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '2.25rem', fontWeight: 500, letterSpacing: '-0.02em', color: '#FAF8F5', margin: '0 0 16px', textTransform: 'uppercase' }}>
               Authentication Required
             </h1>
-            <p className="text-muted-foreground mb-10 leading-relaxed font-medium">
+            <p style={{ color: 'rgba(250,248,245,0.55)', marginBottom: 40, lineHeight: 1.6, fontWeight: 500 }}>
               Access your Portfolio Analytics by establishing a secure link with your Flow wallet.
             </p>
-            <button
-              onClick={logIn}
-              className="btn-primary px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest"
-            >
+            <button onClick={logIn} className="dash-cta" style={{ padding: '16px 40px' }}>
               Connect Flow Wallet
             </button>
           </div>
@@ -74,15 +58,15 @@ export default function PortfolioPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div style={{ minHeight: '100vh', background: '#000' }}>
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen pt-16">
-          <div className="text-center">
-            <div className="relative w-16 h-16 mx-auto mb-6">
-              <div className="absolute inset-0 border-4 border-primary/10 rounded-full" />
-              <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', paddingTop: 64 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ position: 'relative', width: 64, height: 64, margin: '0 auto 24px' }}>
+              <div style={{ position: 'absolute', inset: 0, border: '3px solid rgba(0,239,139,0.08)', borderRadius: '50%' }} />
+              <div style={{ position: 'absolute', inset: 0, border: '3px solid transparent', borderTopColor: '#00EF8B', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
             </div>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse">Analyzing Assets...</p>
+            <p className="dash-label" style={{ color: '#00EF8B', animation: 'pulse 2s infinite' }}>Analyzing Assets...</p>
           </div>
         </div>
       </div>
@@ -90,41 +74,27 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background Glows */}
-      <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[10%] left-[-5%] w-[30%] h-[40%] bg-secondary/5 blur-[100px] rounded-full pointer-events-none" />
+    <div style={{ minHeight: '100vh', background: '#000', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(ellipse at center, rgba(0,239,139,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '10%', left: '-5%', width: '30%', height: '40%', background: 'radial-gradient(ellipse at center, rgba(55,221,223,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
       <Navbar />
 
-      <div className="pt-32 pb-20 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div style={{ paddingTop: 128, paddingBottom: 80, position: 'relative', zIndex: 10 }}>
+        <div className="w-container">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-12"
-          >
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="dash-page-header">
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24 }}>
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Live Analytics</span>
-                </div>
-                <h1 className="text-5xl font-black text-white tracking-tighter uppercase leading-none">
-                  Portfolio Analytics
-                </h1>
+                <h1>Portfolio Analytics</h1>
               </div>
 
-              <div className="flex items-center gap-2 p-1.5 glass rounded-xl border-white/5 bg-white/5">
+              <div className="dash-filter-bar" style={{ alignSelf: 'flex-start' }}>
                 {timeframes.map((tf) => (
                   <button
                     key={tf.value}
                     onClick={() => setTimeframe(tf.value)}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${timeframe === tf.value
-                        ? 'bg-primary text-black shadow-[0_0_20px_rgba(0,239,139,0.3)]'
-                        : 'text-muted-foreground hover:text-white hover:bg-white/5'
-                      }`}
+                    className={`dash-filter-btn ${timeframe === tf.value ? 'active' : ''}`}
                   >
                     {tf.label}
                   </button>
@@ -134,39 +104,41 @@ export default function PortfolioPage() {
           </motion.div>
 
           {/* Core Metrics */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-            <div className="lg:col-span-2 tool-card p-10 border-0 glass relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <BarChart3 className="w-32 h-32 text-primary" />
-              </div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6" style={{ marginBottom: 48 }}>
+            <div className="dash-chart" style={{ paddingBottom: 20 }}>
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 32 }}>
                   <div>
-                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Total Managed Assets</div>
-                    <div className="text-6xl font-black text-white tracking-tighter mb-2">
+                    <div className="dash-label" style={{ marginBottom: 8 }}>Total Managed Assets</div>
+                    <div className="dash-value" style={{ fontSize: '3rem', marginBottom: 8 }}>
                       {formatCurrency(performance?.totalBalance || 0)}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 text-primary mb-1 justify-end">
-                      <TrendingUp className="w-4 h-4" />
-                      <span className="text-xl font-black tracking-tighter">
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#00EF8B', justifyContent: 'flex-end' }}>
+                      <TrendingUp style={{ width: 16, height: 16 }} />
+                      <span className="dash-value" style={{ fontSize: '1.5rem', color: '#00EF8B' }}>
                         {formatPercentage(performance?.totalPnlPercent || 8.42)}
                       </span>
                     </div>
-                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Across All Strategies</div>
+                    <div className="dash-label">Across All Strategies</div>
                   </div>
                 </div>
 
-                <div className="h-48 flex items-end gap-3 mt-10">
+                <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
                   {[40, 60, 45, 70, 55, 90, 80, 100, 85, 95, 75, 110].map((h, i) => (
-                    <div key={i} className="flex-1 group relative">
+                    <div key={i} style={{ flex: 1, position: 'relative' }}>
                       <motion.div
                         initial={{ height: 0 }}
                         animate={{ height: `${h}%` }}
                         transition={{ delay: i * 0.05, duration: 1 }}
-                        className={`w-full rounded-t-lg transition-all duration-300 ${i === 11 ? 'bg-primary shadow-[0_0_20px_rgba(0,239,139,0.4)]' : 'bg-white/10 group-hover:bg-primary/30'
-                          }`}
+                        style={{
+                          width: '100%',
+                          borderRadius: '4px 4px 0 0',
+                          background: i === 11 ? '#00EF8B' : 'rgba(250,248,245,0.06)',
+                          transition: 'background 0.3s',
+                          minHeight: 4,
+                        }}
                       />
                     </div>
                   ))}
@@ -174,102 +146,98 @@ export default function PortfolioPage() {
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="tool-card p-8 border-0 relative overflow-hidden group">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 glass rounded-2xl flex items-center justify-center bg-secondary/10 text-secondary">
-                    <Activity className="w-6 h-6" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div className="dash-stat" style={{ padding: '28px 32px' }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 24, border: '1px solid rgba(55,221,223,0.15)', background: 'rgba(55,221,223,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#37DDDF' }}>
+                      <Activity style={{ width: 24, height: 24 }} />
+                    </div>
+                    <span className="dash-badge dash-badge-cyan">Optimized</span>
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-black tracking-widest border-secondary/20 text-secondary">OPTIMIZED</Badge>
+                  <div className="dash-label" style={{ marginBottom: 8 }}>Health Index</div>
+                  <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 8 }}>98.4 / 100</div>
+                  <div className="dash-label">Protocol Integrity Normal</div>
                 </div>
-                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Health Index</div>
-                <div className="text-4xl font-black text-white mb-2 tracking-tighter">98.4 / 100</div>
-                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Protocol Integrity Normal</div>
               </div>
 
-              <div className="tool-card p-8 border-0 relative overflow-hidden group">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 glass rounded-2xl flex items-center justify-center bg-primary/10 text-primary">
-                    <Shield className="w-6 h-6" />
+              <div className="dash-stat" style={{ padding: '28px 32px' }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 24, border: '1px solid rgba(0,239,139,0.15)', background: 'rgba(0,239,139,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00EF8B' }}>
+                      <Shield style={{ width: 24, height: 24 }} />
+                    </div>
+                    <span className="dash-badge dash-badge-green">Secured</span>
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-black tracking-widest border-primary/20 text-primary">SECURED</Badge>
+                  <div className="dash-label" style={{ marginBottom: 8 }}>Asset Exposure</div>
+                  <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 8, color: '#00EF8B' }}>Low Risk</div>
+                  <div className="dash-label">VRF Jitter Enabled</div>
                 </div>
-                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Asset Exposure</div>
-                <div className="text-4xl font-black text-white mb-2 tracking-tighter">LOW RISK</div>
-                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">VRF Jitter Enabled</div>
               </div>
             </div>
           </div>
 
           {/* Allocation Table */}
-          <div className="tool-card p-10 border-0 glass overflow-hidden relative">
-            <div className="flex items-center justify-between mb-10">
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
+          <div className="dash-card" style={{ padding: 32, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 32 }}>
+              <h3 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '1.25rem', fontWeight: 500, letterSpacing: '-0.02em', color: '#FAF8F5', margin: 0, textTransform: 'uppercase' }}>
                 Strategy Allocation
               </h3>
-              <div className="flex items-center gap-4">
-                <button className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground hover:text-white transition-all tracking-widest">
-                  <Download className="w-4 h-4" /> EXPORT REPORT
-                </button>
-              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div style={{ overflowX: 'auto' }}>
+              <table className="dash-table">
                 <thead>
-                  <tr className="border-b border-white/5">
-                    <th className="pb-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Sentinel / Strategy</th>
-                    <th className="pb-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Current Value</th>
-                    <th className="pb-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Total Yield</th>
-                    <th className="pb-6 text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Allocation</th>
-                    <th className="pb-6 text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Action</th>
+                  <tr>
+                    <th>Sentinel / Strategy</th>
+                    <th>Current Value</th>
+                    <th>Total Yield</th>
+                    <th>Allocation</th>
+                    <th style={{ textAlign: 'right' }}>Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody>
                   {vaults.map((vault) => (
-                    <tr key={vault.id} className="group hover:bg-white/[0.02] transition-all">
-                      <td className="py-8">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 glass rounded-xl flex items-center justify-center bg-primary/5 text-primary group-hover:scale-110 transition-transform">
-                            <Target className="w-5 h-5" />
+                    <tr key={vault.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ width: 40, height: 40, borderRadius: 16, border: '1px solid rgba(0,239,139,0.1)', background: 'rgba(0,239,139,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00EF8B', transition: 'all 0.3s' }}>
+                            <Target style={{ width: 18, height: 18 }} />
                           </div>
                           <div>
-                            <div className="text-sm font-black text-white uppercase tracking-tighter">{vault.name}</div>
-                            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{vault.strategy}</div>
+                            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>{vault.name}</div>
+                            <div className="dash-label">{vault.strategy}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-8">
-                        <div className="text-lg font-black text-white tracking-tighter">{formatCurrency(vault.balance)}</div>
+                      <td>
+                        <div className="dash-value" style={{ fontSize: '1rem' }}>{formatCurrency(vault.balance)}</div>
                       </td>
-                      <td className="py-8">
-                        <div className="flex items-center gap-2 text-primary">
-                          <TrendingUp className="w-3.5 h-3.5" />
-                          <span className="text-sm font-bold tracking-tighter">{formatCurrency(vault.pnl || 0)}</span>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#00EF8B' }}>
+                          <TrendingUp style={{ width: 12, height: 12 }} />
+                          <span style={{ fontSize: '0.8125rem', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(vault.pnl || 0)}</span>
                         </div>
                       </td>
-                      <td className="py-8">
-                        <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary"
-                            style={{ width: `${(vault.balance / (performance?.totalBalance || 1)) * 100}%` }}
-                          />
+                      <td>
+                        <div className="dash-progress" style={{ width: 120 }}>
+                          <div className="dash-progress-bar" style={{ width: `${(vault.balance / (performance?.totalBalance || 1)) * 100}%` }} />
                         </div>
                       </td>
-                      <td className="py-8 text-right">
-                        <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest hover:text-primary transition-all">
-                          DETAILS <ChevronRight className="w-3 h-3 ml-1" />
-                        </Button>
+                      <td style={{ textAlign: 'right' }}>
+                        <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.625rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(250,248,245,0.4)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#00EF8B'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,245,0.4)'}>
+                          Details <ChevronRight style={{ width: 12, height: 12 }} />
+                        </button>
                       </td>
                     </tr>
                   ))}
                   {vaults.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-20 text-center">
-                        <div className="max-w-xs mx-auto">
-                          <Info className="w-8 h-8 text-muted-foreground mx-auto mb-4 opacity-20" />
-                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">No active sentinels detected in portfolio</p>
-                        </div>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '80px 0' }}>
+                        <Info style={{ width: 32, height: 32, color: 'rgba(250,248,245,0.2)', margin: '0 auto 16px' }} />
+                        <p className="dash-label">No active sentinels detected in portfolio</p>
                       </td>
                     </tr>
                   )}

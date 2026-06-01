@@ -11,8 +11,8 @@
     --w-tusk:         #FAF8F5;
     --w-black:        #000000;
     --w-midnight:     #0D0D0D;
-    --w-violet:       #00EF8B;   /* was purple — replaced with Flow Green */
-    --w-mint:         #37DDDF;   /* Flow Aqua */
+    --w-violet:       #00EF8B;
+    --w-mint:         #37DDDF;
     --w-dark-100:     #111111;
     --w-dark-150:     #1A1A1A;
     --w-dark-200:     #222222;
@@ -22,17 +22,11 @@
     --w-border:       rgba(250,248,245,0.10);
     --w-border-hover: rgba(250,248,245,0.25);
 
-    /* ─────────────────────────────────────────
-       Flow Sentinel brand accent
-    ───────────────────────────────────────── */
-    --sen-green:      #00EF8B;   /* Flow Green */
-    --sen-cyan:       #37DDDF;   /* Flow Aqua */
+    --sen-green:      #00EF8B;
+    --sen-cyan:       #37DDDF;
     --sen-green-glow: rgba(0,239,139,0.35);
     --sen-cyan-glow:  rgba(55,221,223,0.35);
 
-    /* ─────────────────────────────────────────
-       ShadCN tokens
-    ───────────────────────────────────────── */
     --background:             0 0% 0%;
     --foreground:             0 0% 98%;
     --card:                   0 0% 4%;
@@ -41,7 +35,7 @@
     --popover-foreground:     0 0% 98%;
     --primary:                153 100% 47%;
     --primary-foreground:     0 0% 0%;
-    --secondary:              178 68% 55%;   /* Flow Aqua hsl */
+    --secondary:              178 68% 55%;
     --secondary-foreground:   0 0% 0%;
     --muted:                  0 0% 10%;
     --muted-foreground:       0 0% 55%;
@@ -54,20 +48,17 @@
     --ring:                   153 100% 47%;
     --radius:                 1rem;
 
-    /* ─────────────────────────────────────────
-       Legacy flow-* vars (dashboard uses these)
-    ───────────────────────────────────────── */
     --flow-bg-primary:   #000000;
     --flow-bg-secondary: #0a0a0a;
     --flow-bg-tertiary:  #111111;
     --flow-bg-card:      rgba(17,17,17,0.7);
-    --flow-cyan:         #37DDDF;   /* Flow Aqua */
+    --flow-cyan:         #37DDDF;
     --flow-cyan-glow:    rgba(55,221,223,0.4);
-    --flow-purple:       #00EF8B;   /* replaced purple with Flow Green */
+    --flow-purple:       #00EF8B;
     --flow-purple-glow:  rgba(0,239,139,0.4);
-    --flow-blue:         #37DDDF;   /* replaced blue with Flow Aqua */
+    --flow-blue:         #37DDDF;
     --flow-blue-glow:    rgba(55,221,223,0.4);
-    --flow-pink:         #02D87E;   /* Flow Green Dark */
+    --flow-pink:         #02D87E;
     --flow-orange:       #00EF8B;
     --flow-green:        #00EF8B;
     --flow-text-primary:   #FAF8F5;
@@ -81,32 +72,24 @@
 
 @layer base {
   * { @apply border-border; }
-
   html { background: #000; color: #FAF8F5; }
-
   body {
     @apply font-sans antialiased;
     background: #000;
     color: #FAF8F5;
     min-height: 100svh;
   }
-
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-authority), 'Host Grotesk', sans-serif;
     color: #FAF8F5;
   }
 }
 
-/* ─────────────────────────────────────────
-   SCROLLBAR
-───────────────────────────────────────── */
+/* SCROLLBAR */
 * { scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { display: none; }
 
-/* ─────────────────────────────────────────
-   WALRUS-EXACT TYPOGRAPHY SCALE
-   Matches walrus.xyz font sizing exactly
-───────────────────────────────────────── */
+/* WALRUS-EXACT TYPOGRAPHY SCALE */
 .text-display-2xl { font-size: clamp(3.5rem, 8vw, 7rem);   line-height: 0.95; letter-spacing: -0.03em; font-weight: 900; }
 .text-display-xl  { font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.0;  letter-spacing: -0.025em; font-weight: 900; }
 .text-display-lg  { font-size: clamp(2rem,   4vw, 3.5rem); line-height: 1.05; letter-spacing: -0.02em;  font-weight: 900; }
@@ -122,138 +105,66 @@
    WALRUS-EXACT BUTTON SYSTEM
 ───────────────────────────────────────── */
 
-/* Outline button — dark theme (white border, white text) */
+/* Outline button — dark theme */
 .w-btn-outline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 14px 30px;
-  border-radius: 26px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 30px; border-radius: 26px;
   border: 2px solid rgba(250,248,245,0.20);
-  background: transparent;
-  color: var(--w-tusk);
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.045em;
-  text-decoration: none;
+  background: transparent; color: var(--w-tusk);
+  font-size: 1rem; font-weight: 500; letter-spacing: 0.045em;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
   transition: border-color 0.2s, background 0.2s;
-  cursor: pointer;
-  white-space: nowrap;
 }
 .w-btn-outline:hover  { border-color: rgba(250,248,245,0.55); }
 .w-btn-outline:active { background: rgba(250,248,245,0.06); }
 
 /* Solid button — tusk fill, black text */
 .w-btn-solid {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 14px 30px;
-  border-radius: 26px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 30px; border-radius: 26px;
   border: 2px solid transparent;
-  background: var(--w-tusk);
-  color: #000;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.045em;
-  text-decoration: none;
+  background: var(--w-tusk); color: #000;
+  font-size: 1rem; font-weight: 500; letter-spacing: 0.045em;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
   transition: background 0.2s;
-  cursor: pointer;
-  white-space: nowrap;
 }
 .w-btn-solid:hover  { background: #e8e6e3; }
 .w-btn-solid:active { background: #d4d2cf; }
 
-/* Violet solid */
+/* Violet/green solid */
 .w-btn-violet {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 14px 30px;
-  border-radius: 26px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 30px; border-radius: 26px;
   border: 2px solid transparent;
-  background: var(--w-violet);
-  color: #000;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.045em;
-  text-decoration: none;
+  background: var(--w-violet); color: #000;
+  font-size: 1rem; font-weight: 500; letter-spacing: 0.045em;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
   transition: background 0.2s;
-  cursor: pointer;
-  white-space: nowrap;
 }
-.w-btn-violet:hover { background: #b694ff; }
+.w-btn-violet:hover { background: #02D87E; }
 
-/* Glow button — Walrus rotating border glow */
+/* Glow button — rotating border */
 .w-glow-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 26px;
-  padding: 2px;
-  overflow: hidden;
-  cursor: pointer;
-  text-decoration: none;
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 26px; padding: 2px; overflow: hidden;
+  cursor: pointer; text-decoration: none;
   transition: transform 0.2s var(--ease-out-expo);
 }
 .w-glow-btn::before {
-  content: '';
-  position: absolute;
-  inset: -200%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 20%,
-    var(--sen-green) 45%,
-    var(--sen-cyan)  55%,
-    transparent 80%
-  );
-  animation: w-border-spin 3s linear infinite;
-  z-index: 0;
+  content: ''; position: absolute; inset: -200%;
+  background: conic-gradient(from 0deg, transparent 20%, var(--sen-green) 45%, var(--sen-cyan) 55%, transparent 80%);
+  animation: w-border-spin 3s linear infinite; z-index: 0;
 }
 .w-glow-btn:hover { transform: scale(1.02); }
 .w-glow-btn-inner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 13px 30px;
-  border-radius: 24px;
-  background: #000;
-  color: var(--w-tusk);
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.045em;
-  white-space: nowrap;
-  transition: background 0.2s;
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 13px 30px; border-radius: 24px;
+  background: #000; color: var(--w-tusk);
+  font-size: 1rem; font-weight: 500; letter-spacing: 0.045em;
+  white-space: nowrap; transition: background 0.2s;
 }
 .w-glow-btn:hover .w-glow-btn-inner { background: #111; }
-
-/* Legacy glow-btn kept for dashboard */
-.glow-btn {
-  position: relative; overflow: hidden; background: transparent;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 12px; padding: 1px;
-  transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
-}
-.glow-btn::before {
-  content: ''; position: absolute; inset: -150%;
-  background: conic-gradient(from 0deg,transparent 30%,#00EF8B 48%,#00f5d4 52%,transparent 70%);
-  animation: w-border-spin 4s linear infinite; z-index: 0;
-}
-.glow-btn:hover { transform: scale(1.02); }
-.glow-btn-inner {
-  position: relative; z-index: 10; background: #030712;
-  border-radius: 11px; width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.3s;
-}
-.glow-btn:hover .glow-btn-inner { background: rgba(17,24,39,0.85); }
 
 /* ─────────────────────────────────────────
    WALRUS-EXACT CARD SYSTEM
@@ -278,18 +189,11 @@
    WALRUS-EXACT NAV
 ───────────────────────────────────────── */
 .w-nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 20px;
-  border-radius: 26px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--w-tusk);
-  font-size: 1rem;
-  font-weight: 430;
-  letter-spacing: 0.045em;
-  cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; border-radius: 26px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--w-tusk); font-size: 1rem; font-weight: 430;
+  letter-spacing: 0.045em; cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
 }
 .w-nav-btn:hover { background: rgba(250,248,245,0.06); }
@@ -299,25 +203,14 @@
 ───────────────────────────────────────── */
 .w-banner {
   background: linear-gradient(90deg, #00D4FF 0%, #00EF8B 100%);
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 0 48px;
-  position: relative;
+  height: 52px; display: flex; align-items: center; justify-content: center;
+  gap: 20px; padding: 0 48px; position: relative;
 }
 .w-banner-pill {
-  background: rgba(0,0,0,0.30);
-  border-radius: 9999px;
-  padding: 7px 20px;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: #fff;
-  white-space: nowrap;
-  transition: background 0.2s;
-  text-decoration: none;
+  background: rgba(0,0,0,0.30); border-radius: 9999px;
+  padding: 7px 20px; font-size: 0.9375rem; font-weight: 500;
+  letter-spacing: 0.04em; color: #fff; white-space: nowrap;
+  transition: background 0.2s; text-decoration: none;
 }
 .w-banner-pill:hover { background: rgba(0,0,0,0.45); }
 
@@ -325,31 +218,19 @@
    WALRUS-EXACT DROPDOWN MEGA MENU
 ───────────────────────────────────────── */
 .w-dropdown {
-  background: var(--w-tusk);
-  border-radius: 48px;
-  padding: 48px;
-  color: #000;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+  background: var(--w-tusk); border-radius: 48px; padding: 48px;
+  color: #000; box-shadow: 0 24px 80px rgba(0,0,0,0.4);
 }
 .w-dropdown-link {
-  display: flex;
-  align-items: center;
-  padding: 10px 0;
+  display: flex; align-items: center; padding: 10px 0;
   border-bottom: 1px solid rgba(0,0,0,0.08);
-  color: #000;
-  font-size: 1rem;
-  font-weight: 400;
-  text-decoration: none;
-  transition: color 0.15s;
+  color: #000; font-size: 1rem; font-weight: 400;
+  text-decoration: none; transition: color 0.15s;
 }
 .w-dropdown-link:hover { color: #555; }
 .w-dropdown-label {
-  font-size: 0.8125rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  color: #00EF8B;
-  margin-bottom: 8px;
-  text-transform: none;
+  font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.01em;
+  color: #00EF8B; margin-bottom: 8px; text-transform: none;
 }
 
 /* ─────────────────────────────────────────
@@ -363,8 +244,7 @@
    WALRUS-EXACT MARQUEE
 ───────────────────────────────────────── */
 .w-marquee-track {
-  display: flex;
-  width: max-content;
+  display: flex; width: max-content;
   animation: w-marquee-scroll 35s linear infinite;
 }
 .w-marquee-track:hover { animation-play-state: paused; }
@@ -374,78 +254,17 @@
    WALRUS-EXACT POWER TABS (centered slider)
 ───────────────────────────────────────── */
 .w-tab-bullet {
-  padding: 10px 20px;
-  border-radius: 9999px;
+  padding: 10px 20px; border-radius: 9999px;
   border: 1px solid rgba(250,248,245,0.12);
-  background: transparent;
-  color: rgba(250,248,245,0.55);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  letter-spacing: 0.045em;
-  cursor: pointer;
+  background: transparent; color: rgba(250,248,245,0.55);
+  font-size: 0.9375rem; font-weight: 500; letter-spacing: 0.045em;
+  cursor: pointer; white-space: nowrap;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
-  white-space: nowrap;
 }
 .w-tab-bullet:hover,
 .w-tab-bullet.active {
-  background: var(--w-tusk);
-  color: #000;
-  border-color: var(--w-tusk);
+  background: var(--w-tusk); color: #000; border-color: var(--w-tusk);
 }
-
-/* ─────────────────────────────────────────
-   WALRUS-EXACT HERO STAR ANIMATION
-───────────────────────────────────────── */
-.w-hero-star {
-  animation: w-star-fade var(--star-dur, 3s) var(--star-del, 0s) ease-in-out infinite;
-  opacity: 0;
-}
-
-/* ─────────────────────────────────────────
-   LEGACY CLASSES (dashboard compat)
-───────────────────────────────────────── */
-.glass {
-  background: rgba(4,11,20,0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.12);
-}
-.glass-pill { @apply glass rounded-full px-4 py-1 flex items-center gap-2; }
-.tool-card {
-  @apply glass rounded-2xl p-6 transition-all duration-300;
-  position: relative; overflow: hidden;
-}
-.tool-card::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(45deg,transparent,rgba(0,239,139,0.08),transparent);
-  transform: translateX(-100%); transition: transform 0.6s;
-}
-.tool-card:hover::before { transform: translateX(100%); }
-.tool-card:hover { border-color: rgba(0,239,139,0.3); box-shadow: 0 0 30px rgba(0,239,139,0.08); transform: translateY(-2px); }
-.btn-primary { @apply bg-primary text-primary-foreground font-display font-black uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]; }
-.btn-secondary { @apply hover:bg-white/5 text-foreground font-sans font-semibold px-6 py-2.5 rounded-xl transition-all duration-200 border border-white/10 hover:border-white/20; }
-.badge-success {
-  @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-sans;
-  background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);
-}
-.badge-premium {
-  @apply px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-sans;
-  background: rgba(124,58,237,0.15); color: #7c3aed; border: 1px solid rgba(124,58,237,0.3);
-}
-.financial-number { @apply font-mono; font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
-.text-glow { text-shadow: 0 0 10px rgba(0,239,139,0.5); }
-.bg-glow   { box-shadow: 0 0 15px rgba(0,239,139,0.3); }
-.status-active  { color: hsl(var(--primary)); }
-.status-warning { color: #f59e0b; }
-.status-error   { color: #ef4444; }
-.bg-grid {
-  background-image:
-    linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
-  background-size: 50px 50px;
-}
-.section-container { @apply max-w-7xl mx-auto px-4; }
-.feature-grid { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6; }
 
 /* ─────────────────────────────────────────
    KEYFRAMES
@@ -503,3 +322,214 @@
 .liquid-glow          { animation: liquid-glow 3s ease-in-out infinite; }
 .animate-w-fade-up    { animation: w-fade-up 0.7s var(--ease-out-expo) both; }
 .animate-w-fade-in    { animation: w-fade-in 0.5s ease both; }
+
+/* ─────────────────────────────────────────
+   INTERNAL PAGES — EXACT LANDING THEME
+   Every class here mirrors landing page's walrus styling
+───────────────────────────────────────── */
+
+/* Card — matches w-card exactly (solid #111) */
+.dash-card {
+  border-radius: 32px;
+  border: 1px solid var(--w-border);
+  background: var(--w-dark-100);
+  transition: border-color 0.25s;
+}
+.dash-card:hover { border-color: var(--w-border-hover); }
+
+/* Dark card — matches w-card-dark exactly */
+.dash-stat,
+.dash-card-dark {
+  border-radius: 32px;
+  border: 1px solid rgba(250,248,245,0.06);
+  background: #0a0a0a;
+  transition: border-color 0.25s;
+}
+.dash-stat:hover,
+.dash-card-dark:hover { border-color: rgba(250,248,245,0.14); }
+
+/* Section label — matches landing page body text (font-weight 500, 55% opacity) */
+.dash-label {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(250,248,245,0.4);
+}
+
+/* Value text — matches landing page headline weight (500) */
+.dash-value {
+  font-family: var(--font-authority), 'Host Grotesk', sans-serif;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: #FAF8F5;
+}
+
+/* Table — minimal style */
+.dash-table {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+}
+.dash-table th {
+  padding: 12px 16px; text-align: left;
+  font-size: 0.625rem; font-weight: 500; letter-spacing: 0.2em;
+  text-transform: uppercase; color: rgba(250,248,245,0.3);
+  border-bottom: 1px solid rgba(250,248,245,0.06);
+}
+.dash-table td {
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(250,248,245,0.04);
+}
+.dash-table tbody tr { transition: background 0.2s; }
+.dash-table tbody tr:hover { background: rgba(250,248,245,0.02); }
+
+/* Inputs */
+.dash-input {
+  width: 100%;
+  background: rgba(250,248,245,0.04);
+  border: 1px solid rgba(250,248,245,0.10);
+  border-radius: 16px; padding: 16px 20px;
+  color: #FAF8F5; font-size: 1rem; font-weight: 500;
+  outline: none; transition: border-color 0.2s, background 0.2s;
+}
+.dash-input::placeholder { color: rgba(250,248,245,0.20); }
+.dash-input:focus {
+  border-color: rgba(0,239,139,0.4);
+  background: rgba(250,248,245,0.06);
+}
+
+/* Select */
+.dash-select {
+  width: 100%;
+  background: rgba(250,248,245,0.04);
+  border: 1px solid rgba(250,248,245,0.10);
+  border-radius: 16px; padding: 14px 20px;
+  color: #FAF8F5; font-size: 0.875rem; font-weight: 500;
+  outline: none; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='rgba(250,248,245,0.4)'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center;
+  padding-right: 40px;
+}
+.dash-select:focus { border-color: rgba(0,239,139,0.4); }
+.dash-select option { background: #111; color: #FAF8F5; }
+
+/* Chart container — solid bg, no glow */
+.dash-chart {
+  border-radius: 32px;
+  border: 1px solid var(--w-border);
+  background: var(--w-dark-100);
+  padding: 40px; position: relative; overflow: hidden;
+}
+
+/* CTA button — matches w-btn-violet exactly  */
+.dash-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 30px; border-radius: 26px;
+  border: 2px solid transparent;
+  background: var(--sen-green); color: #000;
+  font-size: 1rem; font-weight: 500; letter-spacing: 0.045em;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: background 0.2s;
+}
+.dash-cta:hover { background: #02D87E; }
+
+/* Badge system */
+.dash-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 9999px;
+  font-size: 0.5625rem; font-weight: 500; letter-spacing: 0.1em;
+  text-transform: uppercase; border: 1px solid;
+}
+.dash-badge-green {
+  background: rgba(0,239,139,0.08);
+  border-color: rgba(0,239,139,0.2);
+  color: var(--sen-green);
+}
+.dash-badge-cyan {
+  background: rgba(55,221,223,0.08);
+  border-color: rgba(55,221,223,0.2);
+  color: var(--sen-cyan);
+}
+.dash-badge-muted {
+  background: rgba(250,248,245,0.02);
+  border-color: rgba(250,248,245,0.08);
+  color: rgba(250,248,245,0.5);
+}
+
+/* Filter bar */
+.dash-filter-bar {
+  display: flex; gap: 4px; padding: 4px;
+  border-radius: 16px;
+  background: rgba(250,248,245,0.04);
+  border: 1px solid rgba(250,248,245,0.06);
+}
+.dash-filter-btn {
+  padding: 8px 16px; border-radius: 12px;
+  font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(250,248,245,0.4);
+  background: transparent; border: none; cursor: pointer;
+  transition: all 0.2s;
+}
+.dash-filter-btn:hover { color: rgba(250,248,245,0.7); }
+.dash-filter-btn.active { background: var(--sen-green); color: #000; }
+
+/* Timeline item */
+.dash-timeline-item {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px; border-radius: 20px;
+  border: 1px solid rgba(250,248,245,0.06);
+  background: rgba(250,248,245,0.02);
+  transition: all 0.3s;
+}
+.dash-timeline-item:hover {
+  border-color: rgba(250,248,245,0.14);
+  background: rgba(250,248,245,0.04);
+}
+
+/* Progress bar */
+.dash-progress {
+  height: 4px; border-radius: 9999px;
+  background: rgba(250,248,245,0.06); overflow: hidden;
+}
+.dash-progress-bar {
+  height: 100%; border-radius: 9999px;
+  background: linear-gradient(90deg, var(--sen-green), var(--sen-cyan));
+  transition: width 0.5s ease;
+}
+
+/* Page header — minimal, matches landing page */
+.dash-page-header { margin-bottom: 48px; }
+.dash-page-header h1 {
+  font-family: var(--font-authority), 'Host Grotesk', sans-serif;
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #FAF8F5;
+}
+
+/* Sidebar navigation */
+.dash-sidebar-btn {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 12px 16px; border-radius: 16px;
+  border: 1px solid transparent; background: transparent;
+  color: rgba(250,248,245,0.5);
+  font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase; text-align: left; cursor: pointer;
+  transition: all 0.2s;
+}
+.dash-sidebar-btn:hover { color: #FAF8F5; background: rgba(250,248,245,0.04); }
+.dash-sidebar-btn.active {
+  color: var(--sen-green);
+  background: rgba(0,239,139,0.08);
+  border-color: rgba(0,239,139,0.2);
+}
+
+/* Legacy compat */
+.financial-number { @apply font-mono; font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
+.text-glow { text-shadow: 0 0 10px rgba(0,239,139,0.5); }
+.bg-glow   { box-shadow: 0 0 15px rgba(0,239,139,0.3); }
+.section-container { @apply max-w-7xl mx-auto px-4; }
+.feature-grid { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6; }

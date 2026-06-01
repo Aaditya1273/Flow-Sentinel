@@ -7,20 +7,18 @@ import {
   Clock,
   ChevronDown,
   Plus,
-  ArrowRight,
   Pause,
   Play,
   Settings,
-  ArrowUpRight,
   ArrowDownLeft,
   Zap,
   Shield,
   Lock,
   ExternalLink,
   ChevronUp,
-  Activity
+  Activity,
+  Sparkles
 } from 'lucide-react'
-import { Button } from 'components/ui/button'
 import { Badge } from 'components/ui/badge'
 import { Progress } from 'components/ui/progress'
 import { formatCurrency, formatPercentage } from 'lib/utils'
@@ -28,7 +26,6 @@ import { FlowService } from 'lib/flow-service'
 import { VaultActionModal } from './VaultActionModal'
 import { useVaultData } from 'hooks/useVaultData'
 import { useTransactions } from 'lib/transactions'
-import Link from 'next/link'
 
 interface Vault {
   id: string
@@ -59,32 +56,17 @@ export function VaultCard({ vault }: VaultCardProps) {
   const [biometricChallenge, setBiometricChallenge] = useState<'idle' | 'challenging' | 'success' | 'failed'>('idle')
 
   const { flowBalance, refetch } = useVaultData()
+  const { setTxState } = useTransactions()
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  useEffect(() => { setMounted(true) }, [])
 
   const isEpoch = vault.lastExecution.getTime() <= 0 || vault.lastExecution.getFullYear() <= 1970
-
-  const getRiskBadge = (risk: string) => {
-    switch (risk) {
-      case 'low': return 'bg-primary/10 text-primary border-primary/40'
-      case 'medium': return 'bg-warning/10 text-warning border-warning/40'
-      case 'high': return 'bg-destructive/10 text-destructive border-destructive/40'
-      default: return 'bg-muted text-muted-foreground border-border'
-    }
-  }
-
-  const { setTxState } = useTransactions()
 
   const handlePause = async () => {
     try {
       setLoading(true)
-
-      // Passkey Biometric Simulation
       if (vault.status === 'active') {
         setBiometricChallenge('challenging')
-        // Wait for animation
         await new Promise(resolve => setTimeout(resolve, 2000))
         setBiometricChallenge('success')
         await new Promise(resolve => setTimeout(resolve, 500))
@@ -101,16 +83,13 @@ export function VaultCard({ vault }: VaultCardProps) {
         await sealed
         setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Vault Resumed' })
       }
-
       refetch()
       setBiometricChallenge('idle')
     } catch (error: any) {
       console.error('Error toggling vault status:', error)
       setBiometricChallenge('failed')
       setTxState({ status: 'error', txId: null, error: error.message || 'Transaction failed', title: 'Error' })
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   const handleManualStrategy = async () => {
@@ -125,152 +104,156 @@ export function VaultCard({ vault }: VaultCardProps) {
     } catch (error: any) {
       console.error('Error triggering strategy:', error)
       setTxState({ status: 'error', txId: null, error: error.message || 'Strategy execution failed', title: 'Error' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleDeposit = () => {
-    setActionModal({ isOpen: true, type: 'deposit' })
-  }
-
-  const handleWithdraw = () => {
-    setActionModal({ isOpen: true, type: 'withdraw' })
+    } finally { setLoading(false) }
   }
 
   return (
     <>
-      <div className="tool-card group border-0 p-0 overflow-visible">
-        {/* Decorative top border glow */}
-        <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+      <div className="dash-card">
 
         <div className="p-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
             <div className="flex items-start gap-4">
-              <div className={`w-14 h-14 glass rounded-2xl flex items-center justify-center bg-primary/5 group-hover:bg-primary/10 transition-colors duration-300`}>
-                <Zap className={`w-7 h-7 ${vault.status === 'active' ? 'text-primary fill-primary/20' : 'text-muted-foreground'}`} />
+              <div style={{
+                width: 56, height: 56, borderRadius: 20,
+                background: vault.status === 'active' ? 'rgba(0,239,139,0.10)' : 'rgba(250,248,245,0.04)',
+                border: `1px solid ${vault.status === 'active' ? 'rgba(0,239,139,0.2)' : 'rgba(250,248,245,0.08)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.3s',
+              }}>
+                <Zap style={{
+                  width: 28, height: 28,
+                  color: vault.status === 'active' ? '#00EF8B' : 'rgba(250,248,245,0.3)',
+                }} />
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-2xl font-black text-white tracking-tight">{vault.name}</h3>
-                  <Badge className={`${getRiskBadge(vault.risk)} text-[10px] font-black uppercase tracking-widest px-2 py-0.5 border`}>
+                  <h3 style={{
+                    fontSize: '1.5rem', fontWeight: 500, letterSpacing: '-0.02em',
+                    color: '#FAF8F5', margin: 0,
+                  }}>{vault.name}</h3>
+                  <span className={`dash-badge ${vault.risk === 'low' ? 'dash-badge-green' : 'dash-badge-muted'}`}>
                     {vault.risk} RISK
-                  </Badge>
+                  </span>
                 </div>
-                <p className="text-muted-foreground font-medium text-sm">
-                  Strategic Protocol: <span className="text-foreground">{vault.strategy}</span>
+                <p style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.55)', margin: 0 }}>
+                  Strategic Protocol: <span style={{ color: '#FAF8F5' }}>{vault.strategy}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 md:justify-end">
-              <div className="glass-pill border-primary/40 bg-primary/5 text-primary text-[10px] font-black px-3 py-1 flex items-center gap-1.5">
-                <Zap className="w-3 h-3" /> FORTE AUTONOMY
-              </div>
-              <div className="glass-pill border-secondary/40 bg-secondary/5 text-secondary text-[10px] font-black px-3 py-1 flex items-center gap-1.5">
-                <Shield className="w-3 h-3" /> MEV-SHIELD ACTIVE
-              </div>
-              <div className="glass-pill border-white/20 bg-white/5 text-white text-[10px] font-black uppercase px-3 py-1 flex items-center gap-1.5">
-                <div className={`w-1.5 h-1.5 rounded-full ${vault.status === 'active' ? 'bg-primary shadow-[0_0_8px_rgba(0,239,139,0.8)] animate-pulse' : 'bg-warning'}`} />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span className="dash-badge dash-badge-green">
+                <Zap style={{ width: 12, height: 12 }} /> FORTE AUTONOMY
+              </span>
+              <span className="dash-badge dash-badge-cyan">
+                <Shield style={{ width: 12, height: 12 }} /> MEV-SHIELD
+              </span>
+              <span className="dash-badge dash-badge-muted">
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: vault.status === 'active' ? '#00EF8B' : '#f59e0b',
+                  boxShadow: vault.status === 'active' ? '0 0 8px rgba(0,239,139,0.8)' : 'none',
+                  animation: vault.status === 'active' ? 'pulse 2s infinite' : 'none',
+                }} />
                 {vault.status}
-              </div>
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            <div className="space-y-1">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Available Balance</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white financial-number tracking-tighter">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 32, marginBottom: 32 }}>
+            <div>
+              <p className="dash-label">Available Balance</p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                <span className="dash-value" style={{ fontSize: '1.75rem' }}>
                   {formatCurrency(vault.balance)}
                 </span>
-                <span className="text-xs font-bold text-muted-foreground font-mono uppercase">Flow</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'rgba(250,248,245,0.3)', fontFamily: 'monospace' }}>FLOW</span>
               </div>
             </div>
-
-            <div className="space-y-1">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Projected APY</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-primary financial-number tracking-tighter">
+            <div>
+              <p className="dash-label">Projected APY</p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                <span style={{ fontSize: '1.75rem', fontWeight: 500, color: '#00EF8B', fontVariantNumeric: 'tabular-nums' }}>
                   {formatPercentage(vault.apy)}
                 </span>
-                <span className="text-primary/50 font-bold animate-pulse">▲</span>
+                <span style={{ color: 'rgba(0,239,139,0.5)', animation: 'pulse 2s infinite' }}>▲</span>
               </div>
             </div>
-
-            <div className="space-y-1">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Last Execution</p>
-              <div className="flex items-center gap-2 mt-2" suppressHydrationWarning>
-                <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                <span className="text-sm font-bold text-foreground">
+            <div>
+              <p className="dash-label">Last Execution</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#37DDDF', animation: 'pulse 2s infinite' }} />
+                <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#FAF8F5' }}>
                   {mounted ? (isEpoch ? 'NEVER' : vault.lastExecution.toLocaleDateString()) : '---'}
                 </span>
-                {!isEpoch && mounted && (
-                  <span className="text-xs text-muted-foreground">
-                    @{vault.lastExecution.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 pt-6 border-t border-white/15">
-            <Button
-              className="btn-primary flex-1 min-w-[140px] gap-2 rounded-xl h-12"
-              onClick={handleDeposit}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, paddingTop: 24, borderTop: '1px solid rgba(250,248,245,0.08)' }}>
+            <button className="dash-cta" onClick={() => setActionModal({ isOpen: true, type: 'deposit' })} disabled={loading}>
+              <Plus style={{ width: 16, height: 16 }} /> Deposit
+            </button>
+            <button
+              onClick={() => setActionModal({ isOpen: true, type: 'withdraw' })}
               disabled={loading}
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '16px 32px', borderRadius: 26, border: '2px solid rgba(250,248,245,0.15)',
+                background: 'transparent', color: '#FAF8F5',
+                fontSize: '0.8125rem', fontWeight: 500, letterSpacing: '0.045em',
+                cursor: 'pointer', transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(250,248,245,0.4)')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(250,248,245,0.15)')}
             >
-              <Plus className="w-4 h-4" /> Deposit
-            </Button>
-            <Button
-              variant="outline"
-              className="btn-secondary transition-all hover:bg-white/10 flex-1 min-w-[140px] gap-2 rounded-xl h-12"
-              onClick={handleWithdraw}
-              disabled={loading}
-            >
-              <ArrowDownLeft className="w-4 h-4" /> Withdraw
-            </Button>
-            <Button
-              variant="outline"
-              className="btn-secondary transition-all hover:bg-white/10 flex-1 min-w-[140px] gap-2 group/btn rounded-xl h-12"
-              disabled={loading}
+              <ArrowDownLeft style={{ width: 16, height: 16 }} /> Withdraw
+            </button>
+            <button
               onClick={handlePause}
+              disabled={loading}
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '16px 32px', borderRadius: 26, border: '2px solid rgba(250,248,245,0.15)',
+                background: 'transparent', color: '#FAF8F5',
+                fontSize: '0.8125rem', fontWeight: 500, letterSpacing: '0.045em',
+                cursor: 'pointer', transition: 'all 0.2s', flex: 1, minWidth: 140,
+              }}
+              onMouseEnter={e => {
+                if (!loading) e.currentTarget.style.borderColor = 'rgba(250,248,245,0.4)'
+              }}
+              onMouseLeave={e => {
+                if (!loading) e.currentTarget.style.borderColor = 'rgba(250,248,245,0.15)'
+              }}
             >
               {biometricChallenge === 'challenging' ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 flex items-center justify-center relative">
-                    <Shield className="w-4 h-4 text-primary absolute animate-ping" />
-                    <Activity className="w-4 h-4 text-primary" />
-                  </div>
-                  <span className="animate-pulse">SENSING ID...</span>
-                </div>
-              ) : biometricChallenge === 'success' ? (
-                <div className="flex items-center gap-2 text-primary">
-                  <Shield className="w-4 h-4 fill-primary/20" />
-                  <span>IDENTIFIED</span>
-                </div>
+                <>
+                  <Shield style={{ width: 16, height: 16, color: '#00EF8B', animation: 'pulse 1s infinite' }} />
+                  <span style={{ animation: 'pulse 1s infinite' }}>SENSING ID...</span>
+                </>
               ) : loading ? (
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <span style={{ width: 16, height: 16, border: '2px solid rgba(0,239,139,0.3)', borderTopColor: '#00EF8B', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               ) : vault.status === 'active' ? (
-                <>
-                  <Lock className="w-4 h-4 group-hover/btn:text-primary transition-colors" />
-                  <span>Pause (Passkey)</span>
-                </>
+                <><Lock style={{ width: 16, height: 16 }} /> Pause (Passkey)</>
               ) : (
-                <>
-                  <Play className="w-4 h-4 group-hover/btn:text-primary" />
-                  <span>Resume System</span>
-                </>
+                <><Play style={{ width: 16, height: 16 }} /> Resume</>
               )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`rounded-xl glass border-white/10 hover:bg-white/10 h-12 w-12 ${isExpanded ? 'bg-white/10' : ''}`}
+            </button>
+            <button
               onClick={() => setIsExpanded(!isExpanded)}
+              style={{
+                width: 48, height: 48, borderRadius: 26,
+                border: '1px solid rgba(250,248,245,0.10)',
+                background: 'transparent', color: '#FAF8F5',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(250,248,245,0.06)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
-              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </Button>
+              {isExpanded ? <ChevronUp style={{ width: 16, height: 16 }} /> : <ChevronDown style={{ width: 16, height: 16 }} />}
+            </button>
           </div>
 
           <AnimatePresence>
@@ -279,53 +262,75 @@ export function VaultCard({ vault }: VaultCardProps) {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
+                style={{ overflow: 'hidden' }}
               >
-                <div className="pt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="glass rounded-2xl p-6 bg-white/[0.02] border-white/15">
-                    <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Activity className="w-3 h-3" /> Real-time Performance
+                <div style={{ paddingTop: 32, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 32 }}>
+                  <div style={{
+                    borderRadius: 24, padding: 24,
+                    border: '1px solid rgba(250,248,245,0.06)',
+                    background: 'rgba(250,248,245,0.02)',
+                  }}>
+                    <h4 className="dash-label" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Activity style={{ width: 12, height: 12 }} /> Real-time Performance
                     </h4>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground font-bold">Total Accrued P&L</span>
-                        <span className="text-sm font-black text-primary">+{formatCurrency(vault.pnl || 0)}</span>
-                      </div>
-                      <Progress value={Math.min(100, (vault.pnlPercent || 0) * 10)} className="h-1 bg-white/5" />
-                      <div className="flex justify-between items-center text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                        <span>Forte Growth Score</span>
-                        <span>{formatPercentage(vault.pnlPercent || 0)}</span>
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                      <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>Total Accrued P&L</span>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#00EF8B' }}>+{formatCurrency(vault.pnl || 0)}</span>
                     </div>
-                    <Button
-                      variant="ghost"
-                      className="w-full mt-6 h-10 border border-white/5 hover:bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
+                    <div className="dash-progress" style={{ marginBottom: 8 }}>
+                      <div className="dash-progress-bar" style={{ width: `${Math.min(100, (vault.pnlPercent || 0) * 10)}%` }} />
+                    </div>
+                    <div className="dash-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Forte Growth Score</span>
+                      <span>{formatPercentage(vault.pnlPercent || 0)}</span>
+                    </div>
+                    <button
                       onClick={handleManualStrategy}
                       disabled={loading || vault.status !== 'active'}
+                      style={{
+                        width: '100%', marginTop: 24, padding: '12px 0', borderRadius: 16,
+                        border: '1px solid rgba(250,248,245,0.08)',
+                        background: 'transparent', color: '#FAF8F5',
+                        fontSize: '0.625rem', fontWeight: 500, letterSpacing: '0.12em',
+                        textTransform: 'uppercase', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { if (!loading && vault.status === 'active') e.currentTarget.style.background = 'rgba(250,248,245,0.04)' }}
+                      onMouseLeave={e => { if (!loading) e.currentTarget.style.background = 'transparent' }}
                     >
-                      <Zap className="w-3 h-3 text-primary" />
-                      Trigger Forte Task (Demo Mode)
-                    </Button>
+                      <Zap style={{ width: 12, height: 12, color: '#00EF8B' }} />
+                      Trigger Forte Task
+                    </button>
                   </div>
 
-                  <div className="glass rounded-2xl p-6 bg-white/[0.02] border-white/15">
-                    <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Shield className="w-3 h-3" /> Security Report
+                  <div style={{
+                    borderRadius: 24, padding: 24,
+                    border: '1px solid rgba(250,248,245,0.06)',
+                    background: 'rgba(250,248,245,0.02)',
+                  }}>
+                    <h4 className="dash-label" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Shield style={{ width: 12, height: 12 }} /> Security Report
                     </h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <span className="text-muted-foreground font-bold">MEV Resistance: </span>
-                        <span className="font-black text-white uppercase text-[10px] tracking-widest">Maximum</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00EF8B' }} />
+                        <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>MEV Resistance: </span>
+                        <span className="dash-badge dash-badge-green">Maximum</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <span className="text-muted-foreground font-bold">Vault Latency: </span>
-                        <span className="font-black text-white uppercase text-[10px] tracking-widest">2ms</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00EF8B' }} />
+                        <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>Vault Latency: </span>
+                        <span style={{ fontSize: '0.625rem', fontWeight: 500, color: '#FAF8F5', letterSpacing: '0.1em' }}>2ms</span>
                       </div>
-                      <Link href="#" className="text-[10px] font-black text-primary hover:text-white transition-colors flex items-center gap-1 mt-4 tracking-widest">
-                        VIEW AUDIT REPORT <ExternalLink className="w-2.5 h-2.5" />
-                      </Link>
+                      <a href="#" style={{
+                        fontSize: '0.625rem', fontWeight: 500, letterSpacing: '0.12em',
+                        color: '#00EF8B', textDecoration: 'none', marginTop: 16,
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        transition: 'color 0.2s',
+                      }}>
+                        VIEW AUDIT REPORT <ExternalLink style={{ width: 10, height: 10 }} />
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -334,17 +339,20 @@ export function VaultCard({ vault }: VaultCardProps) {
           </AnimatePresence>
         </div>
 
-        <div className="bg-white/[0.02] px-8 py-4 flex items-center justify-between border-t border-white/10">
-          <div className="flex items-center text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-            <Settings className="w-3 h-3 mr-2" />
-            Protocol Configurations
+        <div style={{
+          padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderTop: '1px solid rgba(250,248,245,0.06)',
+          background: 'rgba(250,248,245,0.01)',
+        }}>
+          <div className="dash-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Settings style={{ width: 12, height: 12 }} /> Protocol Configurations
           </div>
-          <div className="flex items-center text-[10px] font-black text-muted-foreground/30 uppercase tracking-widest">
-            <Shield className="w-3 h-3 mr-2" />
-            E2E Encrypted
+          <div className="dash-label" style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: 0.5 }}>
+            <Shield style={{ width: 12, height: 12 }} /> E2E Encrypted
           </div>
         </div>
       </div>
+
       <VaultActionModal
         isOpen={actionModal.isOpen}
         onClose={() => setActionModal({ ...actionModal, isOpen: false })}

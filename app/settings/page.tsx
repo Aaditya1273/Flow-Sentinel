@@ -7,9 +7,6 @@ import {
   AlertTriangle, Save, RefreshCw, Download, Upload, Trash2, Eye, EyeOff
 } from 'lucide-react'
 import { Navbar } from 'components/layout/Navbar'
-import { Button } from 'components/ui/button'
-import { Badge } from 'components/ui/badge'
-import { Card } from 'components/ui/card'
 import { useFlow } from 'lib/flow'
 
 const settingsSections = [
@@ -21,19 +18,20 @@ const settingsSections = [
   { id: 'data',          title: 'Data & Privacy',     description: 'Export & privacy controls',    icon: <Database className="w-4 h-4" /> },
 ]
 
-/* ── Reusable input classes ── */
-const inputCls = 'w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all text-sm font-medium'
-const selectCls = `${inputCls} cursor-pointer`
-const rowCls = 'flex items-center justify-between p-5 glass rounded-2xl border-white/5 bg-white/[0.02]'
-
-/* ── Flow-branded toggle ── */
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
       onClick={() => onChange(!checked)}
-      className={`relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none ${checked ? 'bg-primary shadow-[0_0_12px_rgba(0,239,139,0.4)]' : 'bg-white/10'}`}
+      style={{
+        position: 'relative', width: 48, height: 24, borderRadius: 9999,
+        transition: 'all 0.3s', border: 'none', cursor: 'pointer',
+        background: checked ? '#00EF8B' : 'rgba(250,248,245,0.08)',
+      }}
     >
-      <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-300 ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
+      <span style={{
+        position: 'absolute', top: 2, left: checked ? 26 : 2, width: 20, height: 20,
+        borderRadius: '50%', background: '#fff', transition: 'all 0.3s',
+      }} />
     </button>
   )
 }
@@ -53,82 +51,84 @@ export default function SettingsPage() {
   const set = (section: string, key: string, value: any) =>
     setSettings(prev => ({ ...prev, [section]: { ...prev[section as keyof typeof prev], [key]: value } }))
 
+  const rowStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: 20, borderRadius: 24,
+    border: '1px solid rgba(250,248,245,0.08)',
+    background: 'rgba(250,248,245,0.02)',
+    transition: 'border-color 0.3s',
+  }
+
   const renderProfile = () => (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
-        <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-6">Profile Information</h3>
-        <div className="space-y-4">
+        <h3 className="dash-label" style={{ fontSize: '0.8125rem', color: '#FAF8F5', marginBottom: 24 }}>Profile Information</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Display Name</label>
-            <input type="text" value={settings.profile.displayName} onChange={e => set('profile', 'displayName', e.target.value)} className={inputCls} />
+            <label className="dash-label" style={{ marginBottom: 8, display: 'block' }}>Display Name</label>
+            <input type="text" value={settings.profile.displayName} onChange={e => set('profile', 'displayName', e.target.value)} className="dash-input" />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Email Address</label>
-            <input type="email" value={settings.profile.email} onChange={e => set('profile', 'email', e.target.value)} className={inputCls} />
+            <label className="dash-label" style={{ marginBottom: 8, display: 'block' }}>Email Address</label>
+            <input type="email" value={settings.profile.email} onChange={e => set('profile', 'email', e.target.value)} className="dash-input" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
-              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Timezone</label>
-              <select value={settings.profile.timezone} onChange={e => set('profile', 'timezone', e.target.value)} className={selectCls}>
-                <option value="UTC">UTC</option>
-                <option value="EST">Eastern Time</option>
-                <option value="PST">Pacific Time</option>
-                <option value="GMT">Greenwich Mean Time</option>
+              <label className="dash-label" style={{ marginBottom: 8, display: 'block' }}>Timezone</label>
+              <select value={settings.profile.timezone} onChange={e => set('profile', 'timezone', e.target.value)} className="dash-select">
+                <option value="UTC">UTC</option><option value="EST">Eastern Time</option><option value="PST">Pacific Time</option><option value="GMT">Greenwich Mean Time</option>
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Language</label>
-              <select value={settings.profile.language} onChange={e => set('profile', 'language', e.target.value)} className={selectCls}>
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
+              <label className="dash-label" style={{ marginBottom: 8, display: 'block' }}>Language</label>
+              <select value={settings.profile.language} onChange={e => set('profile', 'language', e.target.value)} className="dash-select">
+                <option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option>
               </select>
             </div>
           </div>
         </div>
       </div>
-      <div className="border-t border-white/5 pt-6">
-        <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-4">Connected Wallet</h3>
-        <div className={rowCls}>
+      <div style={{ borderTop: '1px solid rgba(250,248,245,0.06)', paddingTop: 24 }}>
+        <h3 className="dash-label" style={{ fontSize: '0.8125rem', color: '#FAF8F5', marginBottom: 16 }}>Connected Wallet</h3>
+        <div style={rowStyle}>
           <div>
-            <div className="text-sm font-black text-white">Flow Wallet</div>
-            <div className="text-[10px] font-bold text-muted-foreground mt-1">
+            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5' }}>Flow Wallet</div>
+            <div className="dash-label" style={{ marginTop: 4 }}>
               {user.addr ? `${user.addr.slice(0, 8)}...${user.addr.slice(-6)}` : 'Not connected'}
             </div>
           </div>
-          <Badge className={user.loggedIn ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white/5 text-muted-foreground border-white/10'}>
+          <span className="dash-badge" style={{
+            background: user.loggedIn ? 'rgba(0,239,139,0.10)' : 'rgba(250,248,245,0.04)',
+            borderColor: user.loggedIn ? 'rgba(0,239,139,0.25)' : 'rgba(250,248,245,0.10)',
+            color: user.loggedIn ? '#00EF8B' : 'rgba(250,248,245,0.5)',
+          }}>
             {user.loggedIn ? 'Connected' : 'Disconnected'}
-          </Badge>
+          </span>
         </div>
       </div>
     </div>
   )
 
   const renderSecurity = () => (
-    <div className="space-y-4">
-      <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-6">Security Preferences</h3>
-      <div className={rowCls}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <h3 className="dash-label" style={{ fontSize: '0.8125rem', color: '#FAF8F5', marginBottom: 16 }}>Security Preferences</h3>
+      <div style={rowStyle}>
         <div>
-          <div className="text-sm font-black text-white">Two-Factor Authentication</div>
-          <div className="text-[10px] text-muted-foreground mt-1">Add an extra layer of security</div>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5' }}>Two-Factor Authentication</div>
+          <div className="dash-label">Add an extra layer of security</div>
         </div>
         <Toggle checked={settings.security.twoFactorEnabled} onChange={v => set('security', 'twoFactorEnabled', v)} />
       </div>
       <div>
-        <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Session Timeout (minutes)</label>
-        <select value={settings.security.sessionTimeout} onChange={e => set('security', 'sessionTimeout', parseInt(e.target.value))} className={selectCls}>
-          <option value={15}>15 minutes</option>
-          <option value={30}>30 minutes</option>
-          <option value={60}>1 hour</option>
-          <option value={120}>2 hours</option>
-          <option value={0}>Never</option>
+        <label className="dash-label" style={{ marginBottom: 8, display: 'block' }}>Session Timeout (minutes)</label>
+        <select value={settings.security.sessionTimeout} onChange={e => set('security', 'sessionTimeout', parseInt(e.target.value))} className="dash-select">
+          <option value={15}>15 minutes</option><option value={30}>30 minutes</option><option value={60}>1 hour</option><option value={120}>2 hours</option><option value={0}>Never</option>
         </select>
       </div>
-      <div className={rowCls}>
+      <div style={rowStyle}>
         <div>
-          <div className="text-sm font-black text-white">Auto Logout</div>
-          <div className="text-[10px] text-muted-foreground mt-1">Automatically logout when inactive</div>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5' }}>Auto Logout</div>
+          <div className="dash-label">Automatically logout when inactive</div>
         </div>
         <Toggle checked={settings.security.autoLogout} onChange={v => set('security', 'autoLogout', v)} />
       </div>
@@ -145,13 +145,15 @@ export default function SettingsPage() {
   }
 
   const renderNotifications = () => (
-    <div className="space-y-4">
-      <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-6">Notification Preferences</h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <h3 className="dash-label" style={{ fontSize: '0.8125rem', color: '#FAF8F5', marginBottom: 16 }}>Notification Preferences</h3>
       {Object.entries(settings.notifications).map(([key, value]) => (
-        <div key={key} className={rowCls}>
+        <div key={key} style={rowStyle}>
           <div>
-            <div className="text-sm font-black text-white capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</div>
-            <div className="text-[10px] text-muted-foreground mt-1">{notifLabels[key]}</div>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5', textTransform: 'capitalize' }}>
+              {key.replace(/([A-Z])/g, ' $1').trim()}
+            </div>
+            <div className="dash-label">{notifLabels[key]}</div>
           </div>
           <Toggle checked={value as boolean} onChange={v => set('notifications', key, v)} />
         </div>
@@ -160,67 +162,64 @@ export default function SettingsPage() {
   )
 
   const renderApi = () => (
-    <div className="space-y-6">
-      <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-6">API Access</h3>
-      <div className="p-6 glass rounded-2xl border-white/5 bg-white/[0.02]">
-        <div className="flex items-center justify-between mb-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <h3 className="dash-label" style={{ fontSize: '0.8125rem', color: '#FAF8F5', marginBottom: 16 }}>API Access</h3>
+      <div className="dash-card" style={{ padding: 28 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <div className="text-sm font-black text-white">API Key</div>
-            <div className="text-[10px] text-muted-foreground mt-1">Use this key to access the Sentinel API</div>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5' }}>API Key</div>
+            <div className="dash-label">Use this key to access the Sentinel API</div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setShowApiKey(!showApiKey)} className="text-muted-foreground hover:text-white">
-            {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </Button>
+          <button onClick={() => setShowApiKey(!showApiKey)}
+            style={{ width: 36, height: 36, borderRadius: 18, border: '1px solid rgba(250,248,245,0.1)', background: 'transparent', color: 'rgba(250,248,245,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+            {showApiKey ? <EyeOff style={{ width: 16, height: 16 }} /> : <Eye style={{ width: 16, height: 16 }} />}
+          </button>
         </div>
-        <div className="font-mono text-sm bg-black/40 border border-white/10 p-4 rounded-xl text-muted-foreground">
+        <div style={{ fontFamily: 'monospace', fontSize: '0.8125rem', padding: 16, borderRadius: 16, background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(250,248,245,0.06)', color: 'rgba(250,248,245,0.5)', marginBottom: 16 }}>
           {showApiKey ? 'sk_live_1234567890abcdef...' : '••••••••••••••••••••••••••••••••'}
         </div>
-        <div className="flex gap-2 mt-4">
-          <Button size="sm" variant="outline" className="border-white/10 hover:border-white/20 text-[10px] font-black uppercase tracking-widest">
-            <RefreshCw className="w-3 h-3 mr-2" /> Regenerate
-          </Button>
-          <Button size="sm" variant="outline" className="border-white/10 hover:border-white/20 text-[10px] font-black uppercase tracking-widest">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="dash-cta" style={{ padding: '10px 16px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}>
+            <RefreshCw style={{ width: 12, height: 12 }} /> Regenerate
+          </button>
+          <button className="dash-cta" style={{ padding: '10px 16px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}>
             Copy
-          </Button>
+          </button>
         </div>
       </div>
-      <div className="p-5 bg-primary/5 border border-primary/20 rounded-2xl">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <div className="text-sm font-black text-primary">API Security</div>
-            <div className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
-              Keep your API key secure. Never share it publicly or commit it to version control.
-            </div>
-          </div>
+      <div style={{ padding: 20, borderRadius: 24, border: '1px solid rgba(0,239,139,0.15)', background: 'rgba(0,239,139,0.04)', display: 'flex', gap: 12 }}>
+        <AlertTriangle style={{ width: 20, height: 20, color: '#00EF8B', flexShrink: 0, marginTop: 2 }} />
+        <div>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#00EF8B' }}>API Security</div>
+          <div className="dash-label" style={{ marginTop: 4, lineHeight: 1.5 }}>Keep your API key secure. Never share it publicly or commit it to version control.</div>
         </div>
       </div>
     </div>
   )
 
   const renderData = () => (
-    <div className="space-y-4">
-      <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-6">Data Management</h3>
-      <div className="p-6 glass rounded-2xl border-white/5 bg-white/[0.02]">
-        <div className="text-sm font-black text-white mb-1">Export Data</div>
-        <div className="text-[10px] text-muted-foreground mb-4">Download your portfolio data, transaction history, and settings</div>
-        <Button variant="outline" size="sm" className="border-white/10 hover:border-white/20 text-[10px] font-black uppercase tracking-widest">
-          <Download className="w-3 h-3 mr-2" /> Export All Data
-        </Button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <h3 className="dash-label" style={{ fontSize: '0.8125rem', color: '#FAF8F5', marginBottom: 16 }}>Data Management</h3>
+      <div className="dash-card" style={{ padding: 24 }}>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5', marginBottom: 4 }}>Export Data</div>
+        <div className="dash-label" style={{ marginBottom: 16 }}>Download your portfolio data, transaction history, and settings</div>
+        <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}>
+          <Download style={{ width: 12, height: 12 }} /> Export All Data
+        </button>
       </div>
-      <div className="p-6 glass rounded-2xl border-white/5 bg-white/[0.02]">
-        <div className="text-sm font-black text-white mb-1">Import Settings</div>
-        <div className="text-[10px] text-muted-foreground mb-4">Import settings from a backup file</div>
-        <Button variant="outline" size="sm" className="border-white/10 hover:border-white/20 text-[10px] font-black uppercase tracking-widest">
-          <Upload className="w-3 h-3 mr-2" /> Import Settings
-        </Button>
+      <div className="dash-card" style={{ padding: 24 }}>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5', marginBottom: 4 }}>Import Settings</div>
+        <div className="dash-label" style={{ marginBottom: 16 }}>Import settings from a backup file</div>
+        <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}>
+          <Upload style={{ width: 12, height: 12 }} /> Import Settings
+        </button>
       </div>
-      <div className="p-6 bg-destructive/5 border border-destructive/20 rounded-2xl">
-        <div className="text-sm font-black text-destructive mb-1">Danger Zone</div>
-        <div className="text-[10px] text-destructive/70 mb-4">Permanently delete your account and all associated data</div>
-        <Button variant="outline" size="sm" className="border-destructive/40 text-destructive hover:bg-destructive/10 text-[10px] font-black uppercase tracking-widest">
-          <Trash2 className="w-3 h-3 mr-2" /> Delete Account
-        </Button>
+      <div style={{ padding: 24, borderRadius: 24, border: '1px solid rgba(239,68,68,0.15)', background: 'rgba(239,68,68,0.04)' }}>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#ef4444', marginBottom: 4 }}>Danger Zone</div>
+        <div className="dash-label" style={{ marginBottom: 16, color: 'rgba(239,68,68,0.6)' }}>Permanently delete your account and all associated data</div>
+        <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}>
+          <Trash2 style={{ width: 12, height: 12 }} /> Delete Account
+        </button>
       </div>
     </div>
   )
@@ -237,43 +236,31 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background glows */}
-      <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[10%] left-[-5%] w-[30%] h-[40%] bg-secondary/5 blur-[100px] rounded-full pointer-events-none" />
+    <div style={{ minHeight: '100vh', background: '#000', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(ellipse at center, rgba(0,239,139,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '10%', left: '-5%', width: '30%', height: '40%', background: 'radial-gradient(ellipse at center, rgba(55,221,223,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
       <Navbar />
 
-      <div className="pt-32 pb-20 relative z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div style={{ paddingTop: 128, paddingBottom: 80, position: 'relative', zIndex: 10 }}>
+        <div className="w-container">
           {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Configuration</span>
-            </div>
-            <h1 className="text-5xl font-black text-white tracking-tighter uppercase leading-none">Settings</h1>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="dash-page-header">
+            <h1>Settings</h1>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Nav */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-1">
-              <div className="tool-card p-3 border-0 glass">
-                <nav className="space-y-1">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+            {/* Sidebar Navigation */}
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+              <div className="dash-card" style={{ padding: 8 }}>
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {settingsSections.map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => setActiveSection(s.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
-                        activeSection === s.id
-                          ? 'bg-primary/10 text-primary border border-primary/20'
-                          : 'text-muted-foreground hover:text-white hover:bg-white/5 border border-transparent'
-                      }`}
-                    >
-                      <span className={activeSection === s.id ? 'text-primary' : 'text-muted-foreground'}>{s.icon}</span>
-                      <div>
-                        <div className="text-[11px] font-black uppercase tracking-widest">{s.title}</div>
-                        <div className="text-[9px] opacity-60 mt-0.5">{s.description}</div>
+                    <button key={s.id} onClick={() => setActiveSection(s.id)}
+                      className={`dash-sidebar-btn ${activeSection === s.id ? 'active' : ''}`}>
+                      <span style={{ opacity: activeSection === s.id ? 1 : 0.5 }}>{s.icon}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.6875rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{s.title}</div>
+                        <div style={{ fontSize: '0.5rem', fontWeight: 500, letterSpacing: '0.08em', opacity: 0.5, marginTop: 2, textTransform: 'uppercase' }}>{s.description}</div>
                       </div>
                     </button>
                   ))}
@@ -282,17 +269,24 @@ export default function SettingsPage() {
             </motion.div>
 
             {/* Content */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-3">
-              <div className="tool-card p-8 border-0 glass relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+              <div className="dash-card" style={{ padding: 32, position: 'relative', overflow: 'hidden' }}>
                 {renderContent()}
-                <div className="flex justify-end gap-3 mt-10 pt-8 border-t border-white/5">
-                  <Button variant="outline" className="border-white/10 hover:border-white/20 text-[10px] font-black uppercase tracking-widest">
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 40, paddingTop: 24, borderTop: '1px solid rgba(250,248,245,0.06)' }}>
+                  <button style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    padding: '12px 24px', borderRadius: 26, border: '1px solid rgba(250,248,245,0.15)',
+                    background: 'transparent', color: '#FAF8F5',
+                    fontSize: '0.625rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.4)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.15)'}>
                     Cancel
-                  </Button>
-                  <Button className="btn-primary text-[10px] font-black uppercase tracking-widest">
-                    <Save className="w-3 h-3 mr-2" /> Save Changes
-                  </Button>
+                  </button>
+                  <button className="dash-cta" style={{ padding: '12px 24px', fontSize: '0.625rem' }}>
+                    <Save style={{ width: 12, height: 12 }} /> Save Changes
+                  </button>
                 </div>
               </div>
             </motion.div>

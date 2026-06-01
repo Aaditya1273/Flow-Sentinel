@@ -34,192 +34,163 @@ export function ActivityFeed() {
 
   useEffect(() => {
     const loadActivities = async () => {
-      // If the user isn't logged in, don't show specific data
-      if (!user.addr) {
-        setLoading(false)
-        return
-      }
-
+      if (!user.addr) { setLoading(false); return }
       try {
         setLoading(true)
         const realActivities: Activity[] = []
 
-        // If there are no vaults, just show general system logs
         if (vaults.length === 0) {
           realActivities.push({
-            id: 'system-ready',
-            type: 'system',
+            id: 'system-ready', type: 'system',
             description: 'Sentinel Network Ready',
-            timestamp: new Date(),
-            status: 'completed'
+            timestamp: new Date(), status: 'completed'
           })
         } else {
-          // Add logs for each vault
           vaults.forEach((vault, idx) => {
-            // Vault creation log
             realActivities.push({
-              id: `vault-active-${vault.id}`,
-              type: 'system',
+              id: `vault-active-${vault.id}`, type: 'system',
               description: `Protocol Active: ${vault.name}`,
-              timestamp: new Date(Date.now() - (idx + 1) * 3600000), // Simulated sequence
+              timestamp: new Date(Date.now() - (idx + 1) * 3600000),
               status: 'completed'
             })
-
-            // Initial deposit log
             if (vault.totalDeposits > 0) {
               realActivities.push({
-                id: `deposit-${vault.id}`,
-                type: 'deposit',
+                id: `deposit-${vault.id}`, type: 'deposit',
                 amount: vault.totalDeposits,
                 description: `Capital Inflow: ${vault.name}`,
                 timestamp: new Date(Date.now() - (idx + 2) * 3600000),
                 status: 'completed'
               })
             }
-
-            // Strategy execution log
             if (vault.lastExecution > 0) {
               realActivities.push({
-                id: `strategy-${vault.id}`,
-                type: 'strategy',
+                id: `strategy-${vault.id}`, type: 'strategy',
                 description: `Forte Execution: ${vault.strategy}`,
                 timestamp: new Date(vault.lastExecution * 1000),
                 status: 'completed'
               })
             }
           })
-
-          // Add aggregated yield log if total PnL is positive
           if (performance?.totalPnl && performance.totalPnl > 0) {
             realActivities.push({
-              id: 'total-yield',
-              type: 'yield',
+              id: 'total-yield', type: 'yield',
               amount: performance.totalPnl,
               description: 'Aggregated Yield Harvested',
-              timestamp: new Date(),
-              status: 'completed'
+              timestamp: new Date(), status: 'completed'
             })
           }
         }
 
-        // Global system logs
         realActivities.push({
-          id: 'mev-protection',
-          type: 'system',
+          id: 'mev-protection', type: 'system',
           description: 'MEV-Shield Active Monitoring',
           timestamp: new Date(Date.now() - 24 * 3600000),
           status: 'completed'
         })
 
         realActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-        setActivities(realActivities.slice(0, 10)) // Keep only latest 10
         setActivities(realActivities)
       } catch (error) {
         console.error('Error loading activities:', error)
-      } finally {
-        setLoading(false)
-      }
+      } finally { setLoading(false) }
     }
-
     loadActivities()
   }, [user.addr, vaults, performance])
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'deposit': return <ArrowUpRight className="w-5 h-5 text-primary" />
-      case 'withdrawal': return <ArrowDownLeft className="w-5 h-5 text-destructive" />
-      case 'yield': return <TrendingUp className="w-5 h-5 text-primary" />
-      case 'strategy': return <Zap className="w-5 h-5 text-secondary" />
-      case 'system': return <Shield className="w-5 h-5 text-white" />
-      default: return <Clock className="w-5 h-5" />
+      case 'deposit': return <ArrowUpRight style={{ width: 20, height: 20, color: '#00EF8B' }} />
+      case 'withdrawal': return <ArrowDownLeft style={{ width: 20, height: 20, color: '#ef4444' }} />
+      case 'yield': return <TrendingUp style={{ width: 20, height: 20, color: '#00EF8B' }} />
+      case 'strategy': return <Zap style={{ width: 20, height: 20, color: '#37DDDF' }} />
+      case 'system': return <Shield style={{ width: 20, height: 20, color: '#FAF8F5' }} />
+      default: return <Clock style={{ width: 20, height: 20 }} />
     }
   }
 
   if (loading) {
     return (
-      <div className="tool-card border-0 glass p-6">
-        <h3 className="text-xl font-black tracking-tighter mb-8">SECURE LOGS</h3>
-        <div className="space-y-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center space-x-4 animate-pulse">
-              <div className="w-12 h-12 glass rounded-2xl bg-white/5"></div>
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-white/5 rounded w-3/4"></div>
-                <div className="h-3 bg-white/5 rounded w-1/4"></div>
-              </div>
+      <div className="dash-card" style={{ padding: 24 }}>
+        <h3 className="dash-label" style={{ fontSize: '1.25rem', marginBottom: 32 }}>SECURE LOGS</h3>
+        {[1, 2, 3].map((i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, animation: 'pulse 2s infinite' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 20, background: 'rgba(250,248,245,0.04)' }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ height: 16, width: '75%', background: 'rgba(250,248,245,0.04)', borderRadius: 4, marginBottom: 8 }} />
+              <div style={{ height: 12, width: '25%', background: 'rgba(250,248,245,0.04)', borderRadius: 4 }} />
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     )
   }
 
   return (
     <ClientOnly>
-      <div className="tool-card border-0 glass p-6">
-        <div className="flex items-center justify-between mb-8">
-          <h3 className="text-xl font-black tracking-tighter uppercase">Activity Log</h3>
-          <div className="flex items-center text-[10px] font-black uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/40">
-            <ActivityIcon className="w-3 h-3 mr-2 animate-pulse" />
+      <div className="dash-card" style={{ padding: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+          <h3 style={{
+            fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif',
+            fontSize: '1.25rem', fontWeight: 500, letterSpacing: '-0.02em',
+            color: '#FAF8F5', margin: 0, textTransform: 'uppercase',
+          }}>
+            Activity Log
+          </h3>
+          <span className="dash-badge dash-badge-green" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <ActivityIcon style={{ width: 12, height: 12, animation: 'pulse 2s infinite' }} />
             Live Sync
-          </div>
+          </span>
         </div>
 
         {activities.length === 0 ? (
-          <div className="text-center py-20 opacity-50">
-            <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-sm font-bold uppercase tracking-widest">No signals detected</p>
+          <div style={{ textAlign: 'center', padding: '80px 0', opacity: 0.5 }}>
+            <Clock style={{ width: 48, height: 48, margin: '0 auto 16px', color: 'rgba(250,248,245,0.3)' }} />
+            <p className="dash-label" style={{ fontSize: '0.75rem' }}>No signals detected</p>
           </div>
         ) : (
-          <div className="space-y-4 max-h-[440px] overflow-y-auto pr-2 custom-scrollbar">
+          <div style={{ maxHeight: 440, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
             {activities.map((activity, index) => (
               <motion.div
                 key={activity.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="flex items-start space-x-4 p-4 glass rounded-2xl border-white/10 transition-all duration-300 hover:border-white/30 hover:translate-x-1"
+                className="dash-timeline-item"
               >
-                <div className="flex-shrink-0 w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/20">
+                <div style={{
+                  width: 48, height: 48, borderRadius: 20, flexShrink: 0,
+                  background: 'rgba(250,248,245,0.03)',
+                  border: '1px solid rgba(250,248,245,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
                   {getActivityIcon(activity.type)}
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-bold text-white tracking-tight uppercase">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#FAF8F5', margin: 0 }}>
                       {activity.description}
                     </p>
-                    <span className={`text-[10px] font-black tracking-widest uppercase ${activity.status === 'completed' ? 'text-primary' : 'text-warning'
-                      }`}>
+                    <span style={{
+                      fontSize: '0.5625rem', fontWeight: 500, letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: activity.status === 'completed' ? '#00EF8B' : '#f59e0b',
+                    }}>
                       {activity.status}
                     </span>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tighter">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'rgba(250,248,245,0.25)' }}>
                       {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  •  {new Date(activity.timestamp).toLocaleDateString()}
                     </span>
-                    {activity.amount && (
-                      <span className={`text-base font-black financial-number tracking-tighter ${activity.type === 'deposit' || activity.type === 'yield'
-                        ? 'text-primary'
-                        : 'text-destructive'
-                        }`}>
-                        {activity.type === 'deposit' || activity.type === 'yield' ? '+' : '-'}
+                    {activity.amount && (                    <span style={{ fontSize: '1rem', fontWeight: 500, fontVariantNumeric: 'tabular-nums',
+                        color: (activity.type === 'deposit' || activity.type === 'yield') ? '#00EF8B' : '#ef4444',
+                      }}>
+                        {(activity.type === 'deposit' || activity.type === 'yield') ? '+' : '-'}
                         {formatCurrency(activity.amount)}
                       </span>
                     )}
                   </div>
-
-                  {activity.txHash && (
-                    <a
-                      href={`https://testnet.flowscan.io/tx/${activity.txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] font-black text-primary/50 hover:text-primary mt-3 flex items-center gap-1 uppercase tracking-widest transition-colors"
-                    >
-                      Verify on Explorer ↗
-                    </a>
-                  )}
                 </div>
               </motion.div>
             ))}

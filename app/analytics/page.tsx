@@ -3,22 +3,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  PieChart,
-  BarChart3,
-  Activity,
-  Calendar,
-  Download,
-  Filter,
-  RefreshCw,
-  Clock
+  TrendingUp, DollarSign, BarChart3, Activity,
+  Download, RefreshCw, Clock
 } from 'lucide-react'
 import { Navbar } from 'components/layout/Navbar'
-import { Button } from 'components/ui/button'
-import { Badge } from 'components/ui/badge'
-import { Card } from 'components/ui/card'
 import { formatCurrency, formatPercentage } from 'lib/utils'
 import { useVaultData } from 'hooks/useVaultData'
 import { useFlow } from 'lib/flow'
@@ -26,29 +14,23 @@ import { FlowService, VaultEvent, PerformanceDataPoint } from 'lib/flow-service'
 
 export default function AnalyticsPage() {
   const [timeframe, setTimeframe] = useState('all')
-  const [selectedMetric, setSelectedMetric] = useState('portfolio')
   const { user } = useFlow()
   const { vaults, performance, flowBalance, loading, refetch } = useVaultData()
 
-  // Real blockchain event data
   const [vaultEvents, setVaultEvents] = useState<VaultEvent[]>([])
   const [realPerformanceHistory, setRealPerformanceHistory] = useState<PerformanceDataPoint[]>([])
   const [vaultAgeDays, setVaultAgeDays] = useState(0)
   const [eventsLoading, setEventsLoading] = useState(false)
 
-  // Fetch real vault events from blockchain
   useEffect(() => {
     const fetchEvents = async () => {
       if (!user.addr) return
-
       setEventsLoading(true)
       try {
         const events = await FlowService.getVaultEvents(user.addr)
         setVaultEvents(events)
-
         const ageDays = FlowService.getVaultAgeInDays(events)
         setVaultAgeDays(ageDays)
-
         const totalBalance = vaults.reduce((sum, v) => sum + v.balance, 0)
         const history = FlowService.buildPerformanceHistory(events, totalBalance)
         setRealPerformanceHistory(history)
@@ -58,134 +40,68 @@ export default function AnalyticsPage() {
         setEventsLoading(false)
       }
     }
-
     if (user.loggedIn && vaults.length > 0) {
       fetchEvents()
     }
   }, [user.addr, user.loggedIn, vaults])
 
-  // Check if enough data is available for selected timeframe
   const hasEnoughData = FlowService.hasEnoughDataForTimeframe(vaultAgeDays, timeframe)
   const remainingTime = FlowService.getRemainingTimeForTimeframe(vaultAgeDays, timeframe)
 
   const timeframes = [
-    { label: '24H', value: '1d' },
-    { label: '7D', value: '7d' },
-    { label: '30D', value: '30d' },
-    { label: '90D', value: '90d' },
-    { label: '1Y', value: '1y' },
-    { label: 'All', value: 'all' }
+    { label: '24H', value: '1d' }, { label: '7D', value: '7d' },
+    { label: '30D', value: '30d' }, { label: '90D', value: '90d' },
+    { label: '1Y', value: '1y' }, { label: 'All', value: 'all' }
   ]
 
-  const metrics = [
-    { label: 'Portfolio Value', value: 'portfolio' },
-    { label: 'P&L', value: 'pnl' },
-    { label: 'APY', value: 'apy' },
-    { label: 'Risk Metrics', value: 'risk' }
-  ]
-
-  // Generate analytics data based on real vault data
   const generateAnalyticsData = () => {
     if (!vaults || vaults.length === 0 || !performance) {
       return {
-        totalPortfolioValue: 0,
-        totalPnL: 0,
-        totalPnLPercent: 0,
-        dailyPnL: 0,
-        dailyPnLPercent: 0,
-        weeklyPnL: 0,
-        weeklyPnLPercent: 0,
-        monthlyPnL: 0,
-        monthlyPnLPercent: 0,
-        portfolioBreakdown: [],
-        performanceHistory: [],
-        topPerformers: [],
-        riskMetrics: {
-          sharpeRatio: 0,
-          maxDrawdown: 0,
-          volatility: 0,
-          beta: 0,
-          alpha: 0
-        },
+        totalPortfolioValue: 0, totalPnL: 0, totalPnLPercent: 0,
+        dailyPnL: 0, dailyPnLPercent: 0, weeklyPnL: 0, weeklyPnLPercent: 0, monthlyPnL: 0, monthlyPnLPercent: 0,
+        portfolioBreakdown: [], performanceHistory: [], topPerformers: [],
+        riskMetrics: { sharpeRatio: 0, maxDrawdown: 0, volatility: 0, beta: 0, alpha: 0 },
         recentTransactions: []
       }
     }
-
     const totalVaultBalance = vaults.reduce((sum, v) => sum + v.balance, 0)
     const totalValue = totalVaultBalance + flowBalance
     const pnl = performance.totalPnl || 0
     const pnlPercent = performance.totalPnlPercent || 0
 
-    // Generate portfolio breakdown based on all vaults
     const portfolioBreakdown = [
       ...vaults.map((v, i) => ({
-        name: v.strategy || v.name || 'Vault',
-        value: v.balance,
+        name: v.strategy || v.name || 'Vault', value: v.balance,
         percentage: totalValue > 0 ? (v.balance / totalValue) * 100 : 0,
-        color: ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B'][i % 4]
+        color: ['#00EF8B', '#37DDDF', '#02D87E', '#00B4D8'][i % 4]
       })),
-      {
-        name: 'Available FLOW',
-        value: flowBalance,
-        percentage: totalValue > 0 ? (flowBalance / totalValue) * 100 : 0,
-        color: '#10B981'
-      }
+      { name: 'Available FLOW', value: flowBalance, percentage: totalValue > 0 ? (flowBalance / totalValue) * 100 : 0, color: '#00EF8B' }
     ]
 
-    // Generate performance history
     const performanceHistory = []
     const numPoints = 14
     const baseValue = totalVaultBalance * 0.95
-
-    // Use seeded random for consistent values
-    const seedRandom = (seed: number) => {
-      const x = Math.sin(seed) * 10000
-      return x - Math.floor(x)
-    }
-
+    const seedRandom = (seed: number) => { const x = Math.sin(seed) * 10000; return x - Math.floor(x) }
     for (let i = 0; i < numPoints; i++) {
       const progress = i / (numPoints - 1)
       const value = baseValue + (pnl * progress) + (seedRandom(i + 54321) - 0.5) * (pnl * 0.1)
       performanceHistory.push({
-        date: new Date(1640995200000 - (numPoints - 1 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        value: Math.max(value, baseValue * 0.95),
-        pnl: Math.max(value - baseValue, baseValue * -0.05)
+        date: new Date(1640995200000 - (numPoints - 1 - i) * 86400000).toISOString().split('T')[0],
+        value: Math.max(value, baseValue * 0.95), pnl: Math.max(value - baseValue, baseValue * -0.05)
       })
     }
 
-    // Calculate risk metrics based on performance
     const volatility = Math.abs(pnlPercent) * 0.5
     const sharpeRatio = pnlPercent > 0 ? pnlPercent / Math.max(volatility, 1) : 0
 
     return {
-      totalPortfolioValue: totalValue,
-      totalPnL: pnl,
-      totalPnLPercent: pnlPercent,
-      dailyPnL: pnl * 0.1,
-      dailyPnLPercent: pnlPercent * 0.1,
-      weeklyPnL: pnl * 0.3,
-      weeklyPnLPercent: pnlPercent * 0.3,
-      monthlyPnL: pnl,
-      monthlyPnLPercent: pnlPercent,
-
-      portfolioBreakdown,
-      performanceHistory,
-
-      topPerformers: vaults.map(v => ({
-        name: v.name,
-        pnl: v.pnl || 0,
-        pnlPercent: v.pnlPercent || 0,
-        allocation: totalValue > 0 ? (v.balance / totalValue) * 100 : 0
-      })),
-
-      riskMetrics: {
-        sharpeRatio: Math.max(sharpeRatio, 0),
-        maxDrawdown: Math.min(pnlPercent * -0.2, 0),
-        volatility: volatility,
-        beta: 0.8,
-        alpha: Math.max(pnlPercent - 5, 0)
-      },
-
+      totalPortfolioValue: totalValue, totalPnL: pnl, totalPnLPercent: pnlPercent,
+      dailyPnL: pnl * 0.1, dailyPnLPercent: pnlPercent * 0.1,
+      weeklyPnL: pnl * 0.3, weeklyPnLPercent: pnlPercent * 0.3,
+      monthlyPnL: pnl, monthlyPnLPercent: pnlPercent,
+      portfolioBreakdown, performanceHistory,
+      topPerformers: vaults.map(v => ({ name: v.name, pnl: v.pnl || 0, pnlPercent: v.pnlPercent || 0, allocation: totalValue > 0 ? (v.balance / totalValue) * 100 : 0 })),
+      riskMetrics: { sharpeRatio: Math.max(sharpeRatio, 0), maxDrawdown: Math.min(pnlPercent * -0.2, 0), volatility, beta: 0.8, alpha: Math.max(pnlPercent - 5, 0) },
       recentTransactions: vaults.flatMap(v => [
         { type: 'vault_created', amount: 0, vault: v.name, timestamp: 'Recently' },
         { type: 'deposit', amount: v.totalDeposits, vault: v.name, timestamp: 'Recently' }
@@ -195,24 +111,19 @@ export default function AnalyticsPage() {
 
   const analyticsData = generateAnalyticsData()
 
-  // Chart dimensions
-  const chartWidth = 600
-  const chartHeight = 300
-  const padding = 40
+  const chartWidth = 600, chartHeight = 300, padding = 40
 
   if (!user.loggedIn) {
     return (
-      <div className="min-h-screen bg-background">
+      <div style={{ minHeight: '100vh', background: '#000' }}>
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <BarChart3 className="w-16 h-16 text-accent mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-foreground mb-4">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+          <div style={{ textAlign: 'center' }}>
+            <BarChart3 style={{ width: 64, height: 64, color: 'rgba(250,248,245,0.2)', margin: '0 auto 16px' }} />
+            <h1 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '2rem', fontWeight: 500, color: '#FAF8F5', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
               Connect Your Wallet
             </h1>
-            <p className="text-muted-foreground mb-8">
-              Connect your Flow wallet to view your portfolio analytics
-            </p>
+            <p style={{ color: 'rgba(250,248,245,0.55)' }}>Connect your Flow wallet to view your portfolio analytics</p>
           </div>
         </div>
       </div>
@@ -221,474 +132,290 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div style={{ minHeight: '100vh', background: '#000' }}>
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading analytics data...</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', paddingTop: 64 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ position: 'relative', width: 64, height: 64, margin: '0 auto 24px' }}>
+              <div style={{ position: 'absolute', inset: 0, border: '3px solid rgba(0,239,139,0.08)', borderRadius: '50%' }} />
+              <div style={{ position: 'absolute', inset: 0, border: '3px solid transparent', borderTopColor: '#00EF8B', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            </div>
+            <p className="dash-label" style={{ color: '#00EF8B', animation: 'pulse 2s infinite' }}>Loading analytics data...</p>
           </div>
         </div>
       </div>
     )
   }
 
-  const minValue = Math.min(...analyticsData.performanceHistory.map(d => d.value))
-  const maxValue = Math.max(...analyticsData.performanceHistory.map(d => d.value))
-  const valueRange = maxValue - minValue || 1
-
-  // Create SVG path for the performance chart
-  const pathData = analyticsData.performanceHistory.map((point, index) => {
-    const x = padding + (index / (analyticsData.performanceHistory.length - 1)) * (chartWidth - 2 * padding)
-    const y = chartHeight - padding - ((point.value - minValue) / valueRange) * (chartHeight - 2 * padding)
-    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
-  }).join(' ')
-
-  const areaData = `${pathData} L ${chartWidth - padding} ${chartHeight - padding} L ${padding} ${chartHeight - padding} Z`
-
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ minHeight: '100vh', background: '#000', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(ellipse at center, rgba(0,239,139,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '10%', left: '-5%', width: '30%', height: '40%', background: 'radial-gradient(ellipse at center, rgba(55,221,223,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
       <Navbar />
 
-      <div className="pt-20 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div style={{ paddingTop: 128, paddingBottom: 80, position: 'relative', zIndex: 10 }}>
+        <div className="w-container">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="dash-page-header">
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 16 }}>
               <div>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                  ANALYTICS ACTIVE
-                </p>
-                <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter uppercase ">
-                  PORTFOLIO ANALYTICS
-                </h1>
-                <p className="text-muted-foreground mt-2 font-medium">
+                <h1>Portfolio Analytics</h1>
+                <p style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.55)', marginTop: 8, fontWeight: 500 }}>
                   Deep insights into your DeFi performance
                 </p>
               </div>
-
-              <div className="mt-4 md:mt-0 flex space-x-3">
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-                <Button variant="outline" size="sm" onClick={refetch} disabled={loading}>
-                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.4)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.15)'}>
+                  <Download style={{ width: 14, height: 14 }} /> Export
+                </button>
+                <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}
+                  onClick={refetch} disabled={loading}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.4)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.15)'}>
+                  <RefreshCw style={{ width: 14, height: 14, ...(loading ? { animation: 'spin 1s linear infinite' } : {}) }} /> Refresh
+                </button>
               </div>
             </div>
           </motion.div>
 
           {/* Key Metrics */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-          >
-            <Card className="tool-card p-6 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <DollarSign className="w-8 h-8 text-accent" />
-                <Badge variant="outline" className="status-active">
-                  +{formatPercentage(analyticsData.totalPnLPercent)}
-                </Badge>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
+            {[
+              { icon: DollarSign, label: 'Total Portfolio Value', value: formatCurrency(analyticsData.totalPortfolioValue), sub: `+${formatCurrency(analyticsData.totalPnL)} P&L`, badge: `+${formatPercentage(analyticsData.totalPnLPercent)}`, color1: '#00EF8B' },
+              { icon: TrendingUp, label: 'Daily P&L', value: formatCurrency(analyticsData.dailyPnL), sub: `+${formatPercentage(analyticsData.dailyPnLPercent)}`, badge: '24h', color1: '#00EF8B' },
+              { icon: BarChart3, label: 'Sharpe Ratio', value: analyticsData.riskMetrics.sharpeRatio.toFixed(2), sub: 'Risk-Adjusted Returns', badge: 'Sharpe', color1: '#37DDDF' },
+              { icon: Activity, label: 'Volatility', value: `${analyticsData.riskMetrics.volatility.toFixed(1)}%`, sub: '30-day rolling', badge: 'Vol', color1: '#37DDDF' },
+            ].map((stat, i) => (
+              <div key={i} className="dash-stat" style={{ padding: '24px 28px' }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 16, border: `1px solid ${stat.color1}20`, background: `${stat.color1}08`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color1 }}>
+                      <stat.icon style={{ width: 20, height: 20 }} />
+                    </div>
+                    <span className="dash-badge dash-badge-green" style={{ color: stat.color1, borderColor: `${stat.color1}30`, background: `${stat.color1}10` }}>{stat.badge}</span>
+                  </div>
+                  <div className="dash-value" style={{ fontSize: '1.5rem', color: stat.label === 'Daily P&L' ? '#00EF8B' : '#FAF8F5', marginBottom: 4 }}>{stat.value}</div>
+                  <div className="dash-label" style={{ marginBottom: 8 }}>{stat.label}</div>
+                  <div style={{ fontSize: '0.625rem', fontWeight: 500, color: stat.color1, letterSpacing: '0.08em' }}>{stat.sub}</div>
+                </div>
               </div>
-              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter  financial-number">
-                {formatCurrency(analyticsData.totalPortfolioValue)}
-              </div>
-              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Total Portfolio Value</div>
-              <div className="text-sm text-accent mt-1">
-                +{formatCurrency(analyticsData.totalPnL)} P&L
-              </div>
-            </Card>
-
-            <Card className="tool-card p-6 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <TrendingUp className="w-8 h-8 text-accent" />
-                <Badge variant="outline" className="text-accent">
-                  24h
-                </Badge>
-              </div>
-              <div className="text-3xl font-black text-accent mb-1 tracking-tighter  financial-number">
-                {formatCurrency(analyticsData.dailyPnL)}
-              </div>
-              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Daily P&L</div>
-              <div className="text-sm text-accent mt-1">
-                +{formatPercentage(analyticsData.dailyPnLPercent)}
-              </div>
-            </Card>
-
-            <Card className="tool-card p-6 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <BarChart3 className="w-8 h-8 text-accent" />
-                <Badge variant="outline" className="text-accent">
-                  Sharpe
-                </Badge>
-              </div>
-              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter ">
-                {analyticsData.riskMetrics.sharpeRatio.toFixed(2)}
-              </div>
-              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Sharpe Ratio</div>
-              <div className="text-sm text-accent mt-1">
-                Risk-Adjusted Returns
-              </div>
-            </Card>
-
-            <Card className="tool-card p-6 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <Activity className="w-8 h-8 text-accent" />
-                <Badge variant="outline" className="text-accent">
-                  Vol
-                </Badge>
-              </div>
-              <div className="text-3xl font-black text-foreground mb-1 tracking-tighter ">
-                {analyticsData.riskMetrics.volatility.toFixed(1)}%
-              </div>
-              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Volatility</div>
-              <div className="text-sm text-accent mt-1">
-                30-day rolling
-              </div>
-            </Card>
+            ))}
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
             {/* Performance Chart */}
-            <div className="lg:col-span-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Card className="tool-card p-6 border border-border">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-foreground uppercase  tracking-tight">
-                      PORTFOLIO PERFORMANCE
+            <div>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <div className="dash-chart">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 32 }}>
+                    <h3 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '1rem', fontWeight: 500, color: '#FAF8F5', margin: 0, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                      Portfolio Performance
                     </h3>
-
-                    <div className="flex space-x-1 bg-muted rounded-lg p-1">
+                    <div className="dash-filter-bar">
                       {timeframes.map((tf) => (
-                        <button
-                          key={tf.value}
-                          onClick={() => setTimeframe(tf.value)}
-                          className={`px-3 py-1 text-sm rounded-md transition-colors ${timeframe === tf.value
-                            ? 'bg-accent text-background'
-                            : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
+                        <button key={tf.value} onClick={() => setTimeframe(tf.value)}
+                          className={`dash-filter-btn ${timeframe === tf.value ? 'active' : ''}`}>
                           {tf.label}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="mb-4">
-                    <div className="text-4xl font-black text-foreground tracking-tighter  financial-number">
+                  <div style={{ marginBottom: 24 }}>
+                    <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 4 }}>
                       {formatCurrency(analyticsData.totalPortfolioValue)}
                     </div>
-                    <div className="flex items-center text-accent">
-                      <TrendingUp className="w-4 h-4 mr-1" />
-                      +{formatCurrency(analyticsData.totalPnL)} ({formatPercentage(analyticsData.totalPnLPercent)})
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#00EF8B' }}>
+                      <TrendingUp style={{ width: 14, height: 14 }} />
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+                        +{formatCurrency(analyticsData.totalPnL)} ({formatPercentage(analyticsData.totalPnLPercent)})
+                      </span>
                     </div>
                   </div>
 
-                  {/* Show insufficient data message or real chart */}
                   {!hasEnoughData && timeframe !== 'all' ? (
-                    <div className="relative h-[300px] flex items-center justify-center">
-                      <div className="text-center p-8 glass rounded-2xl border border-white/10">
-                        <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <h4 className="text-lg font-bold text-foreground mb-2">
+                    <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ textAlign: 'center', padding: 32, borderRadius: 24, border: '1px solid rgba(250,248,245,0.06)', background: 'rgba(250,248,245,0.02)' }}>
+                        <Clock style={{ width: 48, height: 48, color: 'rgba(250,248,245,0.2)', margin: '0 auto 16px' }} />
+                        <h4 className="dash-label" style={{ color: '#FAF8F5', marginBottom: 8, fontSize: '0.75rem' }}>
                           Insufficient Data for {timeframes.find(t => t.value === timeframe)?.label}
                         </h4>
-                        <p className="text-muted-foreground text-sm mb-4">
-                          Your vault needs to be active for <span className="text-accent font-bold">{remainingTime}</span> more to display this chart.
+                        <p style={{ fontSize: '0.75rem', color: 'rgba(250,248,245,0.55)', marginBottom: 16 }}>
+                          Your vault needs to be active for <span style={{ color: '#00EF8B', fontWeight: 500 }}>{remainingTime}</span> more to display this chart.
                         </p>
-                        <p className="text-xs text-muted-foreground/70">
-                          Current vault age: <span className="text-foreground">{vaultAgeDays.toFixed(1)} days</span>
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-4"
-                          onClick={() => setTimeframe('all')}
-                        >
+                        <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem' }} onClick={() => setTimeframe('all')}>
                           View All Time Data
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   ) : eventsLoading ? (
-                    <div className="relative h-[300px] flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
-                        <p className="text-muted-foreground text-sm">Loading blockchain data...</p>
+                    <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ position: 'relative', width: 40, height: 40, margin: '0 auto 16px' }}>
+                          <div style={{ position: 'absolute', inset: 0, border: '3px solid rgba(0,239,139,0.08)', borderRadius: '50%' }} />
+                          <div style={{ position: 'absolute', inset: 0, border: '3px solid transparent', borderTopColor: '#00EF8B', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                        </div>
+                        <p className="dash-label">Loading blockchain data...</p>
                       </div>
                     </div>
                   ) : realPerformanceHistory.length > 1 ? (
-                    <div className="relative">
-                      <svg
-                        width={chartWidth}
-                        height={chartHeight}
-                        className="w-full h-auto"
-                        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-                      >
+                    <div style={{ position: 'relative' }}>
+                      <svg width={chartWidth} height={chartHeight} style={{ width: '100%', height: 'auto' }} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
                         <defs>
-                          <linearGradient id="performanceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="rgb(0, 239, 139)" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="rgb(0, 239, 139)" stopOpacity="0" />
+                          <linearGradient id="perfGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#00EF8B" stopOpacity="0.25" />
+                            <stop offset="100%" stopColor="#00EF8B" stopOpacity="0" />
                           </linearGradient>
                         </defs>
-
-                        {/* Grid Lines */}
                         {[0, 1, 2, 3, 4].map((i) => (
-                          <line
-                            key={i}
-                            x1={padding}
-                            y1={padding + (i * (chartHeight - 2 * padding)) / 4}
-                            x2={chartWidth - padding}
-                            y2={padding + (i * (chartHeight - 2 * padding)) / 4}
-                            stroke="hsl(var(--border))"
-                            strokeWidth="1"
-                            opacity="0.3"
-                          />
+                          <line key={i} x1={padding} y1={padding + (i * (chartHeight - 2 * padding)) / 4}
+                            x2={chartWidth - padding} y2={padding + (i * (chartHeight - 2 * padding)) / 4}
+                            stroke="rgba(250,248,245,0.04)" strokeWidth="1" />
                         ))}
-
-                        {/* Real data chart */}
                         {(() => {
                           const values = realPerformanceHistory.map(p => p.balance)
-                          const minVal = Math.min(...values)
-                          const maxVal = Math.max(...values)
+                          const minVal = Math.min(...values), maxVal = Math.max(...values)
                           const range = maxVal - minVal || 1
-
-                          const realPathData = realPerformanceHistory.map((point, index) => {
-                            const x = padding + (index / (realPerformanceHistory.length - 1)) * (chartWidth - 2 * padding)
-                            const y = chartHeight - padding - ((point.balance - minVal) / range) * (chartHeight - 2 * padding)
-                            return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
+                          const realPath = realPerformanceHistory.map((pt, i) => {
+                            const x = padding + (i / (realPerformanceHistory.length - 1)) * (chartWidth - 2 * padding)
+                            const y = chartHeight - padding - ((pt.balance - minVal) / range) * (chartHeight - 2 * padding)
+                            return `${i === 0 ? 'M' : 'L'} ${x} ${y}`
                           }).join(' ')
-
-                          const realAreaData = `${realPathData} L ${chartWidth - padding} ${chartHeight - padding} L ${padding} ${chartHeight - padding} Z`
-
                           return (
                             <>
-                              <motion.path
-                                d={realAreaData}
-                                fill="url(#performanceGradient)"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 1, delay: 0.2 }}
-                              />
-                              <motion.path
-                                d={realPathData}
-                                fill="none"
-                                stroke="hsl(var(--accent))"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 1.5, ease: "easeInOut" }}
-                              />
+                              <motion.path d={`${realPath} L ${chartWidth - padding} ${chartHeight - padding} L ${padding} ${chartHeight - padding} Z`}
+                                fill="url(#perfGradient)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.2 }} />
+                              <motion.path d={realPath} fill="none" stroke="#00EF8B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }} />
                             </>
                           )
                         })()}
                       </svg>
-
-                      {/* Data source indicator */}
-                      <div className="flex items-center justify-center mt-2 text-xs text-muted-foreground">
-                        <div className="w-2 h-2 rounded-full bg-accent mr-2 animate-pulse"></div>
-                        Real blockchain data • {realPerformanceHistory.length} data points
+                      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+                        <span className="dash-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00EF8B', animation: 'pulse 2s infinite' }} />
+                          Real blockchain data &middot; {realPerformanceHistory.length} data points
+                        </span>
                       </div>
                     </div>
                   ) : (
-                    <div className="relative h-[300px] flex items-center justify-center">
-                      <div className="text-center p-8">
-                        <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">No transaction history yet</p>
-                        <p className="text-xs text-muted-foreground/70 mt-2">Create a vault and make deposits to see your performance graph</p>
+                    <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <Activity style={{ width: 48, height: 48, color: 'rgba(250,248,245,0.15)', margin: '0 auto 16px' }} />
+                        <p className="dash-label">No transaction history yet</p>
                       </div>
                     </div>
                   )}
-                </Card>
+                </div>
               </motion.div>
 
               {/* Top Performers */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-6"
-              >
-                <Card className="tool-card p-6 border border-border">
-                  <h3 className="text-xl font-black text-foreground mb-4 uppercase  tracking-tight">
-                    VAULT PERFORMANCE
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} style={{ marginTop: 24 }}>
+                <div className="dash-card" style={{ padding: 32 }}>
+                  <h3 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '1rem', fontWeight: 500, color: '#FAF8F5', marginBottom: 24, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                    Vault Performance
                   </h3>
-
-                  <div className="space-y-4">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {analyticsData.topPerformers.map((vault, index) => (
-                      <div key={vault.name} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="text-lg font-semibold text-muted-foreground">
-                            #{index + 1}
-                          </div>
+                      <div key={vault.name} className="dash-timeline-item">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                          <span className="dash-value" style={{ fontSize: '0.875rem', color: '#00EF8B' }}>#{index + 1}</span>
                           <div>
-                            <div className="font-medium text-foreground">{vault.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {vault.allocation.toFixed(1)}% allocation
-                            </div>
+                            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5' }}>{vault.name}</div>
+                            <div className="dash-label">{vault.allocation.toFixed(1)}% allocation</div>
                           </div>
                         </div>
-
-                        <div className="text-right">
-                          <div className={`font-semibold ${vault.pnl >= 0 ? 'text-accent' : 'text-destructive'} financial-number`}>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: vault.pnl >= 0 ? '#00EF8B' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>
                             {vault.pnl >= 0 ? '+' : ''}{formatCurrency(vault.pnl)}
                           </div>
-                          <div className={`text-sm ${vault.pnlPercent >= 0 ? 'text-accent' : 'text-destructive'}`}>
+                          <div style={{ fontSize: '0.6875rem', color: vault.pnlPercent >= 0 ? '#00EF8B' : '#ef4444', fontWeight: 500 }}>
                             {vault.pnlPercent >= 0 ? '+' : ''}{formatPercentage(vault.pnlPercent)}
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </Card>
+                </div>
               </motion.div>
             </div>
 
             {/* Sidebar */}
-            <div className="space-y-6">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {/* Portfolio Breakdown */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Card className="glass p-6">
-                  <h3 className="text-lg font-black text-white mb-4 uppercase  tracking-tight">
-                    PORTFOLIO BREAKDOWN
-                  </h3>
-
-                  <div className="space-y-4">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+                <div className="dash-card" style={{ padding: 28 }}>
+                  <h3 className="dash-label" style={{ fontSize: '0.875rem', color: '#FAF8F5', marginBottom: 24 }}>Portfolio Breakdown</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                     {analyticsData.portfolioBreakdown.map((item) => (
-                      <div key={item.name} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: item.color }}
-                            />
-                            <span className="text-sm text-white">{item.name}</span>
+                      <div key={item.name}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
+                            <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#FAF8F5' }}>{item.name}</span>
                           </div>
-                          <span className="text-sm text-muted-foreground">
-                            {item.percentage.toFixed(1)}%
-                          </span>
+                          <span className="dash-label">{item.percentage.toFixed(1)}%</span>
                         </div>
-                        <div className="w-full bg-white/10 rounded-full h-2">
-                          <div
-                            className="h-2 rounded-full"
-                            style={{
-                              backgroundColor: item.color,
-                              width: `${item.percentage}%`
-                            }}
-                          />
+                        <div className="dash-progress">
+                          <div className="dash-progress-bar" style={{ width: `${item.percentage}%`, background: item.color }} />
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatCurrency(item.value)}
-                        </div>
+                        <div className="dash-label" style={{ marginTop: 4 }}>{formatCurrency(item.value)}</div>
                       </div>
                     ))}
                   </div>
-                </Card>
+                </div>
               </motion.div>
 
               {/* Risk Metrics */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Card className="glass p-6">
-                  <h3 className="text-lg font-black text-white mb-4 uppercase  tracking-tight">
-                    RISK METRICS
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Sharpe Ratio</span>
-                      <span className="text-white font-black ">
-                        {analyticsData.riskMetrics.sharpeRatio.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Max Drawdown</span>
-                      <span className="text-destructive font-black ">
-                        {analyticsData.riskMetrics.maxDrawdown.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Volatility</span>
-                      <span className="text-warning font-black ">
-                        {analyticsData.riskMetrics.volatility.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Beta</span>
-                      <span className="text-white font-black ">
-                        {analyticsData.riskMetrics.beta.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Alpha</span>
-                      <span className="text-primary font-black ">
-                        {analyticsData.riskMetrics.alpha.toFixed(1)}%
-                      </span>
-                    </div>
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
+                <div className="dash-card" style={{ padding: 28 }}>
+                  <h3 className="dash-label" style={{ fontSize: '0.875rem', color: '#FAF8F5', marginBottom: 24 }}>Risk Metrics</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {[
+                      { label: 'Sharpe Ratio', value: analyticsData.riskMetrics.sharpeRatio.toFixed(2), color: '#FAF8F5' },
+                      { label: 'Max Drawdown', value: `${analyticsData.riskMetrics.maxDrawdown.toFixed(1)}%`, color: '#ef4444' },
+                      { label: 'Volatility', value: `${analyticsData.riskMetrics.volatility.toFixed(1)}%`, color: '#f59e0b' },
+                      { label: 'Beta', value: analyticsData.riskMetrics.beta.toFixed(2), color: '#FAF8F5' },
+                      { label: 'Alpha', value: `${analyticsData.riskMetrics.alpha.toFixed(1)}%`, color: '#00EF8B' },
+                    ].map((m, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span className="dash-label" style={{ fontSize: '0.5rem' }}>{m.label}</span>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: m.color, fontVariantNumeric: 'tabular-nums' }}>{m.value}</span>
+                      </div>
+                    ))}
                   </div>
-                </Card>
+                </div>
               </motion.div>
 
               {/* Recent Activity */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Card className="glass p-6">
-                  <h3 className="text-lg font-black text-white mb-4 uppercase  tracking-tight">
-                    RECENT ACTIVITY
-                  </h3>
-
-                  <div className="space-y-3">
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
+                <div className="dash-card" style={{ padding: 28 }}>
+                  <h3 className="dash-label" style={{ fontSize: '0.875rem', color: '#FAF8F5', marginBottom: 24 }}>Recent Activity</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {analyticsData.recentTransactions.map((tx, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg">
-                        <div>
-                          <div className="text-[10px] font-black text-primary uppercase tracking-wider">
+                      <div key={index} className="dash-timeline-item">
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.625rem', fontWeight: 500, color: '#00EF8B', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                             {tx.type.replace('_', ' ')}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {tx.vault}
-                          </div>
+                          <div className="dash-label">{tx.vault}</div>
                         </div>
-                        <div className="text-right">
+                        <div style={{ textAlign: 'right' }}>
                           {tx.amount > 0 && (
-                            <div className={`text-sm font-black  ${tx.type === 'deposit' || tx.type === 'vault_created'
-                              ? 'text-primary'
-                              : 'text-destructive'
-                              }`}>
-                              {tx.type === 'deposit' ? '+' : ''}
-                              {tx.amount > 0 ? formatCurrency(tx.amount) : ''}
+                            <div style={{ fontSize: '0.6875rem', fontWeight: 500, color: tx.type === 'deposit' || tx.type === 'vault_created' ? '#00EF8B' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>
+                              {tx.type === 'deposit' ? '+' : ''}{tx.amount > 0 ? formatCurrency(tx.amount) : ''}
                             </div>
                           )}
-                          <div className="text-xs text-muted-foreground">
-                            {tx.timestamp}
-                          </div>
+                          <div className="dash-label">{tx.timestamp}</div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </Card>
+                </div>
               </motion.div>
             </div>
           </div>

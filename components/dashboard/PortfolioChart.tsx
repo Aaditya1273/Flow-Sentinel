@@ -19,12 +19,9 @@ export function PortfolioChart() {
 
   const generateChartData = () => {
     if (vaults.length === 0 || !performance) return []
-
-    // Aggregate total initial deposits
     const totalDeposits = vaults.reduce((sum, v) => sum + v.totalDeposits, 0)
     const totalPnl = performance.totalPnl || 0
     const numPoints = timeframe === '1d' ? 24 : timeframe === '7d' ? 7 : timeframe === '30d' ? 30 : 90
-
     const dataPoints = []
     for (let i = 0; i < numPoints; i++) {
       const progress = i / (numPoints - 1)
@@ -32,8 +29,6 @@ export function PortfolioChart() {
         const x = Math.sin(seed) * 10000
         return x - Math.floor(x)
       }
-
-      // Project growth from initial to current
       const value = totalDeposits + (totalPnl * progress) + (seedRandom(i + 12345) - 0.5) * (totalPnl * 0.1)
       dataPoints.push({
         date: new Date(Date.now() - (numPoints - 1 - i) * (timeframe === '1d' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000)),
@@ -50,20 +45,23 @@ export function PortfolioChart() {
 
   if (loading || chartData.length === 0) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="animate-pulse flex flex-col gap-2">
-            <div className="h-8 bg-white/5 rounded-lg w-32"></div>
-            <div className="h-4 bg-white/5 rounded-lg w-24"></div>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <div style={{ height: 32, width: 160, background: 'rgba(250,248,245,0.04)', borderRadius: 8, marginBottom: 8, animation: 'pulse 2s infinite' }} />
+            <div style={{ height: 16, width: 96, background: 'rgba(250,248,245,0.04)', borderRadius: 8, animation: 'pulse 2s infinite' }} />
           </div>
-          <div className="flex gap-2 glass p-1.5 rounded-xl">
+          <div className="dash-filter-bar">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="w-10 h-8 bg-white/5 rounded-lg animate-pulse" />
+              <div key={i} style={{ width: 40, height: 32, background: 'rgba(250,248,245,0.04)', borderRadius: 8, animation: 'pulse 2s infinite' }} />
             ))}
           </div>
         </div>
-        <div className="h-[300px] glass rounded-2xl animate-pulse relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+        <div className="dash-chart" style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: 48, height: 48 }}>
+            <div style={{ position: 'absolute', inset: 0, border: '3px solid rgba(0,239,139,0.08)', borderRadius: '50%' }} />
+            <div style={{ position: 'absolute', inset: 0, border: '3px solid transparent', borderTopColor: '#00EF8B', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          </div>
         </div>
       </div>
     )
@@ -87,31 +85,23 @@ export function PortfolioChart() {
   const changePercent = previousValue > 0 ? (change / previousValue) * 100 : 0
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <div className="text-3xl font-black tracking-tight text-white mb-1">
+          <div className="dash-value" style={{ fontSize: '1.75rem', marginBottom: 4 }}>
             {formatCurrency(currentValue)}
           </div>
-          <div className={`flex items-center text-sm font-bold ${change >= 0 ? 'text-primary' : 'text-destructive'}`}>
-            {change >= 0 ? (
-              <TrendingUp className="w-4 h-4 mr-1.5" />
-            ) : (
-              <TrendingDown className="w-4 h-4 mr-1.5" />
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8125rem', fontWeight: 500, color: change >= 0 ? '#00EF8B' : '#ef4444' }}>
+            {change >= 0 ? <TrendingUp style={{ width: 16, height: 16 }} /> : <TrendingDown style={{ width: 16, height: 16 }} />}
             {change >= 0 ? '+' : ''}{formatCurrency(change)} ({changePercent.toFixed(2)}%)
           </div>
         </div>
-
-        <div className="flex gap-1 glass p-1 rounded-xl">
+        <div className="dash-filter-bar">
           {timeframes.map((tf) => (
             <button
               key={tf.value}
               onClick={() => setTimeframe(tf.value)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${timeframe === tf.value
-                ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(0,239,139,0.3)]'
-                : 'text-muted-foreground hover:text-white hover:bg-white/5'
-                }`}
+              className={`dash-filter-btn ${timeframe === tf.value ? 'active' : ''}`}
             >
               {tf.label}
             </button>
@@ -119,17 +109,17 @@ export function PortfolioChart() {
         </div>
       </div>
 
-      <div className="relative glass rounded-2xl p-4 overflow-hidden group">
+      <div className="dash-chart" style={{ padding: 24 }}>
         <svg
           width={chartWidth}
           height={chartHeight}
-          className="w-full h-auto overflow-visible"
+          style={{ width: '100%', height: 'auto', overflow: 'visible' }}
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
         >
           <defs>
             <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+              <stop offset="0%" stopColor="#00EF8B" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#00EF8B" stopOpacity="0" />
             </linearGradient>
             <filter id="glow">
               <feGaussianBlur stdDeviation="4" result="blur" />
@@ -144,9 +134,8 @@ export function PortfolioChart() {
               y1={padding + (i * (chartHeight - 2 * padding)) / 4}
               x2={chartWidth - padding}
               y2={padding + (i * (chartHeight - 2 * padding)) / 4}
-              stroke="white"
+              stroke="rgba(250,248,245,0.04)"
               strokeWidth="1"
-              opacity="0.05"
             />
           ))}
 
@@ -161,39 +150,37 @@ export function PortfolioChart() {
           <motion.path
             d={pathData}
             fill="none"
-            stroke="hsl(var(--primary))"
+            stroke="#00EF8B"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
             filter="url(#glow)"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
+            transition={{ duration: 1.5, ease: 'easeInOut' }}
           />
 
           {chartData.map((point, index) => {
             if (index % Math.floor(chartData.length / 5) !== 0 && index !== chartData.length - 1) return null
             const x = padding + (index / (chartData.length - 1)) * (chartWidth - 2 * padding)
             const y = chartHeight - padding - ((point.value - minValue) / valueRange) * (chartHeight - 2 * padding)
-
             return (
               <motion.g key={index} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1 + index * 0.05 }}>
-                <circle cx={x} cy={y} r="6" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="2" />
-                <circle cx={x} cy={y} r="2" fill="hsl(var(--primary))" />
+                <circle cx={x} cy={y} r="6" fill="#000" stroke="#00EF8B" strokeWidth="2" />
+                <circle cx={x} cy={y} r="2" fill="#00EF8B" />
               </motion.g>
             )
           })}
         </svg>
       </div>
 
-      <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground/50">
-        <div className="flex items-center gap-2">
-          <Clock className="w-3 h-3" />
-          <span>Real-time Yield Projection</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+        <div className="dash-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Clock style={{ width: 12, height: 12 }} /> Real-time Yield Projection
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span>Forte Active</span>
+        <div className="dash-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00EF8B', animation: 'pulse 2s infinite' }} />
+          Forte Active
         </div>
       </div>
     </div>
