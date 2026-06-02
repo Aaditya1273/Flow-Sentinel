@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Book, Code, Shield, Zap, ChevronRight, ExternalLink,
-  Copy, Check, Search, FileText, Terminal, Cpu, Lock, ArrowUpRight
+  Copy, Check, Search, FileText, Lock, ArrowUpRight
 } from 'lucide-react'
 import { Navbar } from 'components/layout/Navbar'
 
 interface DocSection {
   id: string
   title: string
-  icon: React.ReactNode
   items: DocItem[]
 }
 
@@ -26,7 +25,6 @@ const docSections: DocSection[] = [
   {
     id: 'getting-started',
     title: 'Deployment Sequence',
-    icon: <Terminal style={{ width: 20, height: 20 }} />,
     items: [
       { title: 'Core Architecture', description: 'Deep dive into the autonomous sentinel engine.', difficulty: 'beginner', readTime: '5 min' },
       { title: 'Vault Initialization', description: 'Complete technical walkthrough of the multisig deployment process.', difficulty: 'beginner', readTime: '10 min' },
@@ -36,7 +34,6 @@ const docSections: DocSection[] = [
   {
     id: 'strategies',
     title: 'Forte Protocols',
-    icon: <Cpu style={{ width: 20, height: 20 }} />,
     items: [
       { title: 'MEV-Shield Calculus', description: 'Understanding Native VRF jitter for front-running resistance.', difficulty: 'advanced', readTime: '15 min' },
       { title: 'Yield Maximization', description: 'Automated compounding logic across Flow native pools.', difficulty: 'intermediate', readTime: '12 min' },
@@ -46,7 +43,7 @@ const docSections: DocSection[] = [
 ]
 
 const codeExample = `// Initialize Private Sentinel Vault
-import SentinelVaultFinal from 0x136b642d0aa31ca9
+import SentinelVaultFinal from 0xc13b08053be24e87
 
 transaction(vaultName: String, strategy: String) {
     prepare(signer: auth(Storage, Capabilities) &Account) {
@@ -186,10 +183,7 @@ export default function DocsPage() {
                   <motion.div key={section.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + (idx * 0.1) }}
                     style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 16, border: '1px solid rgba(0,239,139,0.15)', background: 'rgba(0,239,139,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00EF8B' }}>
-                        {section.icon}
-                      </div>
-                      <h2 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '1.125rem', fontWeight: 500, color: '#FAF8F5', margin: 0, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                        <h2 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '1.125rem', fontWeight: 500, color: '#FAF8F5', margin: 0, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
                         {section.title}
                       </h2>
                     </div>

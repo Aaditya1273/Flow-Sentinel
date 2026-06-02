@@ -1,4 +1,4 @@
-import SentinelVault from 0x136b642d0aa31ca9
+import SentinelVault from 0xc13b08053be24e87
 
 // Script to get comprehensive vault information
 access(all) fun main(address: Address): {String: AnyStruct} {

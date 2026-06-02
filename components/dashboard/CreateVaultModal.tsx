@@ -6,13 +6,10 @@ import {
   X,
   Shield,
   AlertTriangle,
-  DollarSign,
-  TrendingUp,
   Zap,
   ChevronRight,
   ChevronLeft,
   Lock,
-  Target,
   Sparkles
 } from 'lucide-react'
 import { useVaultData } from 'hooks/useVaultData'
@@ -113,16 +110,6 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
       setError(errorMessage)
       setStep(3)
       setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Deployment Failed' })
-    }
-  }
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'liquid-staking': return <Shield style={{ width: 20, height: 20 }} />
-      case 'yield-farming': return <TrendingUp style={{ width: 20, height: 20 }} />
-      case 'lending': return <DollarSign style={{ width: 20, height: 20 }} />
-      case 'arbitrage': return <Zap style={{ width: 20, height: 20 }} />
-      default: return <Target style={{ width: 20, height: 20 }} />
     }
   }
 
@@ -235,15 +222,6 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-                        <div style={{
-                          width: 48, height: 48, borderRadius: 20,
-                          background: selectedStrategy === strategy.id ? 'rgba(0,239,139,0.15)' : 'rgba(250,248,245,0.04)',
-                          border: `1px solid ${selectedStrategy === strategy.id ? 'rgba(0,239,139,0.2)' : 'rgba(250,248,245,0.08)'}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: selectedStrategy === strategy.id ? '#00EF8B' : 'rgba(250,248,245,0.4)',
-                        }}>
-                          {getCategoryIcon(strategy.category)}
-                        </div>
                         <span className={`dash-badge ${strategy.riskLevel === 1 ? 'dash-badge-green' : strategy.riskLevel === 2 ? 'dash-badge-cyan' : 'dash-badge-muted'}`}>
                           {strategy.riskLevel === 1 ? 'Low' : strategy.riskLevel === 2 ? 'Medium' : 'High'} Risk
                         </span>
@@ -344,15 +322,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                   border: '1px solid rgba(250,248,245,0.06)',
                   background: 'rgba(250,248,245,0.02)',
                 }}>
-                  <div style={{
-                    width: 64, height: 64, borderRadius: 20,
-                    background: 'rgba(0,239,139,0.08)',
-                    border: '1px solid rgba(0,239,139,0.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#00EF8B',
-                  }}>
-                    <Sparkles style={{ width: 32, height: 32 }} />
-                  </div>
+                  <Sparkles style={{ width: 32, height: 32, color: '#00EF8B' }} />
                   <div>
                     <h5 style={{
                       fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif',

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
-  TrendingUp, DollarSign, BarChart3, Activity,
+  TrendingUp, BarChart3, Activity,
   Download, RefreshCw, Clock
 } from 'lucide-react'
 import { Navbar } from 'components/layout/Navbar'
@@ -185,17 +185,14 @@ export default function AnalyticsPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
             {[
-              { icon: DollarSign, label: 'Total Portfolio Value', value: formatCurrency(analyticsData.totalPortfolioValue), sub: `+${formatCurrency(analyticsData.totalPnL)} P&L`, badge: `+${formatPercentage(analyticsData.totalPnLPercent)}`, color1: '#00EF8B' },
-              { icon: TrendingUp, label: 'Daily P&L', value: formatCurrency(analyticsData.dailyPnL), sub: `+${formatPercentage(analyticsData.dailyPnLPercent)}`, badge: '24h', color1: '#00EF8B' },
-              { icon: BarChart3, label: 'Sharpe Ratio', value: analyticsData.riskMetrics.sharpeRatio.toFixed(2), sub: 'Risk-Adjusted Returns', badge: 'Sharpe', color1: '#37DDDF' },
-              { icon: Activity, label: 'Volatility', value: `${analyticsData.riskMetrics.volatility.toFixed(1)}%`, sub: '30-day rolling', badge: 'Vol', color1: '#37DDDF' },
+              { label: 'Total Portfolio Value', value: formatCurrency(analyticsData.totalPortfolioValue), sub: `+${formatCurrency(analyticsData.totalPnL)} P&L`, badge: `+${formatPercentage(analyticsData.totalPnLPercent)}`, color1: '#00EF8B' },
+              { label: 'Daily P&L', value: formatCurrency(analyticsData.dailyPnL), sub: `+${formatPercentage(analyticsData.dailyPnLPercent)}`, badge: '24h', color1: '#00EF8B' },
+              { label: 'Sharpe Ratio', value: analyticsData.riskMetrics.sharpeRatio.toFixed(2), sub: 'Risk-Adjusted Returns', badge: 'Sharpe', color1: '#37DDDF' },
+              { label: 'Volatility', value: `${analyticsData.riskMetrics.volatility.toFixed(1)}%`, sub: '30-day rolling', badge: 'Vol', color1: '#37DDDF' },
             ].map((stat, i) => (
               <div key={i} className="dash-stat" style={{ padding: '24px 28px' }}>
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 16, border: `1px solid ${stat.color1}20`, background: `${stat.color1}08`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color1 }}>
-                      <stat.icon style={{ width: 20, height: 20 }} />
-                    </div>
                     <span className="dash-badge dash-badge-green" style={{ color: stat.color1, borderColor: `${stat.color1}30`, background: `${stat.color1}10` }}>{stat.badge}</span>
                   </div>
                   <div className="dash-value" style={{ fontSize: '1.5rem', color: stat.label === 'Daily P&L' ? '#00EF8B' : '#FAF8F5', marginBottom: 4 }}>{stat.value}</div>

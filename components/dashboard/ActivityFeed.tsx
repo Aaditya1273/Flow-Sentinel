@@ -114,7 +114,6 @@ export function ActivityFeed() {
         <h3 className="dash-label" style={{ fontSize: '1.25rem', marginBottom: 32 }}>SECURE LOGS</h3>
         {[1, 2, 3].map((i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, animation: 'pulse 2s infinite' }}>
-            <div style={{ width: 48, height: 48, borderRadius: 20, background: 'rgba(250,248,245,0.04)' }} />
             <div style={{ flex: 1 }}>
               <div style={{ height: 16, width: '75%', background: 'rgba(250,248,245,0.04)', borderRadius: 4, marginBottom: 8 }} />
               <div style={{ height: 12, width: '25%', background: 'rgba(250,248,245,0.04)', borderRadius: 4 }} />
@@ -157,14 +156,7 @@ export function ActivityFeed() {
                 transition={{ delay: index * 0.05 }}
                 className="dash-timeline-item"
               >
-                <div style={{
-                  width: 48, height: 48, borderRadius: 20, flexShrink: 0,
-                  background: 'rgba(250,248,245,0.03)',
-                  border: '1px solid rgba(250,248,245,0.08)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {getActivityIcon(activity.type)}
-                </div>
+                {getActivityIcon(activity.type)}
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>

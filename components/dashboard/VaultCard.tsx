@@ -92,6 +92,21 @@ export function VaultCard({ vault }: VaultCardProps) {
     } finally { setLoading(false) }
   }
 
+  const handleClaimYield = async () => {
+    try {
+      setLoading(true)
+      setTxState({ status: 'executing', txId: null, error: null, title: 'Claiming Yield' })
+      const { transactionId, sealed } = await FlowService.claimYield(vault.id)
+      setTxState({ status: 'pending', txId: transactionId, error: null, title: 'Claiming Yield' })
+      await sealed
+      setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Yield Claimed' })
+      refetch()
+    } catch (error: any) {
+      console.error('Error claiming yield:', error)
+      setTxState({ status: 'error', txId: null, error: error.message || 'Yield claim failed', title: 'Error' })
+    } finally { setLoading(false) }
+  }
+
   const handleManualStrategy = async () => {
     try {
       setLoading(true)
@@ -114,18 +129,6 @@ export function VaultCard({ vault }: VaultCardProps) {
         <div className="p-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
             <div className="flex items-start gap-4">
-              <div style={{
-                width: 56, height: 56, borderRadius: 20,
-                background: vault.status === 'active' ? 'rgba(0,239,139,0.10)' : 'rgba(250,248,245,0.04)',
-                border: `1px solid ${vault.status === 'active' ? 'rgba(0,239,139,0.2)' : 'rgba(250,248,245,0.08)'}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background 0.3s',
-              }}>
-                <Zap style={{
-                  width: 28, height: 28,
-                  color: vault.status === 'active' ? '#00EF8B' : 'rgba(250,248,245,0.3)',
-                }} />
-              </div>
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <h3 style={{
@@ -302,6 +305,26 @@ export function VaultCard({ vault }: VaultCardProps) {
                       <Zap style={{ width: 12, height: 12, color: '#00EF8B' }} />
                       Trigger Forte Task
                     </button>
+
+                    {(vault.totalYieldAccrued || 0) > 0 && (
+                      <button
+                        onClick={handleClaimYield}
+                        disabled={loading}
+                        style={{
+                          width: '100%', marginTop: 8, padding: '12px 0', fontSize: '0.625rem',
+                          fontWeight: 500, letterSpacing: '0.045em',
+                          borderRadius: 26,
+                          background: 'rgba(0,239,139,0.1)', color: '#00EF8B',
+                          border: '1px solid rgba(0,239,139,0.2)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,239,139,0.18)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,239,139,0.1)' }}
+                      >
+                        Claim Yield ({formatCurrency(vault.totalYieldAccrued || 0)})
+                      </button>
+                    )}
                   </div>
 
                   <div style={{

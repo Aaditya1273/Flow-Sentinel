@@ -27,6 +27,7 @@ import { useVaultData } from 'hooks/useVaultData'
 import { formatCurrency, formatPercentage } from 'lib/utils'
 
 import { Suspense } from 'react'
+import { ErrorBoundary } from 'components/ErrorBoundary'
 
 function DashboardContent() {
   const { user, logIn, isConnected } = useFlow()
@@ -53,10 +54,6 @@ function DashboardContent() {
         <Navbar />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', paddingTop: 64, position: 'relative', zIndex: 10 }}>
           <div style={{ textAlign: 'center', maxWidth: 480, padding: '0 16px' }}>
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              style={{ width: 80, height: 80, borderRadius: 32, border: '1px solid rgba(0,239,139,0.2)', background: 'rgba(0,239,139,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' }}>
-              <Shield style={{ width: 40, height: 40, color: '#00EF8B' }} />
-            </motion.div>
             <h1 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '2.25rem', fontWeight: 500, letterSpacing: '-0.02em', color: '#FAF8F5', margin: '0 0 16px', textTransform: 'uppercase' }}>
               Authentication Required
             </h1>
@@ -160,6 +157,7 @@ function DashboardContent() {
           </motion.div>
 
           {/* Stats Overview */}
+          <ErrorBoundary>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 48 }}>
             {[
@@ -179,8 +177,10 @@ function DashboardContent() {
               </div>
             ))}
           </motion.div>
+          </ErrorBoundary>
 
           {/* Main Content Grid */}
+          <ErrorBoundary>
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
@@ -231,7 +231,7 @@ function DashboardContent() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-                <ActivityFeed />
+                <ErrorBoundary><ActivityFeed /></ErrorBoundary>
               </motion.div>
 
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
@@ -256,16 +256,6 @@ function DashboardContent() {
                         style={{ width: '100%', cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1 }}>
-                          <div style={{
-                            width: 40, height: 40, borderRadius: 16,
-                            background: 'rgba(250,248,245,0.04)',
-                            border: '1px solid rgba(250,248,245,0.06)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: 'rgba(250,248,245,0.5)',
-                            transition: 'all 0.2s'
-                          }}>
-                            <act.icon style={{ width: 16, height: 16 }} />
-                          </div>
                           <span className="dash-label">{act.label}</span>
                         </div>
                         <ChevronRight style={{ width: 16, height: 16, opacity: 0, transition: 'all 0.2s' }} />
@@ -298,6 +288,7 @@ function DashboardContent() {
               </motion.div>
             </div>
           </div>
+          </ErrorBoundary>
 
           {error && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}

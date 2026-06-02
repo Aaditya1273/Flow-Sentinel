@@ -1,11 +1,11 @@
-import StrategyRegistry from 0x136b642d0aa31ca9
-import LiquidStakingStrategy from 0x136b642d0aa31ca9
-import YieldFarmingStrategy from 0x136b642d0aa31ca9
-import ArbitrageStrategy from 0x136b642d0aa31ca9
+import StrategyRegistry from 0xc13b08053be24e87
+import LiquidStakingStrategy from 0xc13b08053be24e87
+import YieldFarmingStrategy from 0xc13b08053be24e87
+import ArbitrageStrategy from 0xc13b08053be24e87
 
 // Test script to verify all strategies are deployed and working
 access(all) fun main(): {String: AnyStruct} {
-    let account = getAccount(0x136b642d0aa31ca9)
+    let account = getAccount(0xc13b08053be24e87)
     
     // Test StrategyRegistry
     var registryWorking = false
@@ -28,7 +28,7 @@ access(all) fun main(): {String: AnyStruct} {
         "liquidStakingStrategy": liquidStakingInfo,
         "yieldFarmingStrategy": yieldFarmingInfo,
         "arbitrageStrategy": arbitrageInfo,
-        "contractAddress": "0x136b642d0aa31ca9",
+        "contractAddress": "0xc13b08053be24e87",
         "testStatus": "All contracts deployed and accessible"
     }
 }

@@ -4,49 +4,49 @@
 			"source": "./contracts/strategies/ArbitrageStrategy.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "136b642d0aa31ca9"
+				"testnet": "c13b08053be24e87"
 			}
 		},
 		"LiquidStakingStrategy": {
 			"source": "./contracts/strategies/LiquidStakingStrategy.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "136b642d0aa31ca9"
+				"testnet": "c13b08053be24e87"
 			}
 		},
 		"SentinelInterfaces": {
 			"source": "./contracts/SentinelInterfaces.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "136b642d0aa31ca9"
+				"testnet": "c13b08053be24e87"
 			}
 		},
 		"SentinelVault": {
 			"source": "./contracts/SentinelVault.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "136b642d0aa31ca9"
+				"testnet": "c13b08053be24e87"
 			}
 		},
 		"SentinelVaultFinal": {
 			"source": "./contracts/SentinelVaultV2.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "136b642d0aa31ca9"
+				"testnet": "c13b08053be24e87"
 			}
 		},
 		"StrategyRegistry": {
 			"source": "./contracts/StrategyRegistry.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "136b642d0aa31ca9"
+				"testnet": "c13b08053be24e87"
 			}
 		},
 		"YieldFarmingStrategy": {
 			"source": "./contracts/strategies/YieldFarmingStrategy.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "136b642d0aa31ca9"
+				"testnet": "c13b08053be24e87"
 			}
 		}
 	},
@@ -61,7 +61,7 @@
 			"key": "2eae2f31cb5b756151fa11d82949c634b8f28796a711d7eb1e52cc301ed11111"
 		},
 		"testnet-account": {
-			"address": "136b642d0aa31ca9",
+			"address": "c13b08053be24e87",
 			"key": {
 				"type": "file",
 				"signatureAlgorithm": "ECDSA_secp256k1",

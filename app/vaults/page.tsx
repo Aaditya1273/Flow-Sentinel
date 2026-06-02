@@ -5,14 +5,12 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import {
   Search,
-  TrendingUp,
   Shield,
-  Zap,
-  DollarSign,
   Users,
   Star,
   ArrowUpRight
 } from 'lucide-react'
+import { ErrorBoundary } from 'components/ErrorBoundary'
 import { Navbar } from 'components/layout/Navbar'
 import { formatCurrency } from 'lib/utils'
 import { useFlow } from 'lib/flow'
@@ -124,16 +122,6 @@ export default function VaultsPage() {
     router.push(`/dashboard?${params.toString()}`)
   }
 
-  const getCategoryIcon = (category: string, size = 16) => {
-    switch (category) {
-      case 'liquid-staking': return <Shield style={{ width: size, height: size }} />
-      case 'yield-farming': return <TrendingUp style={{ width: size, height: size }} />
-      case 'lending': return <DollarSign style={{ width: size, height: size }} />
-      case 'arbitrage': return <Zap style={{ width: size, height: size }} />
-      default: return <Shield style={{ width: size, height: size }} />
-    }
-  }
-
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#000', position: 'relative' }}>
@@ -200,6 +188,7 @@ export default function VaultsPage() {
             )}
           </motion.div>
 
+          <ErrorBoundary>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="dash-card" style={{ padding: 24, marginBottom: 40 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
@@ -229,13 +218,6 @@ export default function VaultsPage() {
                     <div className="dash-card" style={{ padding: 32, cursor: 'pointer' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                          <div style={{
-                            width: 48, height: 48, borderRadius: 20,
-                            background: 'rgba(0,239,139,0.08)',
-                            border: '1px solid rgba(0,239,139,0.15)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#00EF8B',
-                          }}>{getCategoryIcon(strategy.category, 20)}</div>
                           <div>
                             <h3 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '1rem', fontWeight: 500, color: '#FAF8F5', margin: 0, textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
                               {strategy.name}
@@ -275,13 +257,6 @@ export default function VaultsPage() {
                   <div className="dash-card" style={{ padding: 24, cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{
-                          width: 40, height: 40, borderRadius: 16,
-                          background: 'rgba(0,239,139,0.06)',
-                          border: '1px solid rgba(0,239,139,0.12)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: '#00EF8B',
-                        }}>{getCategoryIcon(strategy.category, 16)}</div>
                         <div>
                           <h3 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5', margin: 0, textTransform: 'uppercase' }}>
                             {strategy.name}
@@ -313,6 +288,7 @@ export default function VaultsPage() {
               ))}
             </div>
           </motion.div>
+          </ErrorBoundary>
 
           {filteredStrategies.length === 0 && !loading && (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>

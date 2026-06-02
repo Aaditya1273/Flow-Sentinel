@@ -1,6 +1,6 @@
 import FungibleToken from 0x9a0766d93b6608b7
 import FlowToken from 0x7e60df042a9c0868
-import SentinelInterfaces from 0x136b642d0aa31ca9
+import SentinelInterfaces from 0xc13b08053be24e87
 
 // Arbitrage Strategy - Capture arbitrage opportunities across DEXs with MEV protection
 access(all) contract ArbitrageStrategy {
@@ -68,9 +68,11 @@ access(all) contract ArbitrageStrategy {
             let totalProfit = self.executeArbitrageTrades(opportunities, vaultBalance)
             
             // 4. Update strategy metrics
-            self.updateArbitrageMetrics(opportunities.length, totalProfit > 0.0)
-            
-            emit StrategyExecuted(vaultId: 0, amount: vaultBalance, yield: totalProfit)
+            ArbitrageStrategy.totalArbitrageOpportunities = ArbitrageStrategy.totalArbitrageOpportunities + UInt64(opportunities.length)
+            if totalProfit > 0.0 {
+                ArbitrageStrategy.successfulTrades = ArbitrageStrategy.successfulTrades + 1
+            }
+            ArbitrageStrategy.totalValueLocked = ArbitrageStrategy.totalValueLocked + totalProfit
             
             return totalProfit
         }

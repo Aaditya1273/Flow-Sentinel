@@ -3,8 +3,8 @@ import * as fcl from '@onflow/fcl'
 
 
 // Contract addresses from environment
-const SENTINEL_VAULT_ADDRESS = process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0x136b642d0aa31ca9'
-const STRATEGY_REGISTRY_ADDRESS = process.env.NEXT_PUBLIC_STRATEGY_REGISTRY_ADDRESS || '0x136b642d0aa31ca9'
+const SENTINEL_VAULT_ADDRESS = process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0xc13b08053be24e87'
+const STRATEGY_REGISTRY_ADDRESS = process.env.NEXT_PUBLIC_STRATEGY_REGISTRY_ADDRESS || '0xc13b08053be24e87'
 const FLOW_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_FLOW_TOKEN_ADDRESS || '0x7e60df042a9c0868'
 const FUNGIBLE_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS || '0x9a0766d93b6608b7'
 
@@ -144,7 +144,7 @@ transaction(strategyId: String, vaultName: String, initialDeposit: UFix64) {
         let strategyInfo = StrategyRegistry.getStrategy(strategyId: strategyId) ?? panic("Strategy not found")
         let strategyName = strategyInfo["name"] as! String
         
-        let vault <- SentinelVaultFinal.createVault(owner: self.collectionRef.owner!.address, name: vaultName, strategy: strategyName)
+        let vault <- SentinelVaultFinal.createVault(owner: self.collectionRef.owner!.address, name: vaultName, strategyName: strategyName, strategyId: strategyId)
         vault.deposit(from: <-self.flowVault)
         
         self.collectionRef.deposit(vault: <-vault)
@@ -187,9 +187,13 @@ access(all) fun main(): [{String: AnyStruct}] {
 
 export const TRIGGER_STRATEGY = `
 import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+import SentinelInterfaces from ${SENTINEL_VAULT_ADDRESS}
+import LiquidStakingStrategy from ${SENTINEL_VAULT_ADDRESS}
+import YieldFarmingStrategy from ${SENTINEL_VAULT_ADDRESS}
+import ArbitrageStrategy from ${SENTINEL_VAULT_ADDRESS}
 
 transaction(vaultId: UInt64) {
-    let vaultRef: &SentinelVaultFinal.Vault
+    let vaultRef: auth(SentinelVaultFinal.StrategyExecution) &SentinelVaultFinal.Vault
     
     prepare(signer: auth(BorrowValue) &Account) {
         let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
@@ -199,12 +203,51 @@ transaction(vaultId: UInt64) {
     }
     
     execute {
-        self.vaultRef.performStrategy()
+        let strategyId = self.vaultRef.getStrategyId()
+        var executor: @{SentinelInterfaces.IStrategy} <-!
+        
+        if strategyId == "liquid-staking-pro" {
+            executor <-! LiquidStakingStrategy.createExecutor()
+        } else if strategyId == "defi-yield-maximizer" || strategyId == "high-yield-farming" {
+            executor <-! YieldFarmingStrategy.createExecutor()
+        } else if strategyId == "arbitrage-hunter" {
+            executor <-! ArbitrageStrategy.createExecutor()
+        } else {
+            executor <-! LiquidStakingStrategy.createExecutor()
+        }
+        
+        self.vaultRef.performStrategy(executor: <-executor)
     }
 }
 `
 
 // Event types for tracking history
+export const CLAIM_YIELD = `
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+import FlowToken from ${FLOW_TOKEN_ADDRESS}
+import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
+
+transaction(vaultId: UInt64) {
+    let vaultRef: auth(SentinelVaultFinal.Withdraw) &SentinelVaultFinal.Vault
+    let flowReceiver: &{FungibleToken.Receiver}
+
+    prepare(signer: auth(BorrowValue) &Account) {
+        let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow collection reference")
+        self.vaultRef = collection.borrowVaultPriv(id: vaultId)
+            ?? panic("Could not borrow vault reference")
+
+        self.flowReceiver = signer.capabilities.borrow<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+            ?? panic("Could not borrow Flow receiver")
+    }
+
+    execute {
+        let claimedYield <- self.vaultRef.claimYield()
+        self.flowReceiver.deposit(from: <-claimedYield)
+    }
+}
+`
+
 export interface VaultEvent {
   type: 'deposit' | 'withdraw' | 'created'
   vaultId: string
@@ -434,6 +477,10 @@ export class FlowService {
 
   static async triggerStrategy(vaultId: string) {
     return this.mutate(TRIGGER_STRATEGY, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+  }
+
+  static async claimYield(vaultId: string) {
+    return this.mutate(CLAIM_YIELD, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
   }
 
   static async cleanupIncompatibleStorage() {

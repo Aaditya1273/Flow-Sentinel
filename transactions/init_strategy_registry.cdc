@@ -1,4 +1,4 @@
-import StrategyRegistry from 0x136b642d0aa31ca9
+import StrategyRegistry from 0xc13b08053be24e87
 
 // Initialize the Strategy Registry
 // This transaction creates and saves the registry resource to the deployer's account

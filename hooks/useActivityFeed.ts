@@ -3,6 +3,34 @@ import { useState, useEffect } from 'react'
 import { useFlow } from 'lib/flow'
 import * as fcl from '@onflow/fcl'
 
+const SENTINEL_VAULT_ADDRESS = process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0xc13b08053be24e87'
+
+// Cache: Cadence script to get user's vault IDs
+const GET_USER_VAULT_IDS = `
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+access(all) fun main(address: Address): [UInt64] {
+  let account = getAccount(address)
+  if let collectionRef = account.capabilities.borrow<&{SentinelVaultFinal.CollectionPublic}>(
+    SentinelVaultFinal.VaultCollectionPublicPath
+  ) {
+    return collectionRef.getIDs()
+  }
+  return []
+}
+`
+
+const GET_VAULT_LIST = `
+import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
+access(all) fun main(address: Address): [SentinelVaultFinal.VaultInfo] {
+  let account = getAccount(address)
+  if let collectionRef = account.capabilities.borrow<&{SentinelVaultFinal.CollectionPublic}>(
+    SentinelVaultFinal.VaultCollectionPublicPath
+  ) {
+    return collectionRef.getVaultInfos()
+  }
+  return []
+}
+`
 
 export interface Activity {
   id: string
@@ -20,83 +48,213 @@ export function useActivityFeed() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(false)
 
-  const fetchActivities = async () => {
-    if (!user.addr) return
+  // Ref counter to allow imperative refetch
+  const [refetchCounter, setRefetchCounter] = useState(0)
 
-    setLoading(true)
-    try {
-      // In a real implementation, you would:
-      // 1. Query Flow blockchain events for the user's address
-      // 2. Parse transaction history
-      // 3. Get vault-related events
-      
-      // For now, we'll create some sample activities based on real blockchain state
-      const mockActivities: Activity[] = [
-        {
-          id: '1',
-          type: 'vault_created',
-          title: 'Vault Created',
-          description: 'Successfully created your first Sentinel vault',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-          vault: 'My Vault'
-        },
-        {
-          id: '2',
-          type: 'deposit',
-          title: 'Initial Deposit',
-          description: 'Deposited FLOW tokens to start earning',
-          amount: 100,
-          timestamp: new Date(Date.now() - 25 * 60 * 1000), // 25 minutes ago
-          vault: 'My Vault'
-        },
-        {
-          id: '3',
-          type: 'execution',
-          title: 'Strategy Executed',
-          description: 'Autonomous strategy executed successfully',
-          timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
-          vault: 'My Vault'
-        },
-        {
-          id: '4',
-          type: 'success',
-          title: 'Yield Generated',
-          description: 'Generated yield from liquid staking',
-          amount: 2.5,
-          timestamp: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
-          vault: 'My Vault'
-        }
-      ]
-
-      setActivities(mockActivities)
-    } catch (error) {
-      console.error('Error fetching activities:', error)
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    if (!user.loggedIn || !user.addr) {
+      setActivities([])
+      return
     }
+
+    let cancelled = false
+
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const addr = user.addr!
+        const items: Activity[] = []
+
+        // Step 1: Get this user's vault IDs FIRST to scope event filtering
+        const userVaultIds = new Set<string>()
+        let vaultList: any[] = []
+        try {
+          const ids: any[] = await fcl.query({
+            cadence: GET_USER_VAULT_IDS,
+            args: (arg: any, t: any) => [arg(addr, t.Address)],
+          }) || []
+          ids.forEach((id: any) => userVaultIds.add(String(id)))
+
+          const list: any[] = await fcl.query({
+            cadence: GET_VAULT_LIST,
+            args: (arg: any, t: any) => [arg(addr, t.Address)],
+          }) || []
+          vaultList = list
+        } catch { /* no vaults yet */ }
+
+        // Step 2: Query blockchain events, scoped to this user's vaults
+        if (userVaultIds.size > 0) {
+          const latestBlock = await fcl.block({ sealed: true })
+          const startHeight = Math.max(0, latestBlock.height - 100000)
+
+          const eventTypes = [
+            `A.${SENTINEL_VAULT_ADDRESS.replace('0x', '')}.SentinelVaultFinal.VaultCreated`,
+            `A.${SENTINEL_VAULT_ADDRESS.replace('0x', '')}.SentinelVaultFinal.DepositMade`,
+            `A.${SENTINEL_VAULT_ADDRESS.replace('0x', '')}.SentinelVaultFinal.WithdrawalMade`,
+            `A.${SENTINEL_VAULT_ADDRESS.replace('0x', '')}.SentinelVaultFinal.StrategyExecuted`,
+            `A.${SENTINEL_VAULT_ADDRESS.replace('0x', '')}.SentinelVaultFinal.YieldClaimed`,
+          ]
+
+          for (const eventType of eventTypes) {
+            try {
+              const result = await fcl.send([
+                fcl.getEventsAtBlockHeightRange(eventType, startHeight, latestBlock.height)
+              ])
+              const decoded = await fcl.decode(result)
+
+              if (decoded && Array.isArray(decoded)) {
+                for (const event of decoded) {
+                  const data = event.data
+                  // vaultId can be in data.vaultId OR data.id (VaultCreated uses 'id')
+                  const vaultIdStr = String(data.vaultId ?? data.id ?? '')
+
+                  // CRITICAL: Only include events for this user's vaults
+                  if (!userVaultIds.has(vaultIdStr)) continue
+
+                  const ts = event.blockTimestamp
+                    ? new Date(event.blockTimestamp)
+                    : new Date()
+
+                  if (eventType.includes('VaultCreated')) {
+                    items.push({
+                      id: `created-${event.blockHeight}`,
+                      type: 'vault_created',
+                      title: 'Vault Deployed',
+                      description: `Sentinel vault created: ${data.name || `#${vaultIdStr}`}`,
+                      timestamp: ts,
+                      vault: data.name || `Vault #${vaultIdStr}`,
+                      transactionId: event.transactionId,
+                    })
+                  } else if (eventType.includes('DepositMade')) {
+                    const amount = parseFloat(data.amount || '0')
+                    items.push({
+                      id: `deposit-${event.blockHeight}`,
+                      type: 'deposit',
+                      title: 'Capital Injected',
+                      description: `Deposited ${amount.toFixed(2)} FLOW`,
+                      amount,
+                      timestamp: ts,
+                      vault: `Vault #${vaultIdStr}`,
+                      transactionId: event.transactionId,
+                    })
+                  } else if (eventType.includes('WithdrawalMade')) {
+                    const amount = parseFloat(data.amount || '0')
+                    items.push({
+                      id: `withdraw-${event.blockHeight}`,
+                      type: 'withdrawal',
+                      title: 'Funds Extracted',
+                      description: `Withdrew ${amount.toFixed(2)} FLOW`,
+                      amount,
+                      timestamp: ts,
+                      vault: `Vault #${vaultIdStr}`,
+                      transactionId: event.transactionId,
+                    })
+                  } else if (eventType.includes('StrategyExecuted')) {
+                    const yieldGen = parseFloat(data.yieldGenerated || '0')
+                    items.push({
+                      id: `strategy-${event.blockHeight}`,
+                      type: 'execution',
+                      title: 'Forte Executed',
+                      description: yieldGen > 0
+                        ? `Generated ${yieldGen.toFixed(6)} FLOW yield`
+                        : 'Executed (no yield this cycle)',
+                      amount: yieldGen > 0 ? yieldGen : undefined,
+                      timestamp: ts,
+                      vault: `Vault #${vaultIdStr}`,
+                      transactionId: event.transactionId,
+                    })
+                  } else if (eventType.includes('YieldClaimed')) {
+                    const amount = parseFloat(data.amount || '0')
+                    items.push({
+                      id: `yield-${event.blockHeight}`,
+                      type: 'success',
+                      title: 'Yield Harvested',
+                      description: `Claimed ${amount.toFixed(6)} FLOW profit`,
+                      amount,
+                      timestamp: ts,
+                      vault: `Vault #${vaultIdStr}`,
+                      transactionId: event.transactionId,
+                    })
+                  }
+                }
+              }
+            } catch {
+              // Skip event types that have no events yet
+            }
+          }
+        }
+
+        // If no events but vaults exist, show vault statuses
+        if (items.length === 0 && vaultList.length > 0) {
+          for (const vault of vaultList) {
+            const balance = parseFloat(vault.balance || '0')
+            if (balance > 0 || vault.isActive) {
+              items.push({
+                id: `vault-${vault.id}`,
+                type: 'success',
+                title: vault.isActive ? 'Vault Active' : 'Vault Paused',
+                description: `${vault.name} · ${balance.toFixed(2)} FLOW${vault.isActive ? '' : ' · Paused'}`,
+                timestamp: new Date(vault.lastExecution ? parseInt(vault.lastExecution) * 1000 : Date.now()),
+                vault: vault.name,
+              })
+            }
+          }
+        }
+
+        // If absolutely nothing found, show welcome state
+        if (items.length === 0) {
+          items.push({
+            id: 'welcome',
+            type: 'alert',
+            title: 'System Ready',
+            description: 'Connected to Flow Testnet. Deploy your first vault to see on-chain activity.',
+            timestamp: new Date(),
+          })
+        }
+
+        // Sort newest first
+        items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+
+        if (!cancelled) setActivities(items)
+      } catch (error) {
+        console.error('Activity feed error:', error)
+        if (!cancelled) {
+          setActivities([{
+            id: 'network-err',
+            type: 'alert',
+            title: 'Connection Issue',
+            description: 'Could not query Flow blockchain. Check your network connection.',
+            timestamp: new Date(),
+          }])
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    fetchData()
+    return () => { cancelled = true }
+  }, [user.loggedIn, user.addr, refetchCounter])
+
+  // Expose a refetch function that re-triggers the effect
+  const refetch = () => {
+    // Force re-run by toggling a ref counter
+    setActivities(prev => [...prev])
   }
 
   const addActivity = (activity: Omit<Activity, 'id' | 'timestamp'>) => {
     const newActivity: Activity = {
       ...activity,
-      id: Date.now().toString(),
+      id: `local-${Date.now()}`,
       timestamp: new Date()
     }
     setActivities(prev => [newActivity, ...prev])
   }
 
-  useEffect(() => {
-    if (user.loggedIn && user.addr) {
-      fetchActivities()
-    } else {
-      setActivities([])
-    }
-  }, [user.loggedIn, user.addr])
-
   return {
     activities,
     loading,
-    refetch: fetchActivities,
+    refetch: () => setRefetchCounter(c => c + 1),
     addActivity
   }
 }

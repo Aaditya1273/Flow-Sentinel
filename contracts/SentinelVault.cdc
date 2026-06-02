@@ -112,6 +112,15 @@ access(all) contract SentinelVault {
             emit WithdrawalMade(vaultId: self.id, amount: amount)
             return <-withdrawnVault
         }
+
+        access(Pause) fun emergencyPause() {
+            self.isActive = false
+            emit EmergencyPause(vaultId: self.id, owner: self.vaultOwner)
+        }
+
+        access(Resume) fun resume() {
+            self.isActive = true
+        }
     }
 
     access(all) resource interface CollectionPublic {
@@ -141,8 +150,8 @@ access(all) contract SentinelVault {
             return &self.vaults[id] as &{VaultPublic}?
         }
 
-        access(all) fun borrowVaultPriv(id: UInt64): &Vault? {
-            return &self.vaults[id] as &Vault?
+        access(all) fun borrowVaultPriv(id: UInt64): auth(Deposit, Withdraw, Pause, Resume) &Vault? {
+            return &self.vaults[id] as auth(Deposit, Withdraw, Pause, Resume) &Vault?
         }
 
         access(all) fun getVaultInfos(): [VaultInfo] {

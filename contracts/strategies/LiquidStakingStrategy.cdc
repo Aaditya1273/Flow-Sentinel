@@ -1,6 +1,6 @@
 import FungibleToken from 0x9a0766d93b6608b7
 import FlowToken from 0x7e60df042a9c0868
-import SentinelInterfaces from 0x136b642d0aa31ca9
+import SentinelInterfaces from 0xc13b08053be24e87
 
 // Liquid Staking Strategy - Maximizes staking rewards with automated delegation
 access(all) contract LiquidStakingStrategy {
@@ -53,12 +53,11 @@ access(all) contract LiquidStakingStrategy {
             let jitter = self.applyMEVProtection()
             
             // 3. Execute staking delegation (simulated for testnet)
+            // Uses Flow's native randomness to vary yield rate for realism
             let yield = self.performLiquidStaking(delegationAmount)
             
             // 4. Update strategy metrics
-            self.updateMetrics(vaultBalance, yield)
-            
-            emit StrategyExecuted(vaultId: 0, amount: vaultBalance, yield: yield)
+            LiquidStakingStrategy.totalValueLocked = LiquidStakingStrategy.totalValueLocked + yield
             
             return yield
         }

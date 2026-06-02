@@ -1,6 +1,6 @@
 import FungibleToken from 0x9a0766d93b6608b7
 import FlowToken from 0x7e60df042a9c0868
-import SentinelInterfaces from 0x136b642d0aa31ca9
+import SentinelInterfaces from 0xc13b08053be24e87
 
 // Yield Farming Strategy - Multi-protocol yield farming with automatic rebalancing
 access(all) contract YieldFarmingStrategy {
@@ -60,19 +60,18 @@ access(all) contract YieldFarmingStrategy {
             // 1. Analyze current market conditions
             let marketConditions = self.analyzeMarketConditions()
             
-            // 2. Rebalance across protocols if needed
+            // 2. Rebalance across protocols if needed (simulated)
             self.rebalanceProtocols(vaultBalance, marketConditions)
             
-            // 3. Execute farming strategies
+            // 3. Execute farming strategies across all protocols
             let totalYield = self.executeFarmingStrategies(vaultBalance)
             
-            // 4. Compound rewards
-            let compoundedYield = self.compoundRewards(totalYield)
+            // 4. Compound rewards with multiplicative factor
+            let compoundingBonus = UFix64(revertibleRandom<UInt64>() % 10) / 200.0 // 0-5% compounding bonus
+            let compoundedYield = totalYield * (1.0 + compoundingBonus)
             
-            // 5. Apply risk management
-            self.applyRiskManagement(vaultBalance)
-            
-            emit StrategyExecuted(vaultId: 0, amount: vaultBalance, yield: compoundedYield)
+            // 5. Update TVL with accrued yield
+            YieldFarmingStrategy.totalValueLocked = YieldFarmingStrategy.totalValueLocked + compoundedYield
             
             return compoundedYield
         }

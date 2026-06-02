@@ -4,13 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   TrendingUp,
-  DollarSign,
-  BarChart3,
-  Activity,
-  Shield,
   ChevronRight,
   Info,
-  Target
 } from 'lucide-react'
 import { Navbar } from 'components/layout/Navbar'
 import { useFlow } from 'lib/flow'
@@ -37,10 +32,6 @@ export default function PortfolioPage() {
         <Navbar />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', paddingTop: 64, position: 'relative', zIndex: 10 }}>
           <div style={{ textAlign: 'center', maxWidth: 480, padding: '0 16px' }}>
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              style={{ width: 80, height: 80, borderRadius: 32, border: '1px solid rgba(0,239,139,0.2)', background: 'rgba(0,239,139,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' }}>
-              <Shield style={{ width: 40, height: 40, color: '#00EF8B' }} />
-            </motion.div>
             <h1 style={{ fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif', fontSize: '2.25rem', fontWeight: 500, letterSpacing: '-0.02em', color: '#FAF8F5', margin: '0 0 16px', textTransform: 'uppercase' }}>
               Authentication Required
             </h1>
@@ -150,13 +141,12 @@ export default function PortfolioPage() {
               <div className="dash-stat" style={{ padding: '28px 32px' }}>
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 24, border: '1px solid rgba(55,221,223,0.15)', background: 'rgba(55,221,223,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#37DDDF' }}>
-                      <Activity style={{ width: 24, height: 24 }} />
+                    <div>
+                      <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 8 }}>98.4</div>
+                      <div className="dash-label" style={{ marginBottom: 8 }}>Health Index</div>
                     </div>
                     <span className="dash-badge dash-badge-cyan">Optimized</span>
                   </div>
-                  <div className="dash-label" style={{ marginBottom: 8 }}>Health Index</div>
-                  <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 8 }}>98.4 / 100</div>
                   <div className="dash-label">Protocol Integrity Normal</div>
                 </div>
               </div>
@@ -164,13 +154,12 @@ export default function PortfolioPage() {
               <div className="dash-stat" style={{ padding: '28px 32px' }}>
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 24, border: '1px solid rgba(0,239,139,0.15)', background: 'rgba(0,239,139,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00EF8B' }}>
-                      <Shield style={{ width: 24, height: 24 }} />
+                    <div>
+                      <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 8, color: '#00EF8B' }}>Low Risk</div>
+                      <div className="dash-label" style={{ marginBottom: 8 }}>Asset Exposure</div>
                     </div>
                     <span className="dash-badge dash-badge-green">Secured</span>
                   </div>
-                  <div className="dash-label" style={{ marginBottom: 8 }}>Asset Exposure</div>
-                  <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 8, color: '#00EF8B' }}>Low Risk</div>
                   <div className="dash-label">VRF Jitter Enabled</div>
                 </div>
               </div>
@@ -201,9 +190,6 @@ export default function PortfolioPage() {
                     <tr key={vault.id}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ width: 40, height: 40, borderRadius: 16, border: '1px solid rgba(0,239,139,0.1)', background: 'rgba(0,239,139,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00EF8B', transition: 'all 0.3s' }}>
-                            <Target style={{ width: 18, height: 18 }} />
-                          </div>
                           <div>
                             <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#FAF8F5', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>{vault.name}</div>
                             <div className="dash-label">{vault.strategy}</div>

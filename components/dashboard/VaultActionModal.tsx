@@ -4,8 +4,6 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     X,
-    ArrowDownLeft,
-    Plus,
     Shield,
     Zap,
     Info,
@@ -96,15 +94,6 @@ export function VaultActionModal({
                         <div style={{ padding: 32 }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    <div style={{
-                                        width: 48, height: 48, borderRadius: 20,
-                                        background: isDeposit ? 'rgba(0,239,139,0.10)' : 'rgba(55,221,223,0.10)',
-                                        border: `1px solid ${isDeposit ? 'rgba(0,239,139,0.2)' : 'rgba(55,221,223,0.2)'}`,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        color: isDeposit ? '#00EF8B' : '#37DDDF',
-                                    }}>
-                                        {isDeposit ? <Plus style={{ width: 24, height: 24 }} /> : <ArrowDownLeft style={{ width: 24, height: 24 }} />}
-                                    </div>
                                     <div>
                                         <h2 style={{
                                             fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif',

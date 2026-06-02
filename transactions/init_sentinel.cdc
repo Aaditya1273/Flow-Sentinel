@@ -1,4 +1,4 @@
-import SentinelVault from 0x136b642d0aa31ca9
+import SentinelVault from 0xc13b08053be24e87
 import FlowToken from 0x7e60df042a9c0868
 import FungibleToken from 0x9a0766d93b6608b7
 
