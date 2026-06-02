@@ -42,6 +42,9 @@ const flowTestnet = {
 
 export const config = getDefaultConfig({
   appName: 'Flow Sentinel',
+  // Get a REAL project ID from https://cloud.reown.com (formerly WalletConnect Cloud)
+  // This is REQUIRED for EVM wallet connections (MetaMask, Rainbow, etc.)
+  // WARNING: 'demo-project-id' will cause EVM wallets to fail silently
   projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'demo-project-id',
   chains: [flowTestnet, flowEVM, mainnet, polygon, optimism, arbitrum, base],
   ssr: true,

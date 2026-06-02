@@ -14,21 +14,19 @@ transaction(vaultId: UInt64, strategyId: String) {
 
         self.vaultRef = collection.borrowVaultPriv(id: vaultId)
             ?? panic("Could not borrow vault reference")
-    }
-
-    execute {
-        var executor: @{SentinelInterfaces.IStrategy} <-!
-
+    }    execute {
         if strategyId == "liquid-staking-pro" {
-            executor <-! LiquidStakingStrategy.createExecutor()
+            let executor <- LiquidStakingStrategy.createExecutor()
+            self.vaultRef.performStrategy(executor: <-executor)
         } else if strategyId == "defi-yield-maximizer" || strategyId == "high-yield-farming" {
-            executor <-! YieldFarmingStrategy.createExecutor()
+            let executor <- YieldFarmingStrategy.createExecutor()
+            self.vaultRef.performStrategy(executor: <-executor)
         } else if strategyId == "arbitrage-hunter" {
-            executor <-! ArbitrageStrategy.createExecutor()
+            let executor <- ArbitrageStrategy.createExecutor()
+            self.vaultRef.performStrategy(executor: <-executor)
         } else {
-            executor <-! LiquidStakingStrategy.createExecutor()
+            let executor <- LiquidStakingStrategy.createExecutor()
+            self.vaultRef.performStrategy(executor: <-executor)
         }
-
-        self.vaultRef.performStrategy(executor: <-executor)
     }
 }
