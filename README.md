@@ -164,7 +164,7 @@ Unlike traditional DeFi positions that require daily claiming, restaking, and mo
 ├──────────────────────┬──────────────────────┬──────────────────────┤
 │   Core Contracts     │   MEV Protection     │   Strategies          │
 │                      │                      │                      │
-│  SentinelVaultMEV    │   MEVShieldCore      │  LiquidStakingStrat   │
+│  SentinelVaultFinal  │   MEVShieldCore      │  LiquidStakingStrat   │
 │  ┌──────────────┐    │   ┌──────────────┐    │  ┌──────────────┐    │
 │  │    Vault     │    │   │  Commits     │    │  │  Execute()   │    │
 │  │  Resource    │───▶│   │  Dictionary  │    │  │              │    │
@@ -180,8 +180,8 @@ Unlike traditional DeFi positions that require daily claiming, restaking, and mo
 │  │  IStrategy   │    │                      │                      │
 │  └──────────────┘    │   MultiSigAdmin       │   StrategyRegistry   │
 │                      │   ┌──────────────┐    │   ┌──────────────┐    │
-│  SentinelVaultFinal   │   │  Admin       │    │   │  Strategy    │    │
-│  (Legacy V1 Vault)   │   │  Multi-Sig   │    │   │  Catalog     │    │
+│  SentinelVaultFinal  │   │  Admin       │    │   │  Strategy    │    │
+│  (V2)                │   │  Multi-Sig   │    │   │  Catalog     │    │
 │                      │   └──────────────┘    │   └──────────────┘    │
 └──────────────────────┴──────────────────────┴──────────────────────┘
 ```
@@ -221,7 +221,7 @@ Unlike traditional DeFi positions that require daily claiming, restaking, and mo
 sequenceDiagram
     participant U as User/Mastermind
     participant C as MEVShieldCore
-    participant V as SentinelVaultMEV
+    participant V as SentinelVaultFinal
     participant S as Strategy
     participant O as YieldOracle
 
@@ -253,11 +253,11 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    User((User)) -->|1. Create Vault<br/>(with MEV config)| CreateVault[SentinelVaultMEV.createVault]
+    User((User)) -->|1. Create Vault<br/>(with MEV config)| CreateVault[SentinelVaultFinal.createVault]
     CreateVault -->|2. Register| MEV[MEVShieldCore.registerVaultMEV]
     CreateVault -->|3. Store| Collection[(VaultCollection)]
     
-    User -->|4. Deposit FLOW| Deposit[SentinelVaultMEV.deposit]
+    User -->|4. Deposit FLOW| Deposit[SentinelVaultFinal.deposit]
     Deposit --> Vault[(Vault Resource)]
     
     User -->|5. Trigger Strategy| Trigger[mev_reveal / mev_execute]
@@ -412,9 +412,7 @@ Flow-Sentinel/
 │   └── ui/                       # Reusable UI primitives
 ├── contracts/
 │   ├── MEVShieldCore.cdc         # ⭐ 4-layer MEV protection engine
-│   ├── SentinelVaultMEV.cdc      # ⭐ MEV-protected vault (V2)
-│   ├── SentinelVaultV2.cdc       # Legacy vault (deployed as SentinelVaultFinal)
-│   ├── SentinelVault.cdc         # V1 vault (deprecated)
+│   ├── SentinelVaultV2.cdc       # ⭐ MEV-protected vault (deployed as SentinelVaultFinal)
 │   ├── SentinelInterfaces.cdc    # Core interfaces
 │   ├── StrategyRegistry.cdc      # Strategy catalog
 │   ├── YieldOracle.cdc           # Yield data oracle
@@ -552,8 +550,7 @@ npx next build
 | Contract | Address (Testnet) | Description |
 |:---------|:------------------|:------------|
 | **MEVShieldCore** | `0xc13b08053be24e87` | 4-layer MEV protection engine — commit-reveal, VRF jitter, price guard, execution queue |
-| **SentinelVaultMEV** | `0xc13b08053be24e87` | **NEW** MEV-protected vault with full protection integration |
-| **SentinelVaultFinal** | `0xc13b08053be24e87` | Legacy vault (existing deployments, kept for compatibility) |
+| **SentinelVaultFinal** | `0xc13b08053be24e87` | MEV-protected vault (V2) with full protection integration |
 | **SentinelInterfaces** | `0x136b642d0aa31ca9` | Core interfaces: `IMEVShield`, `IStrategy` |
 | **StrategyRegistry** | `0xc13b08053be24e87` | Strategy catalog — register, query, and update strategy TVL |
 | **YieldOracle** | `0xc13b08053be24e87` | Yield data provider for price deviation guard |
@@ -589,7 +586,7 @@ graph TD
     A --> C[MultiSigAdmin]
     B --> D[MEVShieldCore]
     C --> D
-    D --> E[SentinelVaultMEV]
+    D --> E[SentinelVaultFinal]
     A --> F[LiquidStakingStrategy]
     A --> G[YieldFarmingStrategy]
     A --> H[ArbitrageStrategy]

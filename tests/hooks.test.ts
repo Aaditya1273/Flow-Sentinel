@@ -39,17 +39,20 @@ describe('FlowService.getUserFlowBalance()', () => {
 
 describe('FlowService.getVaultList()', () => {
   it('should return an empty array for a user with no vaults', async () => {
-    const vaults = await FlowService.getVaultList('0x0000000000000000')
+    const vaults = (await FlowService.getVaultList('0x0000000000000000')) as Array<unknown>
     expect(Array.isArray(vaults)).toBe(true)
     expect(vaults.length).toBe(0)
   })
 
-  it('should return vault data for a user with deployed vaults', async () => {
-    const vaults = await FlowService.getVaultList(MOCK_ADDRESS)
+  it('should return VaultInfo data for a user with deployed vaults', async () => {
+    const vaults = (await FlowService.getVaultList(MOCK_ADDRESS)) as Array<Record<string, unknown>>
     if (vaults.length > 0) {
-      const vault = vaults[0] as any
+      const vault = vaults[0]
+      // V2 VaultInfo fields
       expect(vault).toHaveProperty('id')
+      expect(vault).toHaveProperty('name')
       expect(vault).toHaveProperty('balance')
+      expect(vault).toHaveProperty('status')
       expect(vault).toHaveProperty('isActive')
       expect(vault).toHaveProperty('strategy')
       expect(vault).toHaveProperty('strategyId')
@@ -60,17 +63,23 @@ describe('FlowService.getVaultList()', () => {
 
 describe('FlowService.getAllStrategies()', () => {
   it('should return at least 3 default strategies', async () => {
-    const strategies = await FlowService.getAllStrategies()
+    const strategies = (await FlowService.getAllStrategies()) as Array<unknown>
     expect(Array.isArray(strategies)).toBe(true)
     expect(strategies.length).toBeGreaterThanOrEqual(3)
   })
 
-  it('should include liquid-staking-pro strategy', async () => {
-    const strategies = await FlowService.getAllStrategies() as any[]
-    const liquidStaking = strategies.find((s: any) => s.id === 'liquid-staking-pro')
+  it('should include liquid-staking-pro strategy with oracle-powered APY', async () => {
+    const strategies = (await FlowService.getAllStrategies()) as Array<Record<string, unknown>>
+    const liquidStaking = strategies.find((s) => (s as Record<string, unknown>).id === 'liquid-staking-pro') as Record<string, unknown> | undefined
     expect(liquidStaking).toBeDefined()
-    expect(liquidStaking.name).toBe('Flow Liquid Staking Pro')
-    expect(liquidStaking.riskLevel).toBe(1)
+    const ls = liquidStaking!
+    expect(ls.name).toBe('Flow Liquid Staking Pro')
+    expect(ls.riskLevel).toBe(1)
+    // V2 fields: APY comes from YieldOracle
+    expect(ls).toHaveProperty('expectedAPY')
+    expect(ls).toHaveProperty('apySource')
+    expect(ls).toHaveProperty('features')
+    expect(ls.features).toContain('Oracle-Powered APY')
   })
 })
 
@@ -79,7 +88,7 @@ describe('FlowService.getAllStrategies()', () => {
 // -------------------------------------------------------------------------
 
 describe('FlowService.createVaultWithStrategy()', () => {
-  it('should submit a create vault transaction', async () => {
+  it('should submit a create vault transaction with V2 cadence', async () => {
     // Note: requires connected FCL user with FLOW tokens
     try {
       const result = await FlowService.createVaultWithStrategy(
@@ -90,7 +99,7 @@ describe('FlowService.createVaultWithStrategy()', () => {
       expect(result).toHaveProperty('transactionId')
       expect(typeof result.transactionId).toBe('string')
       expect(result.transactionId.length).toBeGreaterThan(0)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If no user is connected / emulator not running, expect auth error
       expect(error).toBeDefined()
     }
@@ -98,11 +107,11 @@ describe('FlowService.createVaultWithStrategy()', () => {
 })
 
 describe('FlowService.deposit()', () => {
-  it('should submit a deposit transaction', async () => {
+  it('should submit a deposit transaction (V2 SentinelVaultFinal)', async () => {
     try {
       const result = await FlowService.deposit('0', 50.0)
       expect(result).toHaveProperty('transactionId')
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Expected if no vault exists or no user connected
       expect(error).toBeDefined()
     }
@@ -173,16 +182,17 @@ describe('FlowService.buildPerformanceHistory()', () => {
 })
 
 // -------------------------------------------------------------------------
-// Vault Data Transformation Tests
+// Vault Data Transformation Tests (V2 SentinelVaultFinal)
 // -------------------------------------------------------------------------
 
-describe('Vault data transformation', () => {
-  it('should calculate PnL correctly from on-chain VaultInfo', () => {
-    // Simulate data coming from SentinelVaultFinal.VaultInfo
+describe('Vault data transformation (V2)', () => {
+  it('should calculate PnL correctly from V2 VaultInfo', () => {
+    // Simulate data coming from SentinelVaultFinal.VaultInfo (V2 format)
     const vaultInfo = {
       id: '0',
       name: 'Test Vault',
       balance: '1150.0',
+      status: 'Active',
       isActive: true,
       strategy: 'Flow Liquid Staking Pro',
       strategyId: 'liquid-staking-pro',
@@ -194,8 +204,7 @@ describe('Vault data transformation', () => {
     const totalYieldAccrued = parseFloat(vaultInfo.totalYieldAccrued)
     const totalDeposits = balance - totalYieldAccrued
 
-    // Balance was deposited: 1000
-    // Yield generated: 150
+    // Balance = deposits + yield
     expect(totalDeposits).toBe(1000.0)
     expect(totalYieldAccrued).toBe(150.0)
     expect(balance).toBe(1150.0)
@@ -205,5 +214,24 @@ describe('Vault data transformation', () => {
       ? (totalYieldAccrued / totalDeposits) * 100
       : 0
     expect(pnlPercent).toBe(15.0) // 15% return
+  })
+
+  it('should handle empty/zero vault state gracefully', () => {
+    const vaultInfo = {
+      id: '0',
+      name: 'Empty Vault',
+      balance: '0.0',
+      status: 'Active',
+      isActive: true,
+      strategy: 'Flow Liquid Staking Pro',
+      strategyId: 'liquid-staking-pro',
+      lastExecution: null,
+      totalYieldAccrued: '0.0',
+    }
+
+    const balance = parseFloat(vaultInfo.balance)
+    const totalYieldAccrued = parseFloat(vaultInfo.totalYieldAccrued)
+    expect(balance).toBe(0)
+    expect(totalYieldAccrued).toBe(0)
   })
 })

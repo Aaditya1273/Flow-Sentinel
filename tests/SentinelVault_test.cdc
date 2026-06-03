@@ -1,16 +1,15 @@
 import Test
 import BlockchainHelpers
-import "SentinelVault"
+import "SentinelVaultFinal"
 import "FlowToken"
 
-// NOTE: This test suite validates the LEGACY V1 SentinelVault contract.
-// For the current V2 contract (SentinelVaultFinal), see SentinelVaultV2_test.cdc.
-// V2 adds: yield reserve, claimYield, strategy execution, multiple vaults, and more.
+// NOTE: This test suite validates the V2 SentinelVaultFinal contract (SentinelVaultV2.cdc).
+// Features: yield reserve, claimYield, strategy execution, collection-based vaults, 4-layer MEV protection.
 
 access(all) fun setup() {
     let err = Test.deployContract(
-        name: "SentinelVault",
-        path: "../contracts/SentinelVault.cdc",
+        name: "SentinelVaultFinal",
+        path: "../contracts/SentinelVaultV2.cdc",
         arguments: []
     )
     Test.expect(err, Test.beNil())
