@@ -71,23 +71,23 @@ export default function VaultsPage() {
   useEffect(() => {
     const loadStrategies = async () => {
       try { setLoading(true); setError(null)
-        const blockchainStrategies = await FlowService.getAllStrategies()
-        if (blockchainStrategies && blockchainStrategies.length > 0) {
-          setStrategies(blockchainStrategies.map((s: any) => ({
-            id: s.id, name: s.name, description: s.description,
-            expectedAPY: parseFloat(s.expectedAPY || '0'),
-            tvl: parseFloat(s.tvl || '0'),
-            riskLevel: parseInt(s.riskLevel || '1'),
-            category: s.category,
-            participants: parseInt(s.participants || '0'),
-            minDeposit: parseFloat(s.minDeposit || '0'),
+        const blockchainStrategies = (await FlowService.getAllStrategies()) as Array<Record<string, unknown>>
+        if (blockchainStrategies.length > 0) {
+          setStrategies(blockchainStrategies.map((s: Record<string, unknown>) => ({
+            id: String(s.id ?? ''), name: String(s.name ?? ''), description: String(s.description ?? ''),
+            expectedAPY: parseFloat(String(s.expectedAPY ?? '0')),
+            tvl: parseFloat(String(s.tvl ?? '0')),
+            riskLevel: parseInt(String(s.riskLevel ?? '1')),
+            category: String(s.category ?? ''),
+            participants: parseInt(String(s.participants ?? '0')),
+            minDeposit: parseFloat(String(s.minDeposit ?? '0')),
             featured: s.featured === true,
-            creator: s.creator || 'Unknown',
+            creator: String(s.creator ?? 'Unknown'),
             verified: s.verified === true,
-            performance24h: parseFloat(s.performance24h || '0'),
-            performance7d: parseFloat(s.performance7d || '0'),
-            performance30d: parseFloat(s.performance30d || '0'),
-            features: s.features || [],
+            performance24h: parseFloat(String(s.performance24h ?? '0')),
+            performance7d: parseFloat(String(s.performance7d ?? '0')),
+            performance30d: parseFloat(String(s.performance30d ?? '0')),
+            features: (Array.isArray(s.features) ? s.features : []) as string[],
             isActive: s.isActive !== false
           })))
         }
@@ -99,12 +99,11 @@ export default function VaultsPage() {
   }, [])
 
   useEffect(() => {
-    let filtered = strategies.filter(s =>
+    const filtered = strategies.filter(s =>
       (s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
       (selectedCategory === 'all' || s.category === selectedCategory) &&
       (selectedRisk === 'all' || s.riskLevel.toString() === selectedRisk) && s.isActive
-    )
-    filtered.sort((a, b) => {
+    ).sort((a, b) => {
       switch (sortBy) {
         case 'expectedAPY': return b.expectedAPY - a.expectedAPY
         case 'tvl': return b.tvl - a.tvl

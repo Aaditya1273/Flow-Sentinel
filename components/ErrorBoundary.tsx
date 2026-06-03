@@ -1,6 +1,7 @@
 'use client'
 
 import { Component, ReactNode, ErrorInfo } from 'react'
+import { errorReporter } from '@/lib/sentry-wrapper'
 
 interface Props {
   children: ReactNode
@@ -24,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ErrorBoundary]', error, errorInfo)
+    errorReporter.captureException(error, { component: 'ErrorBoundary', action: 'componentDidCatch' })
     this.props.onError?.(error, errorInfo)
   }
 

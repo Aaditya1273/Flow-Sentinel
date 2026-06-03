@@ -187,16 +187,25 @@
 
 /* ─────────────────────────────────────────
    WALRUS-EXACT NAV
+   NOTE: wrapped in @layer components so Tailwind utilities
+   (text-white, bg-white/10, etc.) can override when needed
 ───────────────────────────────────────── */
-.w-nav-btn {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 20px; border-radius: 26px;
-  border: 1px solid transparent; background: transparent;
-  color: var(--w-tusk); font-size: 1rem; font-weight: 430;
-  letter-spacing: 0.045em; cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+@layer components {
+  .w-nav-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; border-radius: 26px;
+    border: 1px solid transparent; background: transparent;
+    font-size: 1rem; font-weight: 430;
+    letter-spacing: 0.045em; cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .w-nav-btn:hover { background: rgba(250,248,245,0.06); }
+  .w-nav-btn.active {
+    background: rgba(250,248,245,0.12);
+    color: #fff;
+    border-color: rgba(250,248,245,0.15);
+  }
 }
-.w-nav-btn:hover { background: rgba(250,248,245,0.06); }
 
 /* ─────────────────────────────────────────
    WALRUS-EXACT BANNER

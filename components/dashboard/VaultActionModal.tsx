@@ -52,8 +52,8 @@ export function VaultActionModal({
             onClose()
             await sealed
             setTxState({ status: 'sealed', txId: transactionId, error: null, title: isDeposit ? 'Injection Successful' : 'Extraction Successful' })
-        } catch (err: any) {
-            const errorMessage = err.message || `Failed to ${type}. Please try again.`
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : `Failed to ${type}. Please try again.`
             setError(errorMessage)
             setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Transaction Failed' })
         } finally { setLoading(false) }

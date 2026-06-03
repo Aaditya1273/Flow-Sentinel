@@ -43,11 +43,11 @@ function Banner() {
   const [show, setShow] = useState(false)
   useEffect(() => {
     try { if (!localStorage.getItem('sen-banner-v6')) setShow(true) }
-    catch { setShow(true) }
+    catch { setShow(true) /* localStorage blocked */ }
   }, [])
   const dismiss = () => {
     setShow(false)
-    try { localStorage.setItem('sen-banner-v6', '1') } catch {}
+    try { localStorage.setItem('sen-banner-v6', '1') } catch { /* silently ignore */ }
   }
   if (!show) return null
   return (

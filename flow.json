@@ -14,18 +14,25 @@
 				"testnet": "c13b08053be24e87"
 			}
 		},
-		"SentinelInterfaces": {
-			"source": "./contracts/SentinelInterfaces.cdc",
+		"MEVShieldCore": {
+			"source": "./contracts/MEVShieldCore.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
 				"testnet": "c13b08053be24e87"
 			}
 		},
-		"SentinelVault": {
-			"source": "./contracts/SentinelVault.cdc",
+		"MultiSigAdmin": {
+			"source": "./contracts/MultiSigAdmin.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
 				"testnet": "c13b08053be24e87"
+			}
+		},
+		"SentinelInterfaces": {
+			"source": "./contracts/SentinelInterfaces.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "136b642d0aa31ca9"
 			}
 		},
 		"SentinelVaultFinal": {
@@ -47,6 +54,27 @@
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
 				"testnet": "c13b08053be24e87"
+			}
+		},
+		"YieldOracle": {
+			"source": "./contracts/YieldOracle.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "c13b08053be24e87"
+			}
+		},
+		"FlowStakingCollection": {
+			"aliases": {
+				"emulator": "0x8d0e87b65159ae63",
+				"testnet": "0x95e019a17d0e23d7",
+				"mainnet": "0x8d0e87b65159ae63"
+			}
+		},
+		"FlowIDTableStaking": {
+			"aliases": {
+				"emulator": "0x8624b52f9ddcd04a",
+				"testnet": "0x9eca2b38b3c3b55a",
+				"mainnet": "0x8624b52f9ddcd04a"
 			}
 		}
 	},
@@ -74,7 +102,10 @@
 		"emulator": {
 			"emulator-account": [
 				"SentinelInterfaces",
-				"SentinelVault",
+				"YieldOracle",
+				"MultiSigAdmin",
+				"MEVShieldCore",
+				"SentinelVaultFinal",
 				"LiquidStakingStrategy",
 				"YieldFarmingStrategy",
 				"ArbitrageStrategy",
@@ -84,6 +115,9 @@
 		"testnet": {
 			"testnet-account": [
 				"SentinelInterfaces",
+				"YieldOracle",
+				"MultiSigAdmin",
+				"MEVShieldCore",
 				"SentinelVaultFinal",
 				"LiquidStakingStrategy",
 				"YieldFarmingStrategy",

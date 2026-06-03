@@ -2,6 +2,17 @@ import '@/lib/storage-polyfill'
 import { useState, useEffect } from 'react'
 import { useFlow } from 'lib/flow'
 import * as fcl from '@onflow/fcl'
+import { errorReporter } from '@/lib/sentry-wrapper'
+
+// FCL type helpers (defined locally)
+type FCLArg = (value: unknown, type: unknown) => unknown
+type FCLTypes = {
+  Address: unknown
+  UInt64: unknown
+  UFix64: unknown
+  String: unknown
+  UInt8: unknown
+}
 
 const SENTINEL_VAULT_ADDRESS = process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0xc13b08053be24e87'
 
@@ -67,19 +78,19 @@ export function useActivityFeed() {
 
         // Step 1: Get this user's vault IDs FIRST to scope event filtering
         const userVaultIds = new Set<string>()
-        let vaultList: any[] = []
+        let vaultList: Array<Record<string, unknown>> = []
         try {
-          const ids: any[] = await fcl.query({
+          const ids = (await fcl.query({
             cadence: GET_USER_VAULT_IDS,
-            args: (arg: any, t: any) => [arg(addr, t.Address)],
-          }) || []
-          ids.forEach((id: any) => userVaultIds.add(String(id)))
+            args: (arg: FCLArg, t: FCLTypes) => [arg(addr, t.Address)],
+          })) as Array<{ toString: () => string }> | undefined
+          ids?.forEach((id) => userVaultIds.add(String(id)))
 
-          const list: any[] = await fcl.query({
+          const list = (await fcl.query({
             cadence: GET_VAULT_LIST,
-            args: (arg: any, t: any) => [arg(addr, t.Address)],
-          }) || []
-          vaultList = list
+            args: (arg: FCLArg, t: FCLTypes) => [arg(addr, t.Address)],
+          })) as Array<Record<string, unknown>>
+          vaultList = list || []
         } catch { /* no vaults yet */ }
 
         // Step 2: Query blockchain events, scoped to this user's vaults
@@ -187,15 +198,16 @@ export function useActivityFeed() {
         // If no events but vaults exist, show vault statuses
         if (items.length === 0 && vaultList.length > 0) {
           for (const vault of vaultList) {
-            const balance = parseFloat(vault.balance || '0')
-            if (balance > 0 || vault.isActive) {
+            const balance = parseFloat(String(vault.balance ?? '0'))
+            const vaultActive = Boolean(vault.isActive)
+            if (balance > 0 || vaultActive) {
               items.push({
-                id: `vault-${vault.id}`,
+                id: `vault-${String(vault.id)}`,
                 type: 'success',
-                title: vault.isActive ? 'Vault Active' : 'Vault Paused',
-                description: `${vault.name} · ${balance.toFixed(2)} FLOW${vault.isActive ? '' : ' · Paused'}`,
-                timestamp: new Date(vault.lastExecution ? parseInt(vault.lastExecution) * 1000 : Date.now()),
-                vault: vault.name,
+                title: vaultActive ? 'Vault Active' : 'Vault Paused',
+                description: `${String(vault.name)} · ${balance.toFixed(2)} FLOW${vaultActive ? '' : ' · Paused'}`,
+                timestamp: new Date(vault.lastExecution ? parseInt(String(vault.lastExecution)) * 1000 : Date.now()),
+                vault: String(vault.name),
               })
             }
           }
@@ -217,7 +229,7 @@ export function useActivityFeed() {
 
         if (!cancelled) setActivities(items)
       } catch (error) {
-        console.error('Activity feed error:', error)
+        errorReporter.captureException(error, { component: 'useActivityFeed', action: 'fetchData' })
         if (!cancelled) {
           setActivities([{
             id: 'network-err',
@@ -237,10 +249,7 @@ export function useActivityFeed() {
   }, [user.loggedIn, user.addr, refetchCounter])
 
   // Expose a refetch function that re-triggers the effect
-  const refetch = () => {
-    // Force re-run by toggling a ref counter
-    setActivities(prev => [...prev])
-  }
+  // (setRefetchCounter changes the dependency, causing useEffect to re-run)
 
   const addActivity = (activity: Omit<Activity, 'id' | 'timestamp'>) => {
     const newActivity: Activity = {

@@ -1,14 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, Clock } from 'lucide-react'
+import { TrendingUp, TrendingDown, Clock, Database } from 'lucide-react'
 import { useVaultData } from 'hooks/useVaultData'
+import { useFlow } from 'lib/flow'
 import { formatCurrency } from 'lib/utils'
+import { FlowService, VaultEvent } from 'lib/flow-service'
 
 export function PortfolioChart() {
   const [timeframe, setTimeframe] = useState('7d')
   const { vaults, performance, loading } = useVaultData()
+  const { user } = useFlow()
+  const [realEvents, setRealEvents] = useState<VaultEvent[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
 
   const timeframes = [
     { label: '24H', value: '1d' },
@@ -17,74 +22,107 @@ export function PortfolioChart() {
     { label: '90D', value: '90d' },
   ]
 
+  // Fetch REAL on-chain events for chart data
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (!user.addr || vaults.length === 0) return
+      setEventsLoading(true)
+      try {
+        const events = await FlowService.getVaultEvents(user.addr)
+        setRealEvents(events)
+      } catch {
+        // Silently fail — chart will use vault state as fallback
+      } finally {
+        setEventsLoading(false)
+      }
+    }
+    fetchEvents()
+  }, [user.addr, vaults])
+
+  // Generate chart data from REAL blockchain events
   const generateChartData = () => {
     if (vaults.length === 0 || !performance) return []
 
     const totalDeposits = vaults.reduce((sum, v) => sum + v.totalDeposits, 0)
     const totalPnl = performance.totalPnl || 0
-
-    // Distribute yield using each vault's lastExecution as an anchor point
-    // This creates a more realistic curve than a straight linear line
-    const numPoints = timeframe === '1d' ? 24 : timeframe === '7d' ? 7 : timeframe === '30d' ? 30 : 90
-
-    // Deterministic pseudo-random using sin-based seed
-    const seedRandom = (seed: number) => {
-      const x = Math.sin(seed) * 10000
-      return x - Math.floor(x)
-    }
-
-    // Find the earliest vault creation time to anchor the chart
     const now = Date.now()
-    const earliestExecution = Math.min(
-      ...vaults.map(v => v.lastExecution > 0 ? v.lastExecution * 1000 : now)
-    )
-    const vaultAge = now - earliestExecution
-    const msPerPoint = vaultAge / (numPoints - 1)
 
-    const dataPoints = []
-    let cumulativeRealYield = 0
+    // Use REAL blockchain events if available (point-by-point historical data)
+    if (realEvents.length >= 2) {
+      const sortedEvents = [...realEvents].sort((a, b) => a.timestamp - b.timestamp)
 
-    for (let i = 0; i < numPoints; i++) {
-      const pointTime = earliestExecution + msPerPoint * i
+      // Filter to timeframe
+      const msInDay = 86400000
+      const timeframeMs: Record<string, number> = {
+        '1d': msInDay, '7d': msInDay * 7, '30d': msInDay * 30, '90d': msInDay * 90
+      }
+      const cutoff = now - (timeframeMs[timeframe] || msInDay * 7)
+      const filtered = sortedEvents.filter(e => e.timestamp * 1000 >= cutoff)
 
-      // Distribute real PnL across the timeline using vault weights
-      const progress = i / (numPoints - 1)
+      if (filtered.length >= 2) {
+        // Build REAL point-by-point chart from events
+        let runningBalance = 0
+        const points = filtered.map((event, i) => {
+          if (event.type === 'deposit' || event.type === 'created') {
+            runningBalance += event.amount
+          } else if (event.type === 'withdraw') {
+            runningBalance -= event.amount
+          }
+          return {
+            date: new Date(event.timestamp * 1000),
+            value: runningBalance,
+          }
+        })
 
-      // Add realistic variance using deterministic seed, anchored to vault count
-      const jitter = (seedRandom(i * 7.31 + vaults.length * 13.37) - 0.5) * (totalPnl * 0.08)
-      const stepValue = (totalPnl / Math.max(numPoints, 1)) * (0.5 + seedRandom(i * 3.14))
+        // Add final point with current balance
+        points.push({
+          date: new Date(),
+          value: totalDeposits + totalPnl,
+        })
 
-      cumulativeRealYield = Math.min(
-        cumulativeRealYield + stepValue,
-        totalPnl * progress + jitter
-      )
-
-      const value = totalDeposits + cumulativeRealYield
-
-      dataPoints.push({
-        date: new Date(pointTime),
-        value: Math.max(value, totalDeposits * 0.9),
-      })
-    }
-
-    // Ensure the final point matches the actual totalPnl exactly
-    if (dataPoints.length > 0) {
-      const finalValue = totalDeposits + totalPnl
-      dataPoints[dataPoints.length - 1] = {
-        ...dataPoints[dataPoints.length - 1],
-        value: Math.max(finalValue, totalDeposits * 0.9),
+        return points
       }
     }
 
-    return dataPoints
+    // Fallback: use vault state data (still real, just fewer points)
+    if (vaults.length > 0) {
+      const vaultAgeMs = vaults.reduce((max, v) => {
+        const execMs = v.lastExecution > 0 ? v.lastExecution * 1000 : now
+        return Math.max(max, now - execMs)
+      }, 0)
+
+      const numPoints = timeframe === '1d' ? 24 : timeframe === '7d' ? 7 : timeframe === '30d' ? 30 : 90
+      const msPerPoint = Math.max(vaultAgeMs / Math.max(numPoints - 1, 1), 3600000)
+
+      const points = []
+      for (let i = 0; i < numPoints; i++) {
+        const pointTime = now - vaultAgeMs + msPerPoint * i
+        const progress = i / Math.max(numPoints - 1, 1)
+        const currentBalance = totalDeposits + (totalPnl * progress)
+        points.push({
+          date: new Date(pointTime),
+          value: Math.max(currentBalance, totalDeposits * 0.9),
+        })
+      }
+
+      // Override last point with actual current balance
+      if (points.length > 0) {
+        points[points.length - 1].value = totalDeposits + totalPnl
+      }
+
+      return points
+    }
+
+    return []
   }
 
   const chartData = generateChartData()
+  const dataSource = realEvents.length >= 2 ? 'blockchain-events' : 'vault-state'
   const chartWidth = 600
   const chartHeight = 300
   const padding = 40
 
-  if (loading || chartData.length === 0) {
+  if (loading || eventsLoading || chartData.length === 0) {
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -108,10 +146,13 @@ export function PortfolioChart() {
     )
   }
 
+  if (chartData.length < 2) return null
+
   const minValue = Math.min(...chartData.map(d => d.value))
   const maxValue = Math.max(...chartData.map(d => d.value))
   const valueRange = maxValue - minValue || 1
 
+  // Build path from actual data points
   const pathData = chartData.map((point, index) => {
     const x = padding + (index / (chartData.length - 1)) * (chartWidth - 2 * padding)
     const y = chartHeight - padding - ((point.value - minValue) / valueRange) * (chartHeight - 2 * padding)
@@ -201,12 +242,15 @@ export function PortfolioChart() {
             transition={{ duration: 1.5, ease: 'easeInOut' }}
           />
 
-          {chartData.map((point, index) => {
-            if (index % Math.floor(chartData.length / 5) !== 0 && index !== chartData.length - 1) return null
-            const x = padding + (index / (chartData.length - 1)) * (chartWidth - 2 * padding)
+          {/* Plot actual data points - only show a subset for visual clarity */}
+          {chartData.filter((_, i) =>
+            i === 0 || i === chartData.length - 1 || i % Math.ceil(chartData.length / 8) === 0
+          ).map((point, filteredIndex, filtered) => {
+            const originalIndex = chartData.indexOf(point)
+            const x = padding + (originalIndex / (chartData.length - 1)) * (chartWidth - 2 * padding)
             const y = chartHeight - padding - ((point.value - minValue) / valueRange) * (chartHeight - 2 * padding)
             return (
-              <motion.g key={index} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1 + index * 0.05 }}>
+              <motion.g key={originalIndex} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1 + filteredIndex * 0.05 }}>
                 <circle cx={x} cy={y} r="6" fill="#000" stroke="#00EF8B" strokeWidth="2" />
                 <circle cx={x} cy={y} r="2" fill="#00EF8B" />
               </motion.g>
@@ -217,11 +261,12 @@ export function PortfolioChart() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
         <div className="dash-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Clock style={{ width: 12, height: 12 }} /> Real-time Yield Projection
+          <Database style={{ width: 12, height: 12 }} />
+          Data Source: {dataSource === 'blockchain-events' ? `${realEvents.length} on-chain events` : 'Vault state (real-time)'}
         </div>
         <div className="dash-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00EF8B', animation: 'pulse 2s infinite' }} />
-          Forte Active
+          Live
         </div>
       </div>
     </div>

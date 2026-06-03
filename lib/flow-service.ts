@@ -1,9 +1,26 @@
 import '@/lib/storage-polyfill'
 import * as fcl from '@onflow/fcl'
+import { errorReporter } from '@/lib/sentry-wrapper'
 
+
+// FCL type helpers (defined locally since global.d.ts uses module-scoped exports)
+type FCLArg = (value: unknown, type: unknown) => unknown
+type FCLTypes = {
+  Address: unknown
+  UInt64: unknown
+  UFix64: unknown
+  String: unknown
+  UInt8: unknown
+}
+
+// Helper to build FCL args safely
+type FCLArgsFn = (arg: FCLArg, t: FCLTypes) => unknown[]
+type FCLQueryArgs = { cadence: string; args?: FCLArgsFn }
+type FCLMutateArgs = { cadence: string; args?: FCLArgsFn; payer: unknown; proposer: unknown; authorizations: unknown[]; limit: number }
 
 // Contract addresses from environment
 const SENTINEL_VAULT_ADDRESS = process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0xc13b08053be24e87'
+const SENTINEL_INTERFACES_ADDRESS = process.env.NEXT_PUBLIC_SENTINEL_INTERFACES_ADDRESS || '0x136b642d0aa31ca9'
 const STRATEGY_REGISTRY_ADDRESS = process.env.NEXT_PUBLIC_STRATEGY_REGISTRY_ADDRESS || '0xc13b08053be24e87'
 const FLOW_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_FLOW_TOKEN_ADDRESS || '0x7e60df042a9c0868'
 const FUNGIBLE_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS || '0x9a0766d93b6608b7'
@@ -102,6 +119,7 @@ transaction(vaultId: UInt64) {
 export const CREATE_VAULT_WITH_STRATEGY = `
 import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
 import StrategyRegistry from ${STRATEGY_REGISTRY_ADDRESS}
+import MEVShieldCore from ${SENTINEL_VAULT_ADDRESS}
 import FlowToken from ${FLOW_TOKEN_ADDRESS}
 import FungibleToken from ${FUNGIBLE_TOKEN_ADDRESS}
 
@@ -144,7 +162,16 @@ transaction(strategyId: String, vaultName: String, initialDeposit: UFix64) {
         let strategyInfo = StrategyRegistry.getStrategy(strategyId: strategyId) ?? panic("Strategy not found")
         let strategyName = strategyInfo["name"] as! String
         
-        let vault <- SentinelVaultFinal.createVault(owner: self.collectionRef.owner!.address, name: vaultName, strategyName: strategyName, strategyId: strategyId)
+        // Create vault with Full MEV protection (Level 3, 300 bps slippage)
+        // Use signer.address instead of collectionRef.owner (Cadence 1.0 removed owner field)
+        let vault <- SentinelVaultFinal.createVault(
+            owner: signer.address,
+            name: vaultName,
+            strategyName: strategyName,
+            strategyId: strategyId,
+            protectionLevel: 3,
+            slippageBps: 300.0
+        )
         vault.deposit(from: <-self.flowVault)
         
         self.collectionRef.deposit(vault: <-vault)
@@ -187,10 +214,12 @@ access(all) fun main(): [{String: AnyStruct}] {
 
 export const TRIGGER_STRATEGY = `
 import SentinelVaultFinal from ${SENTINEL_VAULT_ADDRESS}
-import SentinelInterfaces from ${SENTINEL_VAULT_ADDRESS}
+import SentinelInterfaces from ${SENTINEL_INTERFACES_ADDRESS}
+import MEVShieldCore from ${SENTINEL_VAULT_ADDRESS}
 import LiquidStakingStrategy from ${SENTINEL_VAULT_ADDRESS}
 import YieldFarmingStrategy from ${SENTINEL_VAULT_ADDRESS}
 import ArbitrageStrategy from ${SENTINEL_VAULT_ADDRESS}
+import YieldOracle from ${SENTINEL_VAULT_ADDRESS}
 
 transaction(vaultId: UInt64) {
     let vaultRef: auth(SentinelVaultFinal.StrategyExecution) &SentinelVaultFinal.Vault
@@ -200,23 +229,68 @@ transaction(vaultId: UInt64) {
             ?? panic("Could not borrow collection reference")
         self.vaultRef = collection.borrowVaultPriv(id: vaultId)
             ?? panic("Could not borrow vault reference")
-    }
-    
-    execute {
-        let strategyId = self.vaultRef.getStrategyId()
-        var executor: @{SentinelInterfaces.IStrategy} <-!
         
-        if strategyId == "liquid-staking-pro" {
-            executor <-! LiquidStakingStrategy.createExecutor()
-        } else if strategyId == "defi-yield-maximizer" || strategyId == "high-yield-farming" {
-            executor <-! YieldFarmingStrategy.createExecutor()
-        } else if strategyId == "arbitrage-hunter" {
-            executor <-! ArbitrageStrategy.createExecutor()
-        } else {
-            executor <-! LiquidStakingStrategy.createExecutor()
+        let strategyId = self.vaultRef.getStrategyId()
+        
+        // Generate commit hash for MEV protection (signer accessible in prepare)
+        let nonce = revertibleRandom<UInt64>()
+        let commitHash = MEVShieldCore.buildCommitPreimage(
+            vaultId: vaultId,
+            nonce: nonce,
+            amount: self.vaultRef.getBalance(),
+            strategyId: strategyId,
+            deadlineBlock: getCurrentBlock().height + MEVShieldCore.getMEVCommitBlocks(),
+            committer: signer.address
+        )
+        
+        // STEP 1: Create the MEV commit (Layer 1 - Commit-Reveal)
+        MEVShieldCore.createCommit(
+            vaultId: vaultId,
+            commitHash: commitHash,
+            protectionLevel: 3
+        )
+        
+        // Get expected APY from oracle for price deviation guard
+        var expectedAPY = 0.0
+        if let oracleData = YieldOracle.getYieldData(strategyId) {
+            expectedAPY = oracleData.apy
         }
         
-        self.vaultRef.performStrategy(executor: <-executor)
+        // STEP 2: Execute with full MEV protection per strategy branch
+        // (Each branch creates its own executor to avoid Cadence resource assignment issues)
+        if strategyId == "liquid-staking-pro" {
+            let executor <- LiquidStakingStrategy.createExecutor()
+            self.vaultRef.executeStrategyWithMEV(
+                executor: <-executor,
+                commitHash: commitHash,
+                expectedAPY: expectedAPY,
+                nonce: nonce
+            )
+        } else if strategyId == "defi-yield-maximizer" || strategyId == "high-yield-farming" {
+            let executor <- YieldFarmingStrategy.createExecutor()
+            self.vaultRef.executeStrategyWithMEV(
+                executor: <-executor,
+                commitHash: commitHash,
+                expectedAPY: expectedAPY,
+                nonce: nonce
+            )
+        } else if strategyId == "arbitrage-hunter" {
+            let executor <- ArbitrageStrategy.createExecutor()
+            self.vaultRef.executeStrategyWithMEV(
+                executor: <-executor,
+                commitHash: commitHash,
+                expectedAPY: expectedAPY,
+                nonce: nonce
+            )
+        } else {
+            let executor <- LiquidStakingStrategy.createExecutor()
+            self.vaultRef.executeStrategyWithMEV(
+                executor: <-executor,
+                commitHash: commitHash,
+                expectedAPY: expectedAPY,
+                nonce: nonce
+            )
+        }
     }
 }
 `
@@ -263,20 +337,22 @@ export interface PerformanceDataPoint {
 }
 
 export class FlowService {
-  static async query(cadence: string, args: any = () => []) {
+  static async query(cadence: string, args?: (arg: FCLArg, t: FCLTypes) => unknown[]) {
     try {
-      return await fcl.query({ cadence, args })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return await fcl.query({ cadence, args: args as any })
     } catch (error) {
-      console.error('FCL Query Error:', error)
+      errorReporter.captureException(error, { component: 'FlowService', action: 'query' })
       return null
     }
   }
 
-  static async mutate(cadence: string, args: any = () => []) {
+  static async mutate(cadence: string, args?: (arg: FCLArg, t: FCLTypes) => unknown[]) {
     try {
       const transactionId = await fcl.mutate({
         cadence,
-        args,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        args: args as any,
         payer: fcl.currentUser,
         proposer: fcl.currentUser,
         authorizations: [fcl.currentUser],
@@ -287,19 +363,19 @@ export class FlowService {
         sealed: fcl.tx(transactionId).onceSealed()
       }
     } catch (error) {
-      console.error('FCL Mutation Error:', error)
+      errorReporter.captureException(error, { component: 'FlowService', action: 'mutate' })
       throw error
     }
   }
 
-  static async getAllStrategies() {
+  static async getAllStrategies(): Promise<Array<Record<string, unknown>>> {
     const result = await this.query(GET_ALL_STRATEGIES)
-    return result || []
+    return (result || []) as Array<Record<string, unknown>>
   }
 
-  static async getVaultList(address: string) {
-    const result = await this.query(GET_VAULT_LIST, (arg: any, t: any) => [arg(address, t.Address)])
-    return result || []
+  static async getVaultList(address: string): Promise<Array<Record<string, unknown>>> {
+    const result = await this.query(GET_VAULT_LIST, (arg: FCLArg, t: FCLTypes) => [arg(address, t.Address)])
+    return (result || []) as Array<Record<string, unknown>>
   }
 
   // Fetch vault events from blockchain using Access API
@@ -357,7 +433,7 @@ export class FlowService {
 
       return events
     } catch (error) {
-      console.error('Error fetching vault events:', error)
+      errorReporter.captureException(error, { component: 'FlowService', action: 'getVaultEvents' })
       return []
     }
   }
@@ -446,7 +522,7 @@ export class FlowService {
   }
 
   static async createVaultWithStrategy(strategyId: string, vaultName: string, initialDeposit: number) {
-    return this.mutate(CREATE_VAULT_WITH_STRATEGY, (arg: any, t: any) => [
+    return this.mutate(CREATE_VAULT_WITH_STRATEGY, (arg: FCLArg, t: FCLTypes) => [
       arg(strategyId, t.String),
       arg(vaultName, t.String),
       arg(initialDeposit.toFixed(8), t.UFix64)
@@ -454,33 +530,33 @@ export class FlowService {
   }
 
   static async deposit(vaultId: string, amount: number) {
-    return this.mutate(DEPOSIT_TO_VAULT, (arg: any, t: any) => [
+    return this.mutate(DEPOSIT_TO_VAULT, (arg: FCLArg, t: FCLTypes) => [
       arg(vaultId, t.UInt64),
       arg(amount.toFixed(8), t.UFix64)
     ])
   }
 
   static async withdraw(vaultId: string, amount: number) {
-    return this.mutate(WITHDRAW_FROM_VAULT, (arg: any, t: any) => [
+    return this.mutate(WITHDRAW_FROM_VAULT, (arg: FCLArg, t: FCLTypes) => [
       arg(vaultId, t.UInt64),
       arg(amount.toFixed(8), t.UFix64)
     ])
   }
 
   static async pauseVault(vaultId: string) {
-    return this.mutate(PAUSE_VAULT, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+    return this.mutate(PAUSE_VAULT, (arg: FCLArg, t: FCLTypes) => [arg(vaultId, t.UInt64)])
   }
 
   static async resumeVault(vaultId: string) {
-    return this.mutate(RESUME_VAULT, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+    return this.mutate(RESUME_VAULT, (arg: FCLArg, t: FCLTypes) => [arg(vaultId, t.UInt64)])
   }
 
   static async triggerStrategy(vaultId: string) {
-    return this.mutate(TRIGGER_STRATEGY, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+    return this.mutate(TRIGGER_STRATEGY, (arg: FCLArg, t: FCLTypes) => [arg(vaultId, t.UInt64)])
   }
 
   static async claimYield(vaultId: string) {
-    return this.mutate(CLAIM_YIELD, (arg: any, t: any) => [arg(vaultId, t.UInt64)])
+    return this.mutate(CLAIM_YIELD, (arg: FCLArg, t: FCLTypes) => [arg(vaultId, t.UInt64)])
   }
 
   static async cleanupIncompatibleStorage() {
@@ -497,7 +573,7 @@ export class FlowService {
           let vaultRef = account.capabilities.borrow<&{FungibleToken.Balance}>(/public/flowTokenBalance)
           return vaultRef?.balance ?? 0.0
         }
-      `, (arg: any, t: any) => [arg(address, t.Address)])
+      `, (arg: FCLArg, t: FCLTypes) => [arg(address, t.Address)])
       return balance || 0.0
     } catch (error) {
       return 0.0

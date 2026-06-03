@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import * as fcl from '@onflow/fcl'
 
 import { useAccount, useDisconnect } from 'wagmi'
+import { errorReporter } from '@/lib/sentry-wrapper'
 
 // Configure FCL for Flow Testnet
 if (typeof window !== 'undefined') {
@@ -16,13 +17,20 @@ if (typeof window !== 'undefined') {
     'app.detail.title': 'Flow Sentinel',
     'app.detail.icon': '/logo.png',
     'app.detail.description': 'Autonomous DeFi Wealth Manager',
-    '0xSentinelVault': process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0xc13b08053be24e87',
+    // Legacy V1 vault (existing deployments)
     '0xSentinelVaultFinal': process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0xc13b08053be24e87',
-    '0xSentinelInterfaces': process.env.NEXT_PUBLIC_SENTINEL_INTERFACES_ADDRESS || '0xc13b08053be24e87',
+    // MEV protection core
+    '0xMEVShieldCore': process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0xc13b08053be24e87',
+    // Yield oracle for price deviation guard
+    '0xYieldOracle': process.env.NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS || '0xc13b08053be24e87',
+    // Interfaces (deployed at separate address)
+    '0xSentinelInterfaces': process.env.NEXT_PUBLIC_SENTINEL_INTERFACES_ADDRESS || '0x136b642d0aa31ca9',
+    // Strategy contracts
     '0xStrategyRegistry': process.env.NEXT_PUBLIC_STRATEGY_REGISTRY_ADDRESS || '0xc13b08053be24e87',
     '0xLiquidStakingStrategy': process.env.NEXT_PUBLIC_LIQUID_STAKING_STRATEGY_ADDRESS || '0xc13b08053be24e87',
     '0xYieldFarmingStrategy': process.env.NEXT_PUBLIC_YIELD_FARMING_STRATEGY_ADDRESS || '0xc13b08053be24e87',
     '0xArbitrageStrategy': process.env.NEXT_PUBLIC_ARBITRAGE_STRATEGY_ADDRESS || '0xc13b08053be24e87',
+    // System tokens (production Flow addresses)
     '0xFungibleToken': process.env.NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS || '0x9a0766d93b6608b7',
     '0xFlowToken': process.env.NEXT_PUBLIC_FLOW_TOKEN_ADDRESS || '0x7e60df042a9c0868',
   })
@@ -96,7 +104,7 @@ export function FlowProvider({ children }: { children: ReactNode }) {
         await fcl.authenticate()
       }
     } catch (error) {
-      console.error('Flow authentication error:', error)
+      errorReporter.captureException(error, { component: 'FlowContext', action: 'logIn' })
       setWalletType(null)
     } finally {
       setLoading(false)
@@ -114,7 +122,7 @@ export function FlowProvider({ children }: { children: ReactNode }) {
       }
       setWalletType(null)
     } catch (error) {
-      console.error('Logout error:', error)
+      errorReporter.captureException(error, { component: 'FlowContext', action: 'logOut' })
     } finally {
       setLoading(false)
     }

@@ -46,6 +46,7 @@ export function Navbar() {
     { label: 'Vaults',    key: 'vaults'    },
     { label: 'Portfolio', key: 'portfolio' },
     { label: 'Analytics', key: 'analytics' },
+    { label: 'Docs',      key: 'docs'      },
     { label: 'Settings',  key: 'settings'  },
   ]
 
@@ -85,13 +86,24 @@ export function Navbar() {
           {/* Desktop nav items */}
           <nav className="justify-self-center hidden md:block" aria-label="Main navigation">
             <ul className="flex items-center gap-1" role="menubar">
-              {navItems.map((item) => (
-                <li key={item.key} role="none">
-                  <Link href={`/${item.key}`} className="w-nav-btn text-[var(--w-tusk)] inline-flex items-center">
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {navItems.map((item) => {
+                const isActive = pathname === `/${item.key}` || pathname.startsWith(`/${item.key}/`)
+                return (
+                  <li key={item.key} role="none" className="relative">
+                    <Link
+                      href={`/${item.key}`}
+                      className={`w-nav-btn inline-flex items-center ${isActive ? 'active' : 'text-[var(--w-tusk)]'}`}
+                    >
+                      {item.label}
+                    </Link>
+                    {isActive && (
+                      <span className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-[60%] h-[2px] rounded-full"
+                        style={{ background: 'var(--sen-green)' }}
+                      />
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </nav>
 
@@ -200,17 +212,24 @@ export function Navbar() {
 
               <nav className="flex-1">
                 <ul className="space-y-1">
-                  {navItems.map((item) => (
-                    <li key={item.key}>
-                      <Link
-                        href={`/${item.key}`}
-                        className="block py-4 text-[2rem] font-display font-black text-[var(--w-tusk)] hover:opacity-70 transition-opacity"
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
+                  {navItems.map((item) => {
+                    const isActive = pathname === `/${item.key}` || pathname.startsWith(`/${item.key}/`)
+                    return (
+                      <li key={item.key}>
+                        <Link
+                          href={`/${item.key}`}
+                          className={`block py-4 text-[2rem] font-display font-black transition-opacity ${
+                            isActive
+                              ? 'text-[#00EF8B]'
+                              : 'text-[var(--w-tusk)] hover:opacity-70'
+                          }`}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    )
+                  })}
                 </ul>
               </nav>
 

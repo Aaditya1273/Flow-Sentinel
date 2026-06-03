@@ -44,7 +44,7 @@ if (typeof window !== 'undefined') {
       });
     } catch (err) {
       try {
-        (window as any).localStorage = createMockStorage();
+        (window as unknown as { localStorage: Storage }).localStorage = createMockStorage();
       } catch (directAssignErr) {
         console.error('[Sentinel] Failed to polyfill localStorage:', directAssignErr);
       }
@@ -66,7 +66,7 @@ if (typeof window !== 'undefined') {
       });
     } catch (err) {
       try {
-        (window as any).sessionStorage = createMockStorage();
+        (window as unknown as { sessionStorage: Storage }).sessionStorage = createMockStorage();
       } catch (directAssignErr) {
         console.error('[Sentinel] Failed to polyfill sessionStorage:', directAssignErr);
       }

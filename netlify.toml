@@ -7,3 +7,16 @@
 
 [build.environment]
   NEXT_USE_NETLIFY_EDGE = "true"
+
+# ── Environment Variables (set these in Netlify dashboard) ──
+# These are the defaults for testnet. Override in Netlify UI for mainnet.
+# [context.production.environment]
+#   NEXT_PUBLIC_FLOW_ACCESS_NODE = "https://rest-mainnet.onflow.org"
+#   NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS = "0x..."
+#   NEXT_PUBLIC_SENTINEL_INTERFACES_ADDRESS = "0x..."
+#   NEXT_PUBLIC_STRATEGY_REGISTRY_ADDRESS = "0x..."
+#   NEXT_PUBLIC_FLOW_TOKEN_ADDRESS = "0x1654653399040a61"
+#   NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS = "0xf233dcee88fe0abe"
+#   NEXT_PUBLIC_LIQUID_STAKING_STRATEGY_ADDRESS = "0x..."
+#   NEXT_PUBLIC_YIELD_FARMING_STRATEGY_ADDRESS = "0x..."
+#   NEXT_PUBLIC_ARBITRAGE_STRATEGY_ADDRESS = "0x..."

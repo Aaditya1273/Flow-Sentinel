@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useVaultData } from 'hooks/useVaultData'
 import { FlowService } from 'lib/flow-service'
+import { errorReporter } from '@/lib/sentry-wrapper'
 import { useTransactions } from 'lib/transactions'
 import { formatCurrency } from 'lib/utils'
 
@@ -53,18 +54,18 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
       try {
         setLoading(true)
         setError(null)
-        const blockchainStrategies = await FlowService.getAllStrategies()
-        if (blockchainStrategies && blockchainStrategies.length > 0) {
-          const transformedStrategies: Strategy[] = blockchainStrategies.map((strategy: any) => ({
-            id: strategy.id,
-            name: strategy.name,
-            description: strategy.description,
-            riskLevel: parseInt(strategy.riskLevel || '1'),
-            category: strategy.category,
-            expectedAPY: parseFloat(strategy.expectedAPY || '0'),
-            minDeposit: parseFloat(strategy.minDeposit || '0'),
-            features: strategy.features || [],
-            creator: strategy.creator || 'Unknown',
+        const blockchainStrategies = (await FlowService.getAllStrategies()) as Array<Record<string, unknown>>
+        if (blockchainStrategies.length > 0) {
+          const transformedStrategies: Strategy[] = blockchainStrategies.map((strategy: Record<string, unknown>) => ({
+            id: String(strategy.id ?? ''),
+            name: String(strategy.name ?? ''),
+            description: String(strategy.description ?? ''),
+            riskLevel: parseInt(String(strategy.riskLevel ?? '1')),
+            category: String(strategy.category ?? ''),
+            expectedAPY: parseFloat(String(strategy.expectedAPY ?? '0')),
+            minDeposit: parseFloat(String(strategy.minDeposit ?? '0')),
+            features: (Array.isArray(strategy.features) ? strategy.features : []) as string[],
+            creator: String(strategy.creator ?? 'Unknown'),
             verified: strategy.verified === true
           }))
           setStrategies(transformedStrategies)
@@ -72,7 +73,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
           setError('No strategies available. Please ensure contracts are deployed.')
         }
       } catch (err) {
-        console.error('Error loading strategies:', err)
+        errorReporter.captureException(err, { component: 'CreateVaultModal', action: 'loadStrategies' })
         setError('Failed to load strategies from blockchain.')
       } finally { setLoading(false) }
     }
@@ -104,9 +105,9 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
       await sealed
       setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Sentinel Deployed' })
       if (onSuccess) onSuccess()
-    } catch (err: any) {
-      console.error('Failed to create vault:', err)
-      const errorMessage = err.message || 'Failed to create vault on blockchain.'
+    } catch (err: unknown) {
+      errorReporter.captureException(err, { component: 'CreateVaultModal', action: 'createVault' })
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create vault on blockchain.'
       setError(errorMessage)
       setStep(3)
       setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Deployment Failed' })

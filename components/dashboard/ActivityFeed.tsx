@@ -15,6 +15,7 @@ import { useFlow } from 'lib/flow'
 import { useVaultData } from 'hooks/useVaultData'
 import { ClientOnly } from 'components/ClientOnly'
 import { formatCurrency } from 'lib/utils'
+import { errorReporter } from '@/lib/sentry-wrapper'
 
 interface Activity {
   id: string
@@ -91,7 +92,7 @@ export function ActivityFeed() {
         realActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         setActivities(realActivities)
       } catch (error) {
-        console.error('Error loading activities:', error)
+        errorReporter.captureException(error, { component: 'ActivityFeed', action: 'loadActivities' })
       } finally { setLoading(false) }
     }
     loadActivities()

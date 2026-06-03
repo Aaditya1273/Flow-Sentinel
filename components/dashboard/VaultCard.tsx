@@ -23,6 +23,7 @@ import { Badge } from 'components/ui/badge'
 import { Progress } from 'components/ui/progress'
 import { formatCurrency, formatPercentage } from 'lib/utils'
 import { FlowService } from 'lib/flow-service'
+import { errorReporter } from '@/lib/sentry-wrapper'
 import { VaultActionModal } from './VaultActionModal'
 import { useVaultData } from 'hooks/useVaultData'
 import { useTransactions } from 'lib/transactions'
@@ -39,6 +40,13 @@ interface Vault {
   pnl?: number
   pnlPercent?: number
   totalYieldAccrued?: number
+  // MEV Shield fields
+  protectionLevel?: number
+  slippageBps?: number
+  commitRevealEnabled?: boolean
+  blockDelayEnabled?: boolean
+  mevProtectionsTriggered?: number
+  mevShieldStatus?: string
 }
 
 interface VaultCardProps {
@@ -85,10 +93,11 @@ export function VaultCard({ vault }: VaultCardProps) {
       }
       refetch()
       setBiometricChallenge('idle')
-    } catch (error: any) {
-      console.error('Error toggling vault status:', error)
+    } catch (error: unknown) {
+      errorReporter.captureException(error, { component: 'VaultCard', action: 'toggleStatus' })
       setBiometricChallenge('failed')
-      setTxState({ status: 'error', txId: null, error: error.message || 'Transaction failed', title: 'Error' })
+      const errMsg = error instanceof Error ? error.message : 'Transaction failed'
+      setTxState({ status: 'error', txId: null, error: errMsg, title: 'Error' })
     } finally { setLoading(false) }
   }
 
@@ -101,9 +110,10 @@ export function VaultCard({ vault }: VaultCardProps) {
       await sealed
       setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Yield Claimed' })
       refetch()
-    } catch (error: any) {
-      console.error('Error claiming yield:', error)
-      setTxState({ status: 'error', txId: null, error: error.message || 'Yield claim failed', title: 'Error' })
+    } catch (error: unknown) {
+      errorReporter.captureException(error, { component: 'VaultCard', action: 'claimYield' })
+      const errMsg = error instanceof Error ? error.message : 'Yield claim failed'
+      setTxState({ status: 'error', txId: null, error: errMsg, title: 'Error' })
     } finally { setLoading(false) }
   }
 
@@ -116,9 +126,10 @@ export function VaultCard({ vault }: VaultCardProps) {
       await sealed
       setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Strategy Executed' })
       refetch()
-    } catch (error: any) {
-      console.error('Error triggering strategy:', error)
-      setTxState({ status: 'error', txId: null, error: error.message || 'Strategy execution failed', title: 'Error' })
+    } catch (error: unknown) {
+      errorReporter.captureException(error, { component: 'VaultCard', action: 'triggerStrategy' })
+      const errMsg = error instanceof Error ? error.message : 'Strategy execution failed'
+      setTxState({ status: 'error', txId: null, error: errMsg, title: 'Error' })
     } finally { setLoading(false) }
   }
 
@@ -149,8 +160,11 @@ export function VaultCard({ vault }: VaultCardProps) {
               <span className="dash-badge dash-badge-green">
                 <Zap style={{ width: 12, height: 12 }} /> FORTE AUTONOMY
               </span>
-              <span className="dash-badge dash-badge-cyan">
-                <Shield style={{ width: 12, height: 12 }} /> MEV-SHIELD
+              <span className="dash-badge dash-badge-cyan" title={`Protection Level: ${vault.protectionLevel ?? 3}/3 | Slippage: ${(vault.slippageBps ?? 300) / 100}% | Protections Triggered: ${vault.mevProtectionsTriggered ?? 0}`}>
+                <Shield style={{ width: 12, height: 12 }} /> 
+                {vault.mevShieldStatus === 'FULL-MEV-SHIELD' ? 'MEV-SHIELD PRO' : 
+                 vault.protectionLevel === 1 ? 'MEV-VRF' : 
+                 vault.protectionLevel === 2 ? 'MEV-CR' : 'MEV-SHIELD'}
               </span>
               <span className="dash-badge dash-badge-muted">
                 <span style={{
@@ -333,27 +347,47 @@ export function VaultCard({ vault }: VaultCardProps) {
                     background: 'rgba(250,248,245,0.02)',
                   }}>
                     <h4 className="dash-label" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Shield style={{ width: 12, height: 12 }} /> Security Report
+                      <Shield style={{ width: 12, height: 12 }} /> MEV-Shield Pro — Security Report
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00EF8B' }} />
-                        <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>MEV Resistance: </span>
-                        <span className="dash-badge dash-badge-green">Maximum</span>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: (vault.protectionLevel ?? 3) >= 1 ? '#00EF8B' : '#666' }} />
+                        <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>Layer 1 — Commit-Reveal: </span>
+                        <span className={`dash-badge ${vault.commitRevealEnabled !== false ? 'dash-badge-green' : 'dash-badge-muted'}`}>
+                          {vault.commitRevealEnabled !== false ? 'ACTIVE' : 'OFF'}
+                        </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00EF8B' }} />
-                        <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>Vault Latency: </span>
-                        <span style={{ fontSize: '0.625rem', fontWeight: 500, color: '#FAF8F5', letterSpacing: '0.1em' }}>2ms</span>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: (vault.protectionLevel ?? 3) >= 2 ? '#00EF8B' : '#666' }} />
+                        <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>Layer 2 — VRF Block-Delay Jitter: </span>
+                        <span className={`dash-badge ${vault.blockDelayEnabled !== false ? 'dash-badge-green' : 'dash-badge-muted'}`}>
+                          {vault.blockDelayEnabled !== false ? 'ACTIVE' : 'OFF'}
+                        </span>
                       </div>
-                      <a href="#" style={{
-                        fontSize: '0.625rem', fontWeight: 500, letterSpacing: '0.12em',
-                        color: '#00EF8B', textDecoration: 'none', marginTop: 16,
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        transition: 'color 0.2s',
-                      }}>
-                        VIEW AUDIT REPORT <ExternalLink style={{ width: 10, height: 10 }} />
-                      </a>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: (vault.protectionLevel ?? 3) >= 3 ? '#00EF8B' : '#666' }} />
+                        <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>Layer 3 — Price Deviation Guard: </span>
+                        <span className={`dash-badge ${(vault.protectionLevel ?? 3) >= 3 ? 'dash-badge-green' : 'dash-badge-muted'}`}>
+                          {(vault.protectionLevel ?? 3) >= 3 ? 'ACTIVE' : 'OFF'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: (vault.protectionLevel ?? 3) >= 3 ? '#00EF8B' : '#666' }} />
+                        <span style={{ fontSize: '0.875rem', color: 'rgba(250,248,245,0.5)', fontWeight: 500 }}>Layer 4 — Execution Queue: </span>
+                        <span className={`dash-badge ${(vault.protectionLevel ?? 3) >= 3 ? 'dash-badge-green' : 'dash-badge-muted'}`}>
+                          {(vault.protectionLevel ?? 3) >= 3 ? 'ACTIVE' : 'OFF'}
+                        </span>
+                      </div>
+                      <div style={{ borderTop: '1px solid rgba(250,248,245,0.06)', paddingTop: 12, marginTop: 4 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'rgba(250,248,245,0.4)', fontWeight: 500 }}>Slippage Tolerance</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#FAF8F5' }}>{(vault.slippageBps ?? 300) / 100}%</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                          <span style={{ fontSize: '0.75rem', color: 'rgba(250,248,245,0.4)', fontWeight: 500 }}>Protections Triggered</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#00EF8B' }}>{vault.mevProtectionsTriggered ?? 0}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -48,7 +48,7 @@ export default function SettingsPage() {
     privacy:       { analyticsOptIn: true, shareAnonymousData: false, publicProfile: false },
   })
 
-  const set = (section: string, key: string, value: any) =>
+  const set = (section: string, key: string, value: string | boolean | number) =>
     setSettings(prev => ({ ...prev, [section]: { ...prev[section as keyof typeof prev], [key]: value } }))
 
   const rowStyle: React.CSSProperties = {

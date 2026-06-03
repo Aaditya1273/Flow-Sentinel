@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useFlow } from 'lib/flow'
 import { useBalance } from 'wagmi'
 import { FlowService } from 'lib/flow-service'
+import { errorReporter } from '@/lib/sentry-wrapper'
 
 export interface VaultData {
   id: string
@@ -13,6 +14,13 @@ export interface VaultData {
   totalDeposits: number
   pnl?: number
   pnlPercent?: number
+  // MEV Shield fields
+  protectionLevel?: number
+  slippageBps?: number
+  commitRevealEnabled?: boolean
+  blockDelayEnabled?: boolean
+  mevProtectionsTriggered?: number
+  mevShieldStatus?: string
 }
 
 export function useVaultData() {
@@ -40,18 +48,25 @@ export function useVaultData() {
       const vaultList = await FlowService.getVaultList(user.addr)
 
       if (vaultList && Array.isArray(vaultList)) {
-        const transformedVaults: VaultData[] = vaultList.map((v: any) => ({
-          id: v.id,
-          name: v.name || 'Unnamed Vault',
-          balance: parseFloat(v.balance || '0'),
-          strategy: v.strategy || 'Unknown Strategy',
-          isActive: v.isActive,
-          lastExecution: parseInt(v.lastExecution || '0'),
-          totalDeposits: parseFloat(v.balance || '0') - parseFloat(v.totalYieldAccrued || '0'),
-          pnl: parseFloat(v.totalYieldAccrued || '0'),
-          pnlPercent: parseFloat(v.balance || '0') > 0
-            ? (parseFloat(v.totalYieldAccrued || '0') / (parseFloat(v.balance || '0') - parseFloat(v.totalYieldAccrued || '0'))) * 100
-            : 0
+        const transformedVaults: VaultData[] = vaultList.map((v: Record<string, unknown>) => ({
+          id: String(v.id ?? ''),
+          name: String(v.name ?? 'Unnamed Vault'),
+          balance: parseFloat(String(v.balance ?? '0')),
+          strategy: String(v.strategy ?? 'Unknown Strategy'),
+          isActive: Boolean(v.isActive),
+          lastExecution: parseInt(String(v.lastExecution ?? '0')),
+          totalDeposits: parseFloat(String(v.balance ?? '0')) - parseFloat(String(v.totalYieldAccrued ?? '0')),
+          pnl: parseFloat(String(v.totalYieldAccrued ?? '0')),
+          pnlPercent: parseFloat(String(v.balance ?? '0')) > 0
+            ? (parseFloat(String(v.totalYieldAccrued ?? '0')) / (parseFloat(String(v.balance ?? '0')) - parseFloat(String(v.totalYieldAccrued ?? '0')))) * 100
+            : 0,
+          // MEV Shield data
+          protectionLevel: typeof v.protectionLevel !== 'undefined' ? parseInt(String(v.protectionLevel)) : undefined,
+          slippageBps: typeof v.slippageBps !== 'undefined' ? parseFloat(String(v.slippageBps)) : undefined,
+          commitRevealEnabled: Boolean(v.commitRevealEnabled),
+          blockDelayEnabled: Boolean(v.blockDelayEnabled),
+          mevProtectionsTriggered: typeof v.mevProtectionsTriggered !== 'undefined' ? parseInt(String(v.mevProtectionsTriggered)) : undefined,
+          mevShieldStatus: String(v.mevShieldStatus ?? '')
         }))
         setVaults(transformedVaults)
 
@@ -77,7 +92,7 @@ export function useVaultData() {
       }
 
     } catch (err) {
-      console.error('Error fetching vault data:', err)
+      errorReporter.captureException(err, { component: 'useVaultData', action: 'fetchVaultData' })
       setError(err instanceof Error ? err.message : 'Failed to fetch vault data')
     } finally {
       setLoading(false)

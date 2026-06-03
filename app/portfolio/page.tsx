@@ -117,22 +117,32 @@ export default function PortfolioPage() {
                 </div>
 
                 <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 3 }}>
-                  {[40, 60, 45, 70, 55, 90, 80, 100, 85, 95, 75, 110].map((h, i) => (
-                    <div key={i} style={{ flex: 1, position: 'relative' }}>
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: `${h}%` }}
-                        transition={{ delay: i * 0.05, duration: 1 }}
-                        style={{
-                          width: '100%',
-                          borderRadius: '4px 4px 0 0',
-                          background: i === 11 ? '#00EF8B' : 'rgba(250,248,245,0.06)',
-                          transition: 'background 0.3s',
-                          minHeight: 4,
-                        }}
-                      />
+                  {vaults.length > 0 ? (() => {
+                    const maxBal = Math.max(...vaults.map(v => v.balance), 1)
+                    return vaults.map((vault, i) => {
+                      const heightPct = (vault.balance / maxBal) * 100
+                      return (
+                        <div key={vault.id} style={{ flex: 1, position: 'relative' }} title={`${vault.name}: ${vault.balance} FLOW`}>
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: `${Math.max(heightPct, 4)}%` }}
+                            transition={{ delay: i * 0.05, duration: 1 }}
+                            style={{
+                              width: '100%',
+                              borderRadius: '4px 4px 0 0',
+                              background: i === vaults.length - 1 ? '#00EF8B' : 'rgba(250,248,245,0.06)',
+                              transition: 'background 0.3s',
+                              minHeight: 4,
+                            }}
+                          />
+                        </div>
+                      )
+                    })
+                  })() : (
+                    <div style={{ width: '100%', textAlign: 'center', padding: 40 }}>
+                      <p className="dash-label">No vault data to display</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -142,12 +152,12 @@ export default function PortfolioPage() {
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                     <div>
-                      <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 8 }}>98.4</div>
-                      <div className="dash-label" style={{ marginBottom: 8 }}>Health Index</div>
+                      <div className="dash-value" style={{ fontSize: '2rem', marginBottom: 8 }}>{vaults.length}</div>
+                      <div className="dash-label" style={{ marginBottom: 8 }}>Active Vaults</div>
                     </div>
-                    <span className="dash-badge dash-badge-cyan">Optimized</span>
+                    <span className="dash-badge dash-badge-cyan">Managed</span>
                   </div>
-                  <div className="dash-label">Protocol Integrity Normal</div>
+                  <div className="dash-label">{vaults.reduce((s, v) => s + (v.mevProtectionsTriggered || 0), 0)} MEV protections triggered</div>
                 </div>
               </div>
 

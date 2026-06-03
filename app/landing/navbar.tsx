@@ -153,7 +153,7 @@ function DiscoverPanel() {
               <li key={l.name}>
                 <Link href={l.href} className="w-dropdown-link">
                   <span>{l.name}</span>
-                  {(l as any).external && <ExternalIcon />}
+                  {'external' in l && l.external === true && <ExternalIcon />}
                 </Link>
               </li>
             ))}
@@ -194,7 +194,7 @@ function BuildPanel() {
               <li key={l.name}>
                 <Link href={l.href} className="w-dropdown-link">
                   <span>{l.name}</span>
-                  {(l as any).external && <ExternalIcon />}
+                  {'external' in l && l.external === true && <ExternalIcon />}
                 </Link>
               </li>
             ))}

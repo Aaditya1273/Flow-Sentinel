@@ -32,13 +32,13 @@ else
 fi
 
 echo ""
-echo "2️⃣ Deploying SentinelVault..."
-flow accounts add-contract SentinelVault ./contracts/SentinelVault.cdc --network testnet --signer testnet-account
+echo "2️⃣ Deploying SentinelVaultFinal (V2)..."
+flow accounts add-contract SentinelVaultFinal ./contracts/SentinelVaultV2.cdc --network testnet --signer testnet-account
 
 if [ $? -eq 0 ]; then
-    echo "✅ SentinelVault deployed successfully"
+    echo "✅ SentinelVaultFinal deployed successfully"
 else
-    echo "❌ Failed to deploy SentinelVault"
+    echo "❌ Failed to deploy SentinelVaultFinal"
     exit 1
 fi
 

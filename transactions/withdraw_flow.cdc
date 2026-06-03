@@ -1,35 +1,25 @@
-import SentinelVault from 0xf8d6e0586b0a20c7
+import SentinelVaultFinal from 0xf8d6e0586b0a20c7
 import FlowToken from 0x1654653399040a61
 import FungibleToken from 0xf233dcee88fe0abe
 
-// Withdraw FLOW tokens from the Sentinel Vault
-transaction(amount: UFix64) {
-    
-    let sentinelVault: auth(SentinelVault.Withdraw) &SentinelVault.Vault
-    let flowVault: auth(FungibleToken.Withdraw) &FlowToken.Vault
-    
+// Withdraw FLOW tokens from a Sentinel Vault (V2 Collection API)
+transaction(vaultId: UInt64, amount: UFix64) {
+    let vaultResource: auth(SentinelVaultFinal.Withdraw) &SentinelVaultFinal.Vault
+    let flowReceiver: &{FungibleToken.Receiver}
+
     prepare(signer: auth(BorrowValue) &Account) {
-        // Get reference to the user's Sentinel Vault
-        self.sentinelVault = signer.storage.borrow<auth(SentinelVault.Withdraw) &SentinelVault.Vault>(from: SentinelVault.VaultStoragePath)
-            ?? panic("Could not borrow Sentinel Vault from storage")
-        
-        // Get reference to the user's Flow Vault
-        self.flowVault = signer.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
-            ?? panic("Could not borrow Flow Vault from storage")
+        let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow vault collection")
+        self.vaultResource = collection.borrowVaultPriv(id: vaultId)
+            ?? panic("Vault not found")
+
+        self.flowReceiver = signer.capabilities.borrow<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+            ?? panic("Could not borrow Flow receiver")
     }
-    
+
     execute {
-        // Withdraw FLOW from Sentinel Vault
-        let withdrawnVault <- self.sentinelVault.withdraw(amount: amount)
-        
-        // Deposit into user's Flow vault
-        self.flowVault.deposit(from: <-withdrawnVault)
-        
-        log("Withdrew ".concat(amount.toString()).concat(" FLOW from Sentinel Vault"))
-    }
-    
-    post {
-        // Verify the withdrawal was successful
-        self.sentinelVault.getBalance() >= 0.0: "Withdrawal failed - invalid balance"
+        let withdrawnTokens <- self.vaultResource.withdraw(amount: amount)
+        self.flowReceiver.deposit(from: <-withdrawnTokens)
+        log("Withdrew ".concat(amount.toString()).concat(" FLOW from vault ").concat(vaultId.toString()))
     }
 }

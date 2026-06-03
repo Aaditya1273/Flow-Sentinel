@@ -34,8 +34,8 @@ const COLS = [
   {
     heading: 'About',
     links: [
-      { name: 'Privacy',         href: '/docs', external: true },
-      { name: 'Terms',           href: '/docs', external: true },
+      { name: 'Privacy',         href: '/legal/privacy', external: false },
+      { name: 'Terms',           href: '/legal/terms', external: false },
       { name: 'Media Kit',       href: '/docs', external: true },
       { name: 'Contact',         href: '/docs' },
     ],

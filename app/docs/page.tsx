@@ -79,6 +79,7 @@ export default function DocsPage() {
       case 'beginner':    return { color: '#00EF8B', borderColor: 'rgba(0,239,139,0.25)', background: 'rgba(0,239,139,0.06)' }
       case 'intermediate': return { color: '#f59e0b', borderColor: 'rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.06)' }
       case 'advanced':    return { color: '#ef4444', borderColor: 'rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.06)' }
+      default:            return { color: '#f59e0b', borderColor: 'rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.06)' }
     }
   }
 
@@ -151,7 +152,7 @@ export default function DocsPage() {
                         <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(245,158,11,0.3)', border: '1px solid rgba(245,158,11,0.4)' }} />
                         <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(16,185,129,0.3)', border: '1px solid rgba(16,185,129,0.4)' }} />
                       </div>
-                      <span className="dash-label">SentinelVault.cdc</span>
+                      <span className="dash-label">SentinelVaultFinal.cdc</span>
                     </div>
                     <button onClick={handleCopyCode}
                       style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: 'transparent', color: 'rgba(250,248,245,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>

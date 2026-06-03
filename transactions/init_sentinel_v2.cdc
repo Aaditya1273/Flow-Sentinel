@@ -38,7 +38,7 @@ transaction(strategyId: String) {
     execute {
         let strategyInfo = StrategyRegistry.getStrategy(strategyId: strategyId)
             ?? panic("Strategy not found")
-        let strategyName = strategyInfo["name"] as! String
+        let strategyName = strategyInfo["name"] as? String ?? strategyId
 
         let vault <- SentinelVaultFinal.createVault(
             owner: self.collectionRef.owner!.address,

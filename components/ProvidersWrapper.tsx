@@ -1,12 +1,15 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { ReactNode } from 'react'
-
-const Providers = dynamic(() => import('@/app/providers').then((m) => m.Providers), {
-  ssr: false,
-})
+import { Providers } from 'app/providers'
+import { OnboardingWrapper } from './OnboardingWrapper'
 
 export function ProvidersWrapper({ children }: { children: ReactNode }) {
-  return <Providers>{children}</Providers>
+  return (
+    <Providers>
+      <OnboardingWrapper>
+        {children}
+      </OnboardingWrapper>
+    </Providers>
+  )
 }

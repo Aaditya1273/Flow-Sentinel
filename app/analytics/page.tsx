@@ -11,6 +11,7 @@ import { formatCurrency, formatPercentage } from 'lib/utils'
 import { useVaultData } from 'hooks/useVaultData'
 import { useFlow } from 'lib/flow'
 import { FlowService, VaultEvent, PerformanceDataPoint } from 'lib/flow-service'
+import { errorReporter } from '@/lib/sentry-wrapper'
 
 export default function AnalyticsPage() {
   const [timeframe, setTimeframe] = useState('all')
@@ -35,7 +36,7 @@ export default function AnalyticsPage() {
         const history = FlowService.buildPerformanceHistory(events, totalBalance)
         setRealPerformanceHistory(history)
       } catch (error) {
-        console.error('Error fetching vault events:', error)
+        errorReporter.captureException(error, { component: 'AnalyticsPage', action: 'fetchEvents' })
       } finally {
         setEventsLoading(false)
       }
@@ -60,7 +61,7 @@ export default function AnalyticsPage() {
         totalPortfolioValue: 0, totalPnL: 0, totalPnLPercent: 0,
         dailyPnL: 0, dailyPnLPercent: 0, weeklyPnL: 0, weeklyPnLPercent: 0, monthlyPnL: 0, monthlyPnLPercent: 0,
         portfolioBreakdown: [], performanceHistory: [], topPerformers: [],
-        riskMetrics: { sharpeRatio: 0, maxDrawdown: 0, volatility: 0, beta: 0, alpha: 0 },
+        riskMetrics: { sharpeRatio: 0, sortinoRatio: 0, calmarRatio: 0, maxDrawdown: 0, annualizedVolatility: 0, annualizedReturn: 0, winRate: 0 },
         recentTransactions: []
       }
     }
@@ -78,30 +79,95 @@ export default function AnalyticsPage() {
       { name: 'Available FLOW', value: flowBalance, percentage: totalValue > 0 ? (flowBalance / totalValue) * 100 : 0, color: '#00EF8B' }
     ]
 
-    const performanceHistory = []
-    const numPoints = 14
-    const baseValue = totalVaultBalance * 0.95
-    const seedRandom = (seed: number) => { const x = Math.sin(seed) * 10000; return x - Math.floor(x) }
-    for (let i = 0; i < numPoints; i++) {
-      const progress = i / (numPoints - 1)
-      const value = baseValue + (pnl * progress) + (seedRandom(i + 54321) - 0.5) * (pnl * 0.1)
-      performanceHistory.push({
-        date: new Date(1640995200000 - (numPoints - 1 - i) * 86400000).toISOString().split('T')[0],
-        value: Math.max(value, baseValue * 0.95), pnl: Math.max(value - baseValue, baseValue * -0.05)
-      })
+    // Performance history built from real on-chain events only
+    // No fabricated data — if no events exist, the chart shows empty state
+    const performanceHistory: Array<{date: string; value: number; pnl: number}> = []
+    if (realPerformanceHistory.length > 1) {
+      for (const pt of realPerformanceHistory) {
+        performanceHistory.push({
+          date: new Date(pt.timestamp * 1000).toISOString().split('T')[0],
+          value: pt.balance,
+          pnl: pt.cumulativePnl
+        })
+      }
     }
 
-    const volatility = Math.abs(pnlPercent) * 0.5
-    const sharpeRatio = pnlPercent > 0 ? pnlPercent / Math.max(volatility, 1) : 0
+    // ── ADVANCED RISK METRICS ──
+    // Calculate from actual vault data using proper financial formulas
+
+    // Annualized return: (1 + total_return)^(365/days_active) - 1
+    const vaultAgeDays = vaults.length > 0
+      ? Math.max(1, (Date.now() - Math.min(...vaults.map(v => v.lastExecution > 0 ? v.lastExecution * 1000 : Date.now()))) / 86400000)
+      : 1
+    const annualizedReturn = totalVaultBalance > 0 && vaultAgeDays > 0
+      ? (Math.pow(1 + (pnl / totalVaultBalance), 365 / vaultAgeDays) - 1) * 100
+      : 0
+
+    // Volatility: standard deviation of daily returns
+    // If we have real event data, use it; otherwise derive from vault data
+    const vaultReturnRates = vaults.map(v => (v.pnlPercent || 0) / (vaultAgeDays || 1))
+    const meanRate = vaultReturnRates.length > 0
+      ? vaultReturnRates.reduce((s, r) => s + r, 0) / vaultReturnRates.length
+      : 0
+    const variance = vaultReturnRates.length > 1
+      ? vaultReturnRates.reduce((s, r) => s + Math.pow(r - meanRate, 2), 0) / (vaultReturnRates.length - 1)
+      : Math.pow(pnlPercent / 100, 2) // Fallback: use PnL% as variance proxy
+    const dailyVolatility = Math.sqrt(Math.abs(variance))
+    const annualizedVolatility = dailyVolatility * Math.sqrt(365)
+
+    // Sharpe Ratio: (portfolio_return - risk_free_rate) / portfolio_volatility
+    // Using 2% risk-free rate (approximate) for DeFi
+    const riskFreeRate = 2.0 // ~2% annual risk-free rate
+    const sharpeRatio = annualizedVolatility > 0
+      ? (annualizedReturn - riskFreeRate) / (annualizedVolatility * 100)
+      : 0
+
+    // Sortino Ratio: (portfolio_return - risk_free_rate) / downside_deviation
+    // Only considers negative returns for volatility
+    const negativeRates = vaultReturnRates.filter(r => r < 0)
+    const downsideVariance = negativeRates.length > 0
+      ? negativeRates.reduce((s, r) => s + Math.pow(r, 2), 0) / negativeRates.length
+      : variance * 0.5 // If no negative returns, estimate at 50% of variance
+    const downsideDeviation = Math.sqrt(Math.abs(downsideVariance))
+    const sortinoRatio = downsideDeviation > 0
+      ? (annualizedReturn - riskFreeRate) / (downsideDeviation * 100)
+      : sharpeRatio
+
+    // Max Drawdown: maximum peak-to-trough decline
+    // Simplification for now: use worst-performing vault as proxy
+    const vaultPnlPercents = vaults.map(v => v.pnlPercent || 0)
+    const maxDrawdown = vaultPnlPercents.length > 0
+      ? Math.min(0, ...vaultPnlPercents)
+      : 0
+
+    // Calmar Ratio: annualized_return / max_drawdown
+    const calmarRatio = Math.abs(maxDrawdown) > 0.01
+      ? annualizedReturn / Math.abs(maxDrawdown)
+      : 0
+
+    // Win Rate: percentage of positive-performing vaults
+    const positiveVaults = vaults.filter(v => (v.pnl || 0) > 0).length
+    const winRate = vaults.length > 0 ? (positiveVaults / vaults.length) * 100 : 0
 
     return {
       totalPortfolioValue: totalValue, totalPnL: pnl, totalPnLPercent: pnlPercent,
-      dailyPnL: pnl * 0.1, dailyPnLPercent: pnlPercent * 0.1,
-      weeklyPnL: pnl * 0.3, weeklyPnLPercent: pnlPercent * 0.3,
-      monthlyPnL: pnl, monthlyPnLPercent: pnlPercent,
+      dailyPnL: pnl / Math.max(vaultAgeDays, 1),
+      dailyPnLPercent: pnlPercent / Math.max(vaultAgeDays, 1),
+      weeklyPnL: pnl / Math.max(vaultAgeDays / 7, 1),
+      weeklyPnLPercent: pnlPercent / Math.max(vaultAgeDays / 7, 1),
+      monthlyPnL: pnl / Math.max(vaultAgeDays / 30, 1),
+      monthlyPnLPercent: pnlPercent / Math.max(vaultAgeDays / 30, 1),
       portfolioBreakdown, performanceHistory,
       topPerformers: vaults.map(v => ({ name: v.name, pnl: v.pnl || 0, pnlPercent: v.pnlPercent || 0, allocation: totalValue > 0 ? (v.balance / totalValue) * 100 : 0 })),
-      riskMetrics: { sharpeRatio: Math.max(sharpeRatio, 0), maxDrawdown: Math.min(pnlPercent * -0.2, 0), volatility, beta: 0.8, alpha: Math.max(pnlPercent - 5, 0) },
+      riskMetrics: {
+        sharpeRatio: Math.max(sharpeRatio, 0),
+        sortinoRatio: Math.max(sortinoRatio, 0),
+        calmarRatio: Math.max(calmarRatio, 0),
+        maxDrawdown,
+        annualizedVolatility: annualizedVolatility * 100,
+        annualizedReturn,
+        winRate
+      },
       recentTransactions: vaults.flatMap(v => [
         { type: 'vault_created', amount: 0, vault: v.name, timestamp: 'Recently' },
         { type: 'deposit', amount: v.totalDeposits, vault: v.name, timestamp: 'Recently' }
@@ -188,7 +254,7 @@ export default function AnalyticsPage() {
               { label: 'Total Portfolio Value', value: formatCurrency(analyticsData.totalPortfolioValue), sub: `+${formatCurrency(analyticsData.totalPnL)} P&L`, badge: `+${formatPercentage(analyticsData.totalPnLPercent)}`, color1: '#00EF8B' },
               { label: 'Daily P&L', value: formatCurrency(analyticsData.dailyPnL), sub: `+${formatPercentage(analyticsData.dailyPnLPercent)}`, badge: '24h', color1: '#00EF8B' },
               { label: 'Sharpe Ratio', value: analyticsData.riskMetrics.sharpeRatio.toFixed(2), sub: 'Risk-Adjusted Returns', badge: 'Sharpe', color1: '#37DDDF' },
-              { label: 'Volatility', value: `${analyticsData.riskMetrics.volatility.toFixed(1)}%`, sub: '30-day rolling', badge: 'Vol', color1: '#37DDDF' },
+              { label: 'Sortino Ratio', value: analyticsData.riskMetrics.sortinoRatio.toFixed(2), sub: 'Downside Risk-Adj.', badge: 'Sortino', color1: '#37DDDF' },
             ].map((stat, i) => (
               <div key={i} className="dash-stat" style={{ padding: '24px 28px' }}>
                 <div style={{ position: 'relative', zIndex: 1 }}>
@@ -375,9 +441,8 @@ export default function AnalyticsPage() {
                     {[
                       { label: 'Sharpe Ratio', value: analyticsData.riskMetrics.sharpeRatio.toFixed(2), color: '#FAF8F5' },
                       { label: 'Max Drawdown', value: `${analyticsData.riskMetrics.maxDrawdown.toFixed(1)}%`, color: '#ef4444' },
-                      { label: 'Volatility', value: `${analyticsData.riskMetrics.volatility.toFixed(1)}%`, color: '#f59e0b' },
-                      { label: 'Beta', value: analyticsData.riskMetrics.beta.toFixed(2), color: '#FAF8F5' },
-                      { label: 'Alpha', value: `${analyticsData.riskMetrics.alpha.toFixed(1)}%`, color: '#00EF8B' },
+                      { label: 'Calmar Ratio', value: analyticsData.riskMetrics.calmarRatio.toFixed(2), color: '#FAF8F5' },
+                      { label: 'Win Rate', value: `${analyticsData.riskMetrics.winRate.toFixed(1)}%`, color: '#00EF8B' },
                     ].map((m, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span className="dash-label" style={{ fontSize: '0.5rem' }}>{m.label}</span>

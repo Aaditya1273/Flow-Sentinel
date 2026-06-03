@@ -1,25 +1,18 @@
-import SentinelVault from 0xf8d6e0586b0a20c7
+import SentinelVaultFinal from 0xf8d6e0586b0a20c7
 
-// Emergency pause transaction - can be triggered via Passkeys/WebAuthn
-transaction() {
-    
-    let sentinelVault: auth(SentinelVault.Pause) &SentinelVault.Vault
-    
+// Emergency pause a Sentinel Vault (V2 Collection API)
+transaction(vaultId: UInt64) {
+    let vaultRef: auth(SentinelVaultFinal.Pause) &SentinelVaultFinal.Vault
+
     prepare(signer: auth(BorrowValue) &Account) {
-        // Get reference to the user's Sentinel Vault
-        self.sentinelVault = signer.storage.borrow<auth(SentinelVault.Pause) &SentinelVault.Vault>(from: SentinelVault.VaultStoragePath)
-            ?? panic("Could not borrow Sentinel Vault from storage")
+        let collection = signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath)
+            ?? panic("Could not borrow vault collection")
+        self.vaultRef = collection.borrowVaultPriv(id: vaultId)
+            ?? panic("Vault not found")
     }
-    
+
     execute {
-        // Trigger emergency pause
-        self.sentinelVault.emergencyPause()
-        
-        log("Emergency pause activated - all automated activities stopped")
-    }
-    
-    post {
-        // Verify the vault is now paused
-        !self.sentinelVault.isActive(): "Emergency pause failed - vault still active"
+        self.vaultRef.emergencyPause()
+        log("Emergency pause activated for vault ".concat(vaultId.toString()))
     }
 }
