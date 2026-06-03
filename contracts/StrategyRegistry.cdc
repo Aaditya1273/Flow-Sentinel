@@ -1,4 +1,4 @@
-import SentinelInterfaces from 0xc13b08053be24e87
+import SentinelInterfaces from 0x136b642d0aa31ca9
 import LiquidStakingStrategy from 0xc13b08053be24e87
 import YieldFarmingStrategy from 0xc13b08053be24e87
 import ArbitrageStrategy from 0xc13b08053be24e87
@@ -62,7 +62,8 @@ access(all) contract StrategyRegistry {
             
             for strategyId in StrategyRegistry.strategies.keys {
                 if let strategy = StrategyRegistry.strategies[strategyId] {
-                    if strategy["category"] as! String == category {
+                    let categoryValue = strategy["category"] as? String ?? ""
+                    if categoryValue == category {
                         categoryStrategies.append(strategy)
                     }
                 }
@@ -76,7 +77,8 @@ access(all) contract StrategyRegistry {
             
             for strategyId in StrategyRegistry.strategies.keys {
                 if let strategy = StrategyRegistry.strategies[strategyId] {
-                    if strategy["riskLevel"] as! UInt8 == riskLevel {
+                    let riskValue = strategy["riskLevel"] as? UInt8 ?? 255
+                    if riskValue == riskLevel {
                         riskStrategies.append(strategy)
                     }
                 }
@@ -125,12 +127,12 @@ access(all) contract StrategyRegistry {
         access(self) fun calculatePerformance(_ strategyId: String, _ days: UInt64): UFix64 {
             // Simulate performance calculation based on strategy type
             if let strategy = StrategyRegistry.strategies[strategyId] {
-                let expectedAPY = strategy["expectedAPY"] as! UFix64
+                let expectedAPY = strategy["expectedAPY"] as? UFix64 ?? 0.0
                 let dailyRate = expectedAPY / 365.0
                 let periodReturn = dailyRate * UFix64(days)
                 
                 // Add some randomness to simulate real performance
-                let randomFactor = UFix64(revertibleRandom<UInt64>() % 20) / 100.0 // ±10%
+                let randomFactor = UFix64(revertibleRandom<UInt64>() % UInt64(20)) / 100.0 // ±10%
                 let performanceVariation = periodReturn * (1.0 + randomFactor - 0.1)
                 
                 return performanceVariation
@@ -177,12 +179,15 @@ access(all) contract StrategyRegistry {
         
         // Emit registration events
         for strategyId in self.strategies.keys {
-            let strategy = self.strategies[strategyId]!
-            emit StrategyRegistered(
-                strategyId: strategyId,
-                name: strategy["name"] as! String,
-                category: strategy["category"] as! String
-            )
+            if let strategy = self.strategies[strategyId] {
+                let name = strategy["name"] as? String ?? strategyId
+                let category = strategy["category"] as? String ?? "unknown"
+                emit StrategyRegistered(
+                    strategyId: strategyId,
+                    name: name,
+                    category: category
+                )
+            }
         }
     }
     
@@ -279,8 +284,8 @@ access(all) contract StrategyRegistry {
     // Update strategy TVL
     access(all) fun updateStrategyTVL(strategyId: String, amount: UFix64, isDeposit: Bool) {
         if var strategy = self.strategies[strategyId] {
-            let currentTVL = strategy["tvl"] as! UFix64
-            let currentParticipants = strategy["participants"] as! UInt64
+            let currentTVL = strategy["tvl"] as? UFix64 ?? 0.0
+            let currentParticipants = strategy["participants"] as? UInt64 ?? 0
             
             if isDeposit {
                 strategy["tvl"] = currentTVL + amount
