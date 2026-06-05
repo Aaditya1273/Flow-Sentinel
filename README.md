@@ -1,8 +1,6 @@
-<p align="center">
-  <img src="/logo.png" alt="Flow Sentinel" width="120" height="120" />
-</p>
+<img width="1500" height="500" alt="flow senital" src="https://github.com/user-attachments/assets/9e684674-30bf-4dbc-8de4-d6b0405573d3" />
 
-<h1 align="center">🛡️ Flow Sentinel</h1>
+<h1 align="center">Flow Sentinel</h1>
 
 <p align="center">
   <b>The Autonomous, MEV-Resistant Wealth Manager on Flow Blockchain</b>
