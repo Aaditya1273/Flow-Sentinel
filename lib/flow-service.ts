@@ -247,7 +247,8 @@ transaction(vaultId: UInt64) {
         MEVShieldCore.createCommit(
             vaultId: vaultId,
             commitHash: commitHash,
-            protectionLevel: 3
+            protectionLevel: 3,
+            committedBy: signer.address
         )
         
         // Get expected APY from oracle for price deviation guard
@@ -255,6 +256,20 @@ transaction(vaultId: UInt64) {
         if let oracleData = YieldOracle.getYieldData(strategyId) {
             expectedAPY = oracleData.apy
         }
+        
+        // STEP 1b: Reveal the commit immediately (required by Layer 1 Guard)
+        // For true two-phase protection, this would be a separate transaction
+        // In a single-tx flow, we reveal + execute atomically
+        MEVShieldCore.revealExecution(
+            vaultId: vaultId,
+            commitHash: commitHash,
+            nonce: nonce,
+            amount: self.vaultRef.getBalance(),
+            strategyId: strategyId,
+            deadlineBlock: getCurrentBlock().height + MEVShieldCore.getMEVCommitBlocks(),
+            expectedAPY: expectedAPY,
+            slippageBps: 300.0
+        )
         
         // STEP 2: Execute with full MEV protection per strategy branch
         // (Each branch creates its own executor to avoid Cadence resource assignment issues)
@@ -464,6 +479,7 @@ export class FlowService {
         totalDeposited += event.amount
       } else if (event.type === 'withdraw') {
         runningBalance -= event.amount
+        totalDeposited -= event.amount
       }
 
       history.push({

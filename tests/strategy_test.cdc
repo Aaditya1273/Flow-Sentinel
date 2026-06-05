@@ -69,7 +69,7 @@ access(all) fun testOracleGetLiquidStakingAPY() {
 access(all) fun testLiquidStakingCreateExecutor() {
     let executor <- LiquidStakingStrategy.createExecutor()
 
-    let info = executor.getStrategyInfo()
+    let info = LiquidStakingStrategy.getStrategyInfo()
     Test.assertEqual("liquid-staking-pro", info["id"] as! String)
     Test.assertEqual("Flow Liquid Staking Pro", info["name"] as! String)
     Test.assertEqual(1, executor.getRiskLevel(), message: "Liquid Staking should be low risk")
@@ -103,7 +103,7 @@ access(all) fun testLiquidStakingExecuteStrategy() {
 access(all) fun testYieldFarmingCreateExecutor() {
     let executor <- YieldFarmingStrategy.createExecutor()
 
-    let info = executor.getStrategyInfo()
+    let info = YieldFarmingStrategy.getStrategyInfo()
     Test.assertEqual("defi-yield-maximizer", info["id"] as! String)
     Test.assertEqual(2, executor.getRiskLevel(), message: "Yield Farming should be medium risk")
 
@@ -130,7 +130,7 @@ access(all) fun testYieldFarmingExecuteStrategy() {
 access(all) fun testYieldFarmingMinimumDepositConfig() {
     let executor <- YieldFarmingStrategy.createExecutor()
 
-    let info = executor.getStrategyInfo()
+    let info = YieldFarmingStrategy.getStrategyInfo()
     let minDeposit = info["minDeposit"] as! UFix64
     Test.assert(minDeposit > 0.0, message: "Minimum deposit should be positive")
     Test.assertEqual(100.0, minDeposit, message: "Default min deposit should be 100 FLOW")
@@ -145,7 +145,7 @@ access(all) fun testYieldFarmingMinimumDepositConfig() {
 access(all) fun testArbitrageCreateExecutor() {
     let executor <- ArbitrageStrategy.createExecutor()
 
-    let info = executor.getStrategyInfo()
+    let info = ArbitrageStrategy.getStrategyInfo()
     Test.assertEqual("arbitrage-hunter", info["id"] as! String)
     Test.assertEqual(2, executor.getRiskLevel(), message: "Arbitrage should be medium risk")
 

@@ -342,6 +342,9 @@ access(all) contract SentinelVaultFinal {
                     } else if commit.isExpired {
                         shouldAbort = true
                         abortReason = "MEV: commit expired"
+                    } else {
+                        shouldAbort = true
+                        abortReason = "MEV: commit not yet revealed"
                     }
                 } else {
                     if self.protectionLevel >= UInt8(3) {
@@ -395,10 +398,13 @@ access(all) contract SentinelVaultFinal {
                 // Withdraw yield from the protocol's yield reserve and deposit into vault
                 // This makes yield REAL — it becomes part of flowVault.balance immediately
                 // Only track yield that was actually delivered (prevents phantom yield inflation)
-                if yieldAmount <= SentinelVaultFinal.yieldReserve.balance {
-                    let yieldSource <- SentinelVaultFinal.yieldReserve.withdraw(amount: yieldAmount)
+                // Partially distributes if reserve is insufficient
+                let availableReserve = SentinelVaultFinal.yieldReserve.balance
+                let actualDistribute = yieldAmount < availableReserve ? yieldAmount : availableReserve
+                if actualDistribute > 0.0 {
+                    let yieldSource <- SentinelVaultFinal.yieldReserve.withdraw(amount: actualDistribute)
                     self.flowVault.deposit(from: <-yieldSource)
-                    self.totalYieldAccrued = self.totalYieldAccrued + yieldAmount
+                    self.totalYieldAccrued = self.totalYieldAccrued + actualDistribute
                 }
             }
             self.lastExecution = getCurrentBlock().timestamp
@@ -513,20 +519,15 @@ access(all) contract SentinelVaultFinal {
         emit YieldReserveFunded(amount: amount, from: self.account.address)
     }
 
-    // MultiSig-aware version
-    access(all) fun fundYieldReserveWithAuth(from: @{FungibleToken.Vault}) {
-        let amount = from.balance
-        self.yieldReserve.deposit(from: <-from)
-        emit YieldReserveFunded(amount: amount, from: self.account.address)
-    }
-
     // MultiSig-guarded: fund the yield reserve from collected protocol rewards
     // The yield reserve must be periodically funded by protocol revenue or staking rewards
     // Without a funded reserve, strategy execution will calculate yield but not distribute real tokens
     access(all) fun fundYieldReserveWithAuth(from: @{FungibleToken.Vault}) {
-        if !MultiSigAdmin.isAdmin(self.account.address) {
-            panic("Only MultiSig admins can fund reserve")
-        }
+        pre { MultiSigAdmin.isAdmin(self.account.address): "Only MultiSig admins can fund reserve" }
+        let amount = from.balance
+        self.yieldReserve.deposit(from: <-from)
+        emit YieldReserveFunded(amount: amount, from: self.account.address)
+    }
 
     // Get current yield reserve balance
     access(all) fun getYieldReserveBalance(): UFix64 {
@@ -536,7 +537,9 @@ access(all) contract SentinelVaultFinal {
     // Create empty collection for a user
     access(all) fun createEmptyCollection(): @Collection {
         return <- create Collection()
-    }        // Create a new vault with strategy linkage — automatically registers MEV protection
+    }
+
+    // Create a new vault with strategy linkage — automatically registers MEV protection
     access(all) fun createVault(
         owner: Address,
         name: String,

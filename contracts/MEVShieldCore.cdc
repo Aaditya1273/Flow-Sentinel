@@ -148,17 +148,17 @@ access(all) contract MEVShieldCore {
     //  LAYER 1 — COMMIT-REVEAL EXECUTION
     // ═══════════════════════════════════════════════════════════════════════
 
-    access(all) fun createCommit(vaultId: UInt64, commitHash: String, protectionLevel: UInt8) {
+    access(all) fun createCommit(vaultId: UInt64, commitHash: String, protectionLevel: UInt8, committedBy: Address) {
         pre { self.commits[commitHash] == nil: "Commit hash already exists"; self.vaultConfigs[vaultId] != nil: "Vault not registered with MEV" }
         let currentBlock = getCurrentBlock().height
         let deadlineBlock = currentBlock + self.getMEVCommitBlocks()
         self.commits[commitHash] = CommitRecord(
-            vaultId: vaultId, commitHash: commitHash, committedBy: self.account.address,
+            vaultId: vaultId, commitHash: commitHash, committedBy: committedBy,
             committedAtBlock: currentBlock, deadlineBlock: deadlineBlock,
             isRevealed: false, isExpired: false, protectionLevel: protectionLevel
         )
         self.totalCommitsCreated = self.totalCommitsCreated + UInt64(1)
-        emit CommitCreated(vaultId: vaultId, commitHash: commitHash, committedBy: self.account.address, commitBlock: currentBlock, deadlineBlock: deadlineBlock)
+        emit CommitCreated(vaultId: vaultId, commitHash: commitHash, committedBy: committedBy, commitBlock: currentBlock, deadlineBlock: deadlineBlock)
     }
 
     access(all) fun revealExecution(vaultId: UInt64, commitHash: String, nonce: UInt64, amount: UFix64, strategyId: String, deadlineBlock: UInt64, expectedAPY: UFix64, slippageBps: UFix64): UInt64 {

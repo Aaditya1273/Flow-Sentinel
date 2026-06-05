@@ -12,7 +12,21 @@ transaction(vaultId: UInt64, strategyId: String, expectedAPY: UFix64, nonce: UIn
         MEVShieldCore.createCommit(
             vaultId: vaultId,
             commitHash: commitHash,
-            protectionLevel: 1
+            protectionLevel: 1,
+            committedBy: signer.address
+        )
+
+        // Step 1b: Reveal the commit (required by Layer 1 Guard before execution)
+        let commitDeadline = getCurrentBlock().height + MEVShieldCore.getMEVCommitBlocks()
+        MEVShieldCore.revealExecution(
+            vaultId: vaultId,
+            commitHash: commitHash,
+            nonce: nonce,
+            amount: 0.0,
+            strategyId: strategyId,
+            deadlineBlock: commitDeadline,
+            expectedAPY: expectedAPY,
+            slippageBps: 300.0
         )
 
         // Step 2: Borrow the vault

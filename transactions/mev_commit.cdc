@@ -19,7 +19,8 @@ transaction(vaultId: UInt64, commitHash: String, protectionLevel: UInt8) {
         MEVShieldCore.createCommit(
             vaultId: vaultId,
             commitHash: commitHash,
-            protectionLevel: protectionLevel
+            protectionLevel: protectionLevel,
+            committedBy: signer.address
         )
     }
 }
