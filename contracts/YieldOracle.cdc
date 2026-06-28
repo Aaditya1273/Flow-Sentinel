@@ -1,9 +1,5 @@
-import FungibleToken from 0x9a0766d93b6608b7
-
 // YieldOracle — Decentralized APY data feed for Sentinel strategies
 access(all) contract YieldOracle {
-
-    access(all) entitlement UpdateYield
 
     access(all) event APYUpdated(strategyId: String, newAPY: UFix64, timestamp: UFix64)
     access(all) event AdminAdded(admin: Address)
@@ -29,19 +25,27 @@ access(all) contract YieldOracle {
     }
 
     access(all) resource Admin {
-        access(all) fun setAPY(strategyId: String, apy: UFix64, source: String, confidence: UFix64) {
+        // setAPY is protected by checking the caller against the oracle's admin list.
+        // The caller must be a registered admin (set during contract init or via admin management).
+        access(all) fun setAPY(strategyId: String, apy: UFix64, source: String, confidence: UFix64, caller: Address) {
+            if !YieldOracle.isAdmin(caller) {
+                panic("Only registered admins can update APY data")
+            }
             let yieldData = YieldData(apy: apy, source: source, confidence: confidence)
             YieldOracle.storeYieldData(strategyId: strategyId, data: yieldData)
             emit APYUpdated(strategyId: strategyId, newAPY: apy, timestamp: getCurrentBlock().timestamp)
         }
 
-        access(all) fun batchSetAPY(strategies: {String: {String: AnyStruct}}) {
+        access(all) fun batchSetAPY(strategies: {String: {String: AnyStruct}}, caller: Address) {
+            if !YieldOracle.isAdmin(caller) {
+                panic("Only registered admins can update APY data")
+            }
             for strategyId in strategies.keys {
                 if let data = strategies[strategyId] {
                     let apy = data["apy"] as? UFix64 ?? panic("Missing or invalid apy field for ".concat(strategyId))
                     let source = data["source"] as? String ?? panic("Missing or invalid source field for ".concat(strategyId))
                     let confidence = data["confidence"] as? UFix64 ?? panic("Missing or invalid confidence field for ".concat(strategyId))
-                    self.setAPY(strategyId: strategyId, apy: apy, source: source, confidence: confidence)
+                    self.setAPY(strategyId: strategyId, apy: apy, source: source, confidence: confidence, caller: caller)
                 }
             }
         }

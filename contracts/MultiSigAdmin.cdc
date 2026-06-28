@@ -1,5 +1,3 @@
-import FungibleToken from 0x9a0766d93b6608b7
-
 // MultiSigAdmin — M-of-N multi-signature authorization for Sentinel admin operations
 access(all) contract MultiSigAdmin {
 
@@ -44,7 +42,7 @@ access(all) contract MultiSigAdmin {
         access(all) let description: String
         access(all) let proposer: Address
         access(all) let createdAt: UFix64
-        access(self) var executed: Bool  // Changed to access(self) so references can't mutate
+        access(self) var executed: Bool
         access(self) var signatures: {Address: Signature}
         access(all) let calldata: {String: AnyStruct}
 
@@ -72,7 +70,6 @@ access(all) contract MultiSigAdmin {
             self.signatures[address] = Signature(address)
         }
 
-        // Setter method to mutate through references
         access(all) fun markExecuted() {
             pre { !self.executed: "Proposal already executed" }
             self.executed = true
@@ -103,6 +100,9 @@ access(all) contract MultiSigAdmin {
         }
 
         access(Propose) fun proposeAction(actionType: ActionType, description: String, calldata: {String: AnyStruct}, caller: Address): UInt64 {
+            if !MultiSigAdmin.isAdmin(caller) {
+                panic("Only registered admins can propose actions")
+            }
             let id = self.proposalCounter
             let proposal = Proposal(id: id, actionType: actionType, description: description, proposer: caller, calldata: calldata)
             self.proposals[id] = proposal
@@ -112,6 +112,9 @@ access(all) contract MultiSigAdmin {
         }
 
         access(Sign) fun signProposal(proposalId: UInt64, caller: Address) {
+            if !MultiSigAdmin.isAdmin(caller) {
+                panic("Only registered admins can sign proposals")
+            }
             if self.proposals[proposalId] == nil {
                 panic("Proposal not found")
             }
@@ -127,6 +130,9 @@ access(all) contract MultiSigAdmin {
         }
 
         access(Execute) fun executeProposal(proposalId: UInt64, caller: Address) {
+            if !MultiSigAdmin.isAdmin(caller) {
+                panic("Only registered admins can execute proposals")
+            }
             if self.proposals[proposalId] == nil {
                 panic("Proposal not found")
             }
@@ -207,31 +213,26 @@ access(all) contract MultiSigAdmin {
         emit AdminAdded(admin: addr)
     }
 
-    access(all) fun addAdminFromContract(addr: Address) {
-        if !self.isAdmin(self.account.address) {
-            panic("Only existing admins can add new admins")
-        }
-        self.addAdminInternal(addr)
-    }
-
-    access(all) fun removeAdminFromContract(addr: Address) {
-        if !self.isAdmin(self.account.address) {
-            panic("Only existing admins can remove admins")
-        }
-        if !self.isAdmin(addr) {
-            panic("Address is not an admin")
-        }
-        self.admins[addr] = false
-        var newList: [Address] = []
-        for a in self.adminList {
-            if a != addr {
-                newList.append(a)
-            }
-        }
-        self.adminList = newList
-        self.totalAdmins = self.totalAdmins - 1
-        emit AdminRemoved(admin: addr)
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    //  SECURITY NOTICE: Contract-level admin management functions
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    //  Cadence contract-level `access(all)` functions CANNOT verify the
+    //  caller's identity (no msg.sender equivalent). A pattern like:
+    //    `pre { MultiSigAdmin.isAdmin(self.account.address) }`
+    //  is a security NO-OP because self.account.address always resolves
+    //  to the contract account, which is always an admin of itself.
+    //
+    //  Therefore the following functions have been REMOVED:
+    //    - addAdminFromContract     — anyone could add themselves as admin
+    //    - removeAdminFromContract  — anyone could remove admins
+    //    - changeThreshold          — anyone could change signature threshold
+    //
+    //  Admin management MUST go through the Admin resource flow:
+    //    1. borrow Admin resource with entitlements
+    //    2. proposeAction → signProposal → executeProposal
+    //
+    // ═══════════════════════════════════════════════════════════════════════
 
     access(all) fun isAdmin(_ addr: Address): Bool {
         return self.admins[addr] ?? false
@@ -247,15 +248,5 @@ access(all) contract MultiSigAdmin {
 
     access(all) fun createAdmin(): @Admin {
         return <- create Admin()
-    }
-
-    access(all) fun changeThreshold(_ newThreshold: UInt64) {
-        pre {
-            newThreshold > 0: "Threshold must be > 0"
-            newThreshold <= self.totalAdmins: "Threshold must be <= total admins"
-        }
-        let oldThreshold = self.requiredSignatures
-        self.requiredSignatures = newThreshold
-        emit ThresholdChanged(oldThreshold: oldThreshold, newThreshold: newThreshold)
     }
 }

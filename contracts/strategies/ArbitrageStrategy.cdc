@@ -25,6 +25,7 @@ access(all) contract ArbitrageStrategy {
 
     access(all) event StrategyExecuted(vaultId: UInt64, amount: UFix64, yield: UFix64, apySource: String, mevLayer: String)
     access(all) event ArbitrageExecuted(dexA: String, dexB: String, profit: UFix64, gasUsed: UFix64, mevProtected: Bool)
+    access(all) event OpportunityDetected(vaultId: UInt64, dexA: String, dexB: String, estimatedProfit: UFix64, confidence: UFix64)
     access(all) event MEVProtectionApplied(vaultId: UInt64, jitter: UInt64, delay: UFix64, layer: String)
 
     init() {

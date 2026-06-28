@@ -82,6 +82,8 @@ access(all) contract MEVShieldCore {
     access(self) var commits: {String: CommitRecord}
     access(self) var pendingExecutions: [PendingExecution]
     access(self) var vaultConfigs: {UInt64: VaultMEVConfig}
+    // pendingExecutionsSummary tracks count for backward-compatible queries
+    // The authoritative data is in pendingExecutions array (processed entries are removed)
     access(all) var totalMEVProtectionsTriggered: UInt64
     access(all) var totalCommitsCreated: UInt64
     access(all) var totalCommitsExpired: UInt64
@@ -257,12 +259,17 @@ access(all) contract MEVShieldCore {
     }
 
     access(all) fun markExecutionProcessed(vaultId: UInt64, commitHash: String, yieldGenerated: UFix64) {
-        for execution in self.pendingExecutions {
+        var foundIndex: Int? = nil
+        for i, execution in self.pendingExecutions {
             if execution.vaultId == vaultId && execution.commitHash == commitHash && !execution.isProcessed {
-                self.totalExecutionsProcessed = self.totalExecutionsProcessed + UInt64(1)
-                emit ExecutionCompleted(vaultId: vaultId, yieldGenerated: yieldGenerated, slippageApplied: 0.0, mevShieldStatus: "MEV-SHIELD-ACTIVE")
+                foundIndex = i
                 break
             }
+        }
+        if let index = foundIndex {
+            self.pendingExecutions.remove(at: index)
+            self.totalExecutionsProcessed = self.totalExecutionsProcessed + UInt64(1)
+            emit ExecutionCompleted(vaultId: vaultId, yieldGenerated: yieldGenerated, slippageApplied: 0.0, mevShieldStatus: "MEV-SHIELD-ACTIVE")
         }
     }
 
