@@ -18,6 +18,7 @@ vi.mock('@onflow/fcl', () => {
       currentUser: { subscribe: vi.fn() },
       authenticate: vi.fn(),
       unauthenticate: vi.fn(),
+      getEventsAtBlockHeightRange: vi.fn(),
     },
     query: mockQuery,
     block: mockBlock,
@@ -25,6 +26,7 @@ vi.mock('@onflow/fcl', () => {
     decode: mockDecode,
     config: vi.fn(),
     currentUser: { subscribe: vi.fn() },
+    getEventsAtBlockHeightRange: vi.fn(),
   }
 })
 
@@ -32,12 +34,18 @@ vi.mock('@onflow/fcl', () => {
 vi.mock('lib/flow', () => ({
   useFlow: () => ({
     user: { loggedIn: true, addr: '0x1234' },
+    isConnected: true,
   }),
 }))
 
-import { useActivityFeed } from 'hooks/useActivityFeed'
+import React from 'react'
+import { ActivityProvider, useActivityFeed } from 'hooks/useActivityFeed'
 import * as fcl from '@onflow/fcl'
 import { renderHook, waitFor } from '@testing-library/react'
+
+function TestWrapper({ children }: { children: React.ReactNode }) {
+  return React.createElement(ActivityProvider, null, children)
+}
 
 describe('useActivityFeed', () => {
   beforeEach(() => {
@@ -57,7 +65,7 @@ describe('useActivityFeed', () => {
     mockFcl.send.mockResolvedValue({})
     mockFcl.decode.mockResolvedValue([])
 
-    const { result } = renderHook(() => useActivityFeed())
+    const { result } = renderHook(() => useActivityFeed(), { wrapper: TestWrapper })
 
     expect(result.current.loading).toBe(true)
     expect(result.current.activities).toEqual([])
@@ -79,7 +87,7 @@ describe('useActivityFeed', () => {
     mockFcl.send.mockResolvedValue({})
     mockFcl.decode.mockResolvedValue([])
 
-    const { result } = renderHook(() => useActivityFeed())
+    const { result } = renderHook(() => useActivityFeed(), { wrapper: TestWrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -95,7 +103,7 @@ describe('useActivityFeed', () => {
     // Make the first query fail
     mockFcl.query.mockRejectedValue(new Error('Network error'))
 
-    const { result } = renderHook(() => useActivityFeed())
+    const { result } = renderHook(() => useActivityFeed(), { wrapper: TestWrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -116,7 +124,7 @@ describe('useActivityFeed', () => {
     mockFcl.send.mockResolvedValue({})
     mockFcl.decode.mockResolvedValue([])
 
-    const { result } = renderHook(() => useActivityFeed())
+    const { result } = renderHook(() => useActivityFeed(), { wrapper: TestWrapper })
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)

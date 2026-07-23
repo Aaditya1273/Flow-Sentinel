@@ -12,7 +12,7 @@
  * 5. npx jest tests/hooks.test.ts
  */
 
-import { FlowService } from '../lib/flow-service'
+import { FlowService, buildPerformanceHistory } from '../lib/flow-service'
 
 // -------------------------------------------------------------------------
 // Mock FCL (Flow Client Library)
@@ -150,13 +150,13 @@ describe('FlowService.getVaultEvents()', () => {
 // FlowService — Performance History Tests
 // -------------------------------------------------------------------------
 
-describe('FlowService.buildPerformanceHistory()', () => {
+describe('buildPerformanceHistory()', () => {
   it('should build a performance history from deposit events', () => {
     const events = [
       { type: 'created' as const, vaultId: '0', amount: 100, timestamp: 1000, blockHeight: 1 },
       { type: 'deposit' as const, vaultId: '0', amount: 50, timestamp: 2000, blockHeight: 2 },
     ]
-    const history = FlowService.buildPerformanceHistory(events, 150)
+    const history = buildPerformanceHistory(events, 150)
     expect(history.length).toBe(3) // 2 events + final state
     expect(history[history.length - 1].cumulativePnl).toBe(0) // No yield yet
   })
@@ -167,7 +167,7 @@ describe('FlowService.buildPerformanceHistory()', () => {
       { type: 'deposit' as const, vaultId: '0', amount: 500, timestamp: 2000, blockHeight: 2 },
       { type: 'withdraw' as const, vaultId: '0', amount: 300, timestamp: 3000, blockHeight: 3 },
     ]
-    const history = FlowService.buildPerformanceHistory(events, 1250)
+    const history = buildPerformanceHistory(events, 1250)
     const final = history[history.length - 1]
     // Total deposited: 1000 + 500 = 1500
     // Total withdrawn: 300
@@ -177,7 +177,7 @@ describe('FlowService.buildPerformanceHistory()', () => {
   })
 
   it('should return an empty array for no events', () => {
-    const history = FlowService.buildPerformanceHistory([], 0)
+    const history = buildPerformanceHistory([], 0)
     expect(history.length).toBe(0)
   })
 })
