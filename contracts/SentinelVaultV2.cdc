@@ -18,10 +18,11 @@ access(all) contract SentinelVaultFinal {
     access(all) event VaultCreated(id: UInt64, owner: Address, name: String, strategyId: String, protectionLevel: UInt8)
     access(all) event StrategyExecuted(vaultId: UInt64, amount: UFix64, yieldGenerated: UFix64, jitterApplied: UInt64, mevShieldStatus: String)
     access(all) event EmergencyPause(vaultId: UInt64, owner: Address)
-    access(all) event DepositMade(vaultId: UInt64, amount: UFix64)
+    access(all) event DepositMade(vaultId: UInt64, amount: UFix64, feeCollected: UFix64)
     access(all) event WithdrawalMade(vaultId: UInt64, amount: UFix64)
     access(all) event YieldClaimed(vaultId: UInt64, amount: UFix64, recipient: Address)
-    access(all) event YieldReserveFunded(amount: UFix64, from: Address)
+    access(all) event YieldReserveFunded(amount: UFix64, from: Address, newReserveBalance: UFix64)
+    access(all) event ProtocolFeeCollected(vaultId: UInt64, feeAmount: UFix64, newReserveBalance: UFix64)
     access(all) event MEVShieldStatus(vaultId: UInt64, protectionLevel: UInt8, layersActive: UInt8, protectionsTriggered: UInt64)
     access(all) event MEVExecutionGuard(vaultId: UInt64, deviation: UFix64, allowed: Bool, reason: String)
     access(all) event MEVBlockDelay(vaultId: UInt64, jitterBlocks: UInt64, executeAtBlock: UInt64)
@@ -35,7 +36,14 @@ access(all) contract SentinelVaultFinal {
     access(all) var totalVaults: UInt64
     access(all) var totalValueLocked: UFix64
     access(all) var totalYieldDistributed: UFix64
+    access(all) var totalFeesCollected: UFix64    // Phase 2: cumulative protocol fees
     access(self) var yieldReserve: @FlowToken.Vault
+
+    // Phase 2: Protocol fee rate — 0.1% (10 basis points) on each deposit
+    // Automatically flows into yieldReserve to sustain real yield payouts.
+    access(all) fun getProtocolFeeRate(): UFix64 { return 0.001 }
+    // Minimum deposit threshold below which no fee is taken (< 0.01 FLOW)
+    access(all) fun getMinFeeThreshold(): UFix64 { return 0.01 }
     
     init() {
         self.VaultCollectionStoragePath = /storage/SentinelVaultV2Collection
@@ -43,6 +51,7 @@ access(all) contract SentinelVaultFinal {
         self.totalVaults = 0
         self.totalValueLocked = 0.0
         self.totalYieldDistributed = 0.0
+        self.totalFeesCollected = 0.0
         let emptyVault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>())
         self.yieldReserve <- emptyVault
     }
@@ -153,15 +162,38 @@ access(all) contract SentinelVaultFinal {
             return "FULL-MEV-SHIELD"
         }
 
+        // Phase 2: 0.1% protocol fee on every deposit auto-flows into yieldReserve.
+        // This makes the reserve self-sustaining — real yield can be distributed.
+        // Fee is only taken if deposit is above minimum threshold (0.01 FLOW).
         access(Deposit) fun deposit(from: @{FungibleToken.Vault}) {
             pre {
                 self.isActive: "Vault is paused"
                 from.balance >= 0.001: "Minimum deposit is 0.001 FLOW"
             }
-            let amount = from.balance
+            let grossAmount = from.balance
+
+            // Calculate protocol fee (0.1% of deposit, zero if below threshold)
+            var feeAmount: UFix64 = 0.0
+            if grossAmount >= SentinelVaultFinal.getMinFeeThreshold() {
+                feeAmount = grossAmount * SentinelVaultFinal.getProtocolFeeRate()
+            }
+            let netDeposit = grossAmount - feeAmount
+
+            // Split: fee → yieldReserve, net → user's flowVault
+            if feeAmount > 0.0 {
+                let feeVault <- (from as! @FlowToken.Vault).withdraw(amount: feeAmount)
+                SentinelVaultFinal.yieldReserve.deposit(from: <-feeVault)
+                SentinelVaultFinal.totalFeesCollected = SentinelVaultFinal.totalFeesCollected + feeAmount
+                emit ProtocolFeeCollected(
+                    vaultId: self.id,
+                    feeAmount: feeAmount,
+                    newReserveBalance: SentinelVaultFinal.yieldReserve.balance
+                )
+            }
+
             self.flowVault.deposit(from: <-from)
-            SentinelVaultFinal.totalValueLocked = SentinelVaultFinal.totalValueLocked + amount
-            emit DepositMade(vaultId: self.id, amount: amount)
+            SentinelVaultFinal.totalValueLocked = SentinelVaultFinal.totalValueLocked + netDeposit
+            emit DepositMade(vaultId: self.id, amount: netDeposit, feeCollected: feeAmount)
         }
         
         access(Withdraw) fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
@@ -183,16 +215,24 @@ access(all) contract SentinelVaultFinal {
             self.isActive = true
         }
 
+        // Phase 1 Fix #4: clamp to actual vault balance — never panic on insufficient balance.
+        // totalYieldAccrued tracks what the user is owed; the vault balance may be less
+        // if the yield reserve was partially funded. Pay out what is available.
         access(Withdraw) fun claimYield(): @{FungibleToken.Vault} {
             pre {
-                self.totalYieldAccrued > 0.0: "No yield to claim"
-                self.totalYieldAccrued <= self.flowVault.balance: "Insufficient vault balance"
+                self.totalYieldAccrued > 0.0: "No yield to claim — execute a strategy first"
             }
-            let yieldAmount = self.totalYieldAccrued
-            let yieldVault <- self.flowVault.withdraw(amount: yieldAmount)
-            self.totalYieldAccrued = 0.0
-            SentinelVaultFinal.totalYieldDistributed = SentinelVaultFinal.totalYieldDistributed + yieldAmount
-            emit YieldClaimed(vaultId: self.id, amount: yieldAmount, recipient: self.vaultOwner)
+            let owed = self.totalYieldAccrued
+            // Clamp: never withdraw more than the vault actually holds
+            let claimable = owed < self.flowVault.balance ? owed : self.flowVault.balance
+            pre {
+                claimable > 0.0: "Vault balance is zero — yield reserve may need funding"
+            }
+            let yieldVault <- self.flowVault.withdraw(amount: claimable)
+            // Reduce accrued by what was actually paid; remainder stays pending
+            self.totalYieldAccrued = owed - claimable
+            SentinelVaultFinal.totalYieldDistributed = SentinelVaultFinal.totalYieldDistributed + claimable
+            emit YieldClaimed(vaultId: self.id, amount: claimable, recipient: self.vaultOwner)
             return <-yieldVault
         }
 
@@ -222,22 +262,22 @@ access(all) contract SentinelVaultFinal {
         }
 
         // ── MEV-Protected Strategy Execution ──
+        // performStrategy: auto-generates commit hash on-chain using revertibleRandom nonce.
+        // Use this for the simplified single-transaction path (trigger_strategy_v2.cdc).
         access(StrategyExecution) fun performStrategy(executor: @{SentinelInterfaces.IStrategy}) {
-            pre {
-                self.isActive: "Vault is paused"
-            }
+            pre { self.isActive: "Vault is paused" }
             let currentBalance = self.flowVault.balance
-            if currentBalance == 0.0 {
-                destroy executor
-                return
-            }
+            if currentBalance == 0.0 { destroy executor; return }
+
             let nonce = revertibleRandom<UInt64>()
-            let commitHash = MEVShieldCore.buildCommitPreimage(
+            let deadlineBlock = getCurrentBlock().height + MEVShieldCore.getMEVCommitBlocks()
+            // Phase 1 Fix: use real SHA3_256 hash
+            let commitHash = MEVShieldCore.buildCommitHash(
                 vaultId: self.id,
                 nonce: nonce,
                 amount: currentBalance,
                 strategyId: self.strategyId,
-                deadlineBlock: getCurrentBlock().height + MEVShieldCore.getMEVCommitBlocks(),
+                deadlineBlock: deadlineBlock,
                 committer: self.vaultOwner
             )
             var expectedAPY = 0.0
@@ -259,20 +299,17 @@ access(all) contract SentinelVaultFinal {
             )
         }
 
+        // executeStrategyWithMEV: used by the two-step commit-reveal path (mev_reveal.cdc).
+        // Caller has already committed the hash on-chain via mev_commit.cdc.
         access(StrategyExecution) fun executeStrategyWithMEV(
             executor: @{SentinelInterfaces.IStrategy},
-            commitHash: String,
+            commitHash: [UInt8],
             expectedAPY: UFix64,
             nonce: UInt64
         ) {
-            pre {
-                self.isActive: "Vault is paused"
-            }
+            pre { self.isActive: "Vault is paused" }
             let currentBalance = self.flowVault.balance
-            if currentBalance == 0.0 { 
-                destroy executor
-                return 
-            }
+            if currentBalance == 0.0 { destroy executor; return }
             self.executeWithMEVCheck(
                 executor: <-executor,
                 commitHash: commitHash,
@@ -284,12 +321,12 @@ access(all) contract SentinelVaultFinal {
         
         access(self) fun executeWithMEVCheck(
             executor: @{SentinelInterfaces.IStrategy},
-            commitHash: String,
+            commitHash: [UInt8],
             expectedAPY: UFix64,
             nonce: UInt64,
             currentBalance: UFix64
         ) {
-            var protectionStatus = "MEV-SHIELD-ACTIVE"
+            var protectionStatus = "MEV-SHIELD-ACTIVE|SHA3-HASH"
             var shouldAbort: Bool = false
             var abortReason: String = ""
             let mevConfig = MEVShieldCore.getVaultMEVConfig(vaultId: self.id)
@@ -297,44 +334,45 @@ access(all) contract SentinelVaultFinal {
             let bdEnabled = mevConfig?.blockDelayEnabled ?? true
             let protectionLevel = mevConfig?.protectionLevel ?? 3
             let slippageBps = mevConfig?.slippageBps ?? 300.0
-            
+            let commitHashHex = MEVShieldCore.hashToHex(commitHash)
+
             // LAYER 1: COMMIT-REVEAL GUARD
             if crEnabled {
-                if let commit = MEVShieldCore.getCommit(commitHash: commitHash) {
+                if let commit = MEVShieldCore.getCommit(commitHashHex: commitHashHex) {
                     if commit.isRevealed {
                         protectionStatus = protectionStatus.concat("|CR-OK")
                     } else if commit.isExpired {
                         shouldAbort = true
-                        abortReason = "MEV: commit expired"
+                        abortReason = "MEV: commit expired — resubmit with new nonce"
                     } else {
                         shouldAbort = true
-                        abortReason = "MEV: commit not yet revealed"
+                        abortReason = "MEV: commit not yet revealed — call mev_reveal.cdc first"
                     }
                 } else {
                     if protectionLevel >= UInt8(3) {
                         shouldAbort = true
-                        abortReason = "MEV: commit required"
+                        abortReason = "MEV: Full protection requires prior commit — call mev_commit.cdc first"
                     } else {
                         protectionStatus = protectionStatus.concat("|CR-SKIP")
                     }
                 }
             }
-            
+
             if shouldAbort {
                 emit MEVExecutionGuard(vaultId: self.id, deviation: 0.0, allowed: false, reason: abortReason)
                 destroy executor
                 return
             }
-            
+
             // LAYER 2: VRF BLOCK-DELAY JITTER
             var jitterBlocks: UInt64 = 0
             if bdEnabled {
                 jitterBlocks = revertibleRandom<UInt64>() % (MEVShieldCore.getMEVDelayMax() + UInt64(1))
-                protectionStatus = protectionStatus.concat("|VRF-").concat(jitterBlocks.toString()).concat("blocks")
+                protectionStatus = protectionStatus.concat("|VRF-").concat(jitterBlocks.toString()).concat("blk")
                 emit MEVBlockDelay(vaultId: self.id, jitterBlocks: jitterBlocks, executeAtBlock: getCurrentBlock().height + jitterBlocks)
             }
-            
-            // LAYER 3: PRICE DEVIATION GUARD
+
+            // LAYER 3: PRICE DEVIATION GUARD (now uses correct OR logic)
             var actualOracleAPY = expectedAPY
             if let oracleData = YieldOracle.getYieldData(self.strategyId) {
                 actualOracleAPY = oracleData.apy
@@ -351,10 +389,10 @@ access(all) contract SentinelVaultFinal {
                 }
                 protectionStatus = protectionStatus.concat("|PG-OK(").concat(oracleCheck.deviation.toString()).concat(")")
             }
-            
+
             // EXECUTE STRATEGY
             let yieldAmount = executor.executeStrategy(vaultBalance: currentBalance)
-            
+
             if yieldAmount > 0.0 {
                 let availableReserve = SentinelVaultFinal.yieldReserve.balance
                 let actualDistribute = yieldAmount < availableReserve ? yieldAmount : availableReserve
@@ -368,12 +406,12 @@ access(all) contract SentinelVaultFinal {
                 }
             }
             self.lastExecution = getCurrentBlock().timestamp
-            
-            // LAYER 4: EXECUTION QUEUE
-            MEVShieldCore.markExecutionProcessed(vaultId: self.id, commitHash: commitHash, yieldGenerated: yieldAmount)
-            
+
+            // LAYER 4: EXECUTION QUEUE — mark processed, remove from pending
+            MEVShieldCore.markExecutionProcessed(vaultId: self.id, commitHashHex: commitHashHex, yieldGenerated: yieldAmount)
+
             emit StrategyExecuted(vaultId: self.id, amount: currentBalance, yieldGenerated: yieldAmount, jitterApplied: jitterBlocks, mevShieldStatus: protectionStatus)
-            
+
             destroy executor
         }
     }
@@ -439,17 +477,13 @@ access(all) contract SentinelVaultFinal {
     access(all) fun fundYieldReserve(from: @{FungibleToken.Vault}) {
         let amount = from.balance
         self.yieldReserve.deposit(from: <-from)
-        emit YieldReserveFunded(amount: amount, from: self.account.address)
+        emit YieldReserveFunded(amount: amount, from: self.account.address, newReserveBalance: self.yieldReserve.balance)
     }
 
-    // MultiSig-guarded: fund the yield reserve from collected protocol rewards
-    // The yield reserve must be periodically funded by protocol revenue or staking rewards
-    // Without a funded reserve, strategy execution will calculate yield but not distribute real tokens
     access(all) fun fundYieldReserveWithAuth(from: @{FungibleToken.Vault}) {
-        // pre { MultiSigAdmin.isAdmin(self.account.address): "Only MultiSig admins can fund reserve" }
         let amount = from.balance
         self.yieldReserve.deposit(from: <-from)
-        emit YieldReserveFunded(amount: amount, from: self.account.address)
+        emit YieldReserveFunded(amount: amount, from: self.account.address, newReserveBalance: self.yieldReserve.balance)
     }
 
     // Get current yield reserve balance
@@ -500,18 +534,34 @@ access(all) contract SentinelVaultFinal {
         return <-vault
     }
     
-    access(all) fun getTotalValueLocked(): UFix64 {
-        return self.totalValueLocked
+    access(all) fun getTotalValueLocked(): UFix64 { return self.totalValueLocked }
+    access(all) fun getTotalVaults(): UInt64 { return self.totalVaults }
+    access(all) fun getTotalYieldDistributed(): UFix64 { return self.totalYieldDistributed }
+    access(all) fun getTotalFeesCollected(): UFix64 { return self.totalFeesCollected }
+    access(all) fun getProtocolFeeRateBps(): UFix64 { return self.getProtocolFeeRate() * 10000.0 }
+
+    // Phase 2: Comprehensive protocol stats — used by GET_PROTOCOL_STATS script
+    access(all) fun getProtocolStats(): {String: AnyStruct} {
+        return {
+            "totalVaults": self.totalVaults,
+            "totalValueLocked": self.totalValueLocked,
+            "totalYieldDistributed": self.totalYieldDistributed,
+            "totalFeesCollected": self.totalFeesCollected,
+            "yieldReserveBalance": self.yieldReserve.balance,
+            "protocolFeeRateBps": self.getProtocolFeeRate() * 10000.0,
+            "contractStatus": self.getContractStatus(),
+            // Reserve health thresholds (in FLOW)
+            "reserveHealthCritical": 10.0,   // < 10 FLOW = critical
+            "reserveHealthWarning": 100.0,   // < 100 FLOW = warning
+            "reserveHealthGood": 100.0,      // >= 100 FLOW = good
+            "reserveStatus": self.yieldReserve.balance < 10.0
+                ? "CRITICAL"
+                : self.yieldReserve.balance < 100.0
+                    ? "WARNING"
+                    : "HEALTHY"
+        }
     }
-    
-    access(all) fun getTotalVaults(): UInt64 {
-        return self.totalVaults
-    }
-    
-    access(all) fun getTotalYieldDistributed(): UFix64 {
-        return self.totalYieldDistributed
-    }
-    
+
     access(all) fun getGlobalMEVStats(): {String: AnyStruct} {
         return MEVShieldCore.getMEVStats()
     }
