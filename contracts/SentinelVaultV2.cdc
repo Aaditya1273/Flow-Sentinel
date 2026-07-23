@@ -247,7 +247,8 @@ access(all) contract SentinelVaultFinal {
             MEVShieldCore.createCommit(
                 vaultId: self.id,
                 commitHash: commitHash,
-                protectionLevel: self.getProtectionLevel()
+                protectionLevel: self.getProtectionLevel(),
+                committedBy: self.vaultOwner
             )
             self.executeWithMEVCheck(
                 executor: <-executor,
@@ -364,7 +365,6 @@ access(all) contract SentinelVaultFinal {
                 }
                 if actualDistribute < yieldAmount {
                     emit YieldReserveInsufficient(vaultId: self.id, requested: yieldAmount, available: availableReserve)
-                }
                 }
             }
             self.lastExecution = getCurrentBlock().timestamp
