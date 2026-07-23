@@ -16,7 +16,19 @@ access(all) contract SentinelVaultFinal {
     
     // Events
     access(all) event VaultCreated(id: UInt64, owner: Address, name: String, strategyId: String, protectionLevel: UInt8)
-    access(all) event StrategyExecuted(vaultId: UInt64, amount: UFix64, yieldGenerated: UFix64, jitterApplied: UInt64, mevShieldStatus: String)
+    // Phase 3: StrategyExecuted now includes rich provenance from StrategyResult
+    access(all) event StrategyExecuted(
+        vaultId: UInt64,
+        amount: UFix64,
+        yieldGenerated: UFix64,
+        realYieldFromProtocol: UFix64,
+        protocolSource: String,
+        realizedAPY: UFix64,
+        usedRealProtocol: Bool,
+        confidence: UFix64,
+        jitterApplied: UInt64,
+        mevShieldStatus: String
+    )
     access(all) event EmergencyPause(vaultId: UInt64, owner: Address)
     access(all) event DepositMade(vaultId: UInt64, amount: UFix64, feeCollected: UFix64)
     access(all) event WithdrawalMade(vaultId: UInt64, amount: UFix64)
