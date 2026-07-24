@@ -1,21 +1,23 @@
-<img width="1500" height="500" alt="flow senital" src="https://github.com/user-attachments/assets/9e684674-30bf-4dbc-8de4-d6b0405573d3" />
+<img width="1500" height="500" alt="Flow Sentinel" src="https://github.com/user-attachments/assets/9e684674-30bf-4dbc-8de4-d6b0405573d3" />
 
 <h1 align="center">Flow Sentinel</h1>
 
 <p align="center">
-  <b>The Autonomous, MEV-Resistant Wealth Manager on Flow Blockchain</b>
+  <b>Protected Yield Vaults on the Flow Blockchain</b>
+  <br />
+  <i>Higher net yield · Safer execution · Simpler DeFi</i>
 </p>
 
 <p align="center">
   <a href="https://flow.com"><img src="https://img.shields.io/badge/Flow-Blockchain-00D4AA?style=flat-square&logo=flow&logoColor=white" alt="Flow Blockchain" /></a>
   <a href="https://cadence-lang.org"><img src="https://img.shields.io/badge/Cadence-1.0-00EF8B?style=flat-square" alt="Cadence 1.0" /></a>
-  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js" alt="Next.js 15" /></a>
-  <a href=""><img src="https://img.shields.io/badge/Status-LIVE_on_Testnet-22c55e?style=flat-square" alt="Status" /></a>
+  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js" alt="Next.js 16" /></a>
+  <a href=""><img src="https://img.shields.io/badge/Status-Testnet_Configured-22c55e?style=flat-square" alt="Status" /></a>
   <a href="./LICENSE.txt"><img src="https://img.shields.io/badge/License-MIT-f59e0b?style=flat-square" alt="License" /></a>
 </p>
 
 <p align="center">
-  <i>Transform static liquidity into autonomous, MEV-protected capital — with zero daily maintenance.</i>
+  <i>Transform static liquidity into protected, yield-bearing capital on the Flow blockchain.</i>
 </p>
 
 <br />
@@ -24,35 +26,17 @@
 
 ## 📋 Table of Contents
 
-- [📋 Table of Contents](#-table-of-contents)
 - [🚩 The Problem](#-the-problem)
 - [💡 The Solution](#-the-solution)
-  - [MEV Resistance Architecture](#mev-resistance-architecture)
-- [🌟 What Makes Flow Sentinel Unique](#-what-makes-flow-sentinel-unique)
+- [🌟 Key Features](#-key-features)
 - [🏗️ System Architecture](#️-system-architecture)
-  - [Contract Architecture](#contract-architecture)
   - [MEV-Shield Pro — 4 Protection Layers](#mev-shield-pro--4-protection-layers)
-  - [MEV Protection Flow](#mev-protection-flow)
 - [🔄 User Workflow](#-user-workflow)
 - [🛠️ Technical Stack](#️-technical-stack)
 - [📁 Project Structure](#-project-structure)
 - [🚀 Getting Started](#-getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Local Development](#local-development)
-  - [Environment Variables](#environment-variables)
 - [🧪 Testing](#-testing)
-  - [Run the MEV Protection Test Suite](#run-the-mev-protection-test-suite)
-  - [On-Chain Verification](#on-chain-verification)
 - [📜 Smart Contracts](#-smart-contracts)
-  - [Core Contracts](#core-contracts)
-  - [Strategy Contracts](#strategy-contracts)
-  - [Transactions](#transactions)
-  - [Deployment Order](#deployment-order)
-- [📊 MEV Protection (Full Technical Deep Dive)](#-mev-protection-full-technical-deep-dive)
-  - [Layer 1 — Commit-Reveal (🔴 Mempool Frontrunning)](#layer-1--commit-reveal--mempool-frontrunning)
-  - [Layer 2 — VRF Block-Delay Jitter (⏱️ Timing Games)](#layer-2--vrf-block-delay-jitter-️-timing-games)
-  - [Layer 3 — Price Deviation Guard (💹 Price Manipulation)](#layer-3--price-deviation-guard--price-manipulation)
-  - [Layer 4 — Execution Queue (🔄 Sandwich Attacks)](#layer-4--execution-queue--sandwich-attacks)
 - [🔬 MEV Protection Comparison](#-mev-protection-comparison)
 - [🗺️ Roadmap](#️-roadmap)
 - [📄 License](#-license)
@@ -61,94 +45,72 @@
 
 ## 🚩 The Problem
 
-Decentralized Finance (DeFi) is one of the most transformative innovations in finance — yet it remains inaccessible to the masses due to three fundamental broken pillars:
+Most DeFi users face three fundamental challenges that keep their capital idle:
 
-### 🔴 The Invisible Tax of MEV
-Every on-chain transaction is visible in the public mempool before it's confirmed. **Maximal Extractable Value (MEV)** bots continuously scan this mempool, identifying profitable transactions to:
+### 🔴 Yield is Fragmented and Complex
 
-- **Frontrun**: Buy an asset seconds before your large purchase, then dump it on you at a higher price
-- **Sandwich**: Place a buy order before your transaction and a sell order immediately after, skimming profit from both sides
-- **Backrun**: Exploit the price impact of your transaction for arbitrage
+DeFi yield opportunities are scattered across hundreds of protocols. Managing positions requires constant attention — claiming rewards, restaking, rebalancing, and monitoring. Most users don't have the time or expertise to actively manage positions across multiple protocols.
 
-This invisible tax extracts **>$500M annually** from DeFi users, disproportionately hurting larger trades and automated strategies.
+### 🔴 The Hidden Cost of MEV
 
-### 🔴 Fragmented Complexity
-DeFi yield opportunities are scattered across hundreds of protocols:
-
-- Liquid Staking (Lido, Stader, EigenLayer)
-- DEX Liquidity Pools (Uniswap, Balancer, Trader Joe)
-- Yield Aggregators (Yearn, Beefy, Harvest)
-- Lending Markets (Aave, Compound, Morpho)
-
-Managing positions across all these protocols requires constant attention — claiming rewards, restaking, rebalancing, and monitoring — creating unsustainable **manual fatigue**.
+Every on-chain transaction is visible in the public mempool before confirmation. **Maximal Extractable Value (MEV)** bots exploit this visibility to frontrun, sandwich, and backrun trades — extracting **>$500M annually** from DeFi users. This invisible tax disproportionately impacts larger trades and automated strategies, silently eroding yields.
 
 ### 🔴 Capital Inefficiency
-Most DeFi users hold their assets in simple wallets, earning zero yield, because the complexity of active management outweighs the perceived benefits. **Static liquidity** fails to participate in the broader economy, leaving billions in idle capital.
 
-### 🔴 UX Friction for Institutions
-Institutional adoption of DeFi is stalled by:
-- Complex wallet interactions and seed phrase management
-- Lack of passkey/biometric authorization
-- No auditable, transparent execution trail
-- No MEV guarantees for large capital deployments
+The vast majority of DeFi users hold assets in simple wallets earning zero yield. The complexity and risk of active management outweigh the perceived benefits, leaving billions in idle capital.
 
 ---
 
-## 💡 The Solution
+## 💡 The Solution: Protected Yield Vaults
 
-**Flow Sentinel** transforms static liquidity into autonomous, MEV-protected capital. Think of it as a **self-driving car for your crypto assets** — once you define your strategy and deposit capital, the Sentinel handles everything autonomously on-chain.
+**Flow Sentinel** enables anyone to deploy capital into smart-contract vaults that autonomously execute yield-generating strategies on the Flow blockchain. Each vault is protected by a built-in 4-layer security system that guards against MEV attacks — ensuring you capture the returns you earn.
 
-### Core Innovation: MEV Resistance by Architecture
+Think of it as a **self-driving yield account** for your FLOW tokens:
+- **Deposit once**, vaults execute strategies automatically
+- **MEV protection built in** — 4 layers, no configuration needed
+- **Real yields** from Flow staking and DeFi protocols
+- **Full transparency** — every operation verifiable on-chain
 
-Flow Sentinel is the **first DeFi wealth manager to implement a full 4-layer MEV protection stack** directly on the Flow Blockchain, inspired by Flashbots MEV-Boost (Ethereum's gold standard) but adapted for Flow's unique Cadence 1.0 runtime.
+### Core Innovation: Built-in Protection at the Protocol Level
 
-| Concept | Problem | Flow Sentinel Solution |
-|---------|---------|----------------------|
-| **Mempool Frontrunning** | Bots see and frontrun your transactions | **Commit-Reveal**: Execution hash is committed first, revealed later — bots can't see what you're doing |
-| **Timing Games** | Bots predict and exploit execution timing | **VRF Block-Delay Jitter**: Random 0-5 block delay using Flow's native verifiable randomness — unpredictable timing |
-| **Price Manipulation** | Bots manipulate oracles before your trade | **Price Deviation Guard**: Expected APY vs real-time oracle APY — trades abort if deviation exceeds configured slippage (default 3%) |
-| **Sandwich Attacks** | Bots sandwich large trades | **Execution Queue**: VRF-shuffled processing order — nobody knows which trade executes when |
+Flow Sentinel's vaults include a 4-layer execution protection system engineered directly in Cadence 1.0 smart contracts. It works silently in the background — you get higher net yields because attacks are blocked before they happen, not after.
 
-### Beyond MEV Protection
-
-Flow Sentinel also delivers:
-
-- **🤖 Zero-Click Automation**: Once configured, vaults autonomously execute strategies on-chain — harvest yields, restake rewards, rebalance positions
-- **🔐 Passkey Authorization**: Biometric (FaceID/TouchID) vault operations for institutional-grade security
-- **📊 Bloomberg-Terminal UI**: Professional-grade dashboard with real-time P&L, vault analytics, and strategy performance tracking
-- **🔗 Verifiable On-Chain History**: Every yield harvest, rebalance, and protection trigger is a transparent, explorable on-chain event
-- **⚡ Multi-Strategy Execution**: Liquid Staking, Yield Farming, and Arbitrage — all managed from a single vault interface
+| Threat | How It Steals Yield | How Sentinel Protects |
+|--------|--------------------|-----------------------|
+| **Frontrunning** | Bots see your transaction and buy ahead | **Commit-Reveal**: Execution details hidden from mempool until confirmed |
+| **Timing Attacks** | Bots predict exactly when your trade executes | **VRF Random Delay**: Unpredictable 0-5 block delay |
+| **Price Manipulation** | Bots move the market before your strategy runs | **Deviation Guard**: Checks real vs expected APY before executing |
+| **Sandwich Attacks** | Bots bracket your trade with their own orders | **Execution Queue**: Random execution order — attackers can't predict position |
 
 ---
 
-## 🌟 What Makes Flow Sentinel Unique
+## 🌟 Key Features
 
-### 1. **Flow-Native MEV Protection**
-The only wealth manager to implement **Flashbots-inspired MEV resistance** directly in Cadence 1.0 smart contracts. We don't just talk about MEV protection — we deliver it in 4 verifiable, on-chain layers.
+### 1. **Protected Yield Vaults**
+Deposit FLOW into smart-contract vaults that autonomously execute yield strategies. Each vault includes a 4-layer execution protection system that silently guards against MEV attacks — you earn higher net yields because value isn't lost to bots.
 
-### 2. **VRF-Powered Security**
-Leveraging Flow's native `revertibleRandom()` for every critical operation:
-- Commit-reveal nonce generation
-- Block-delay jitter (unpredictable execution timing)
-- Execution queue shuffling (prevents sandwich attacks)
+### 2. **Multi-Strategy Execution**
+Three strategy contracts with oracle-powered yield from real Flow DeFi:
+- **Liquid Staking**: Real epoch staking rewards from `FlowIDTableStaking` (APY tracked via on-chain oracle)
+- **Yield Farming**: Multi-protocol allocation across IncrementFi, Flowty, FlowSwap with VRF-shuffled execution
+- **Arbitrage**: Cross-DEX spread detection with VRF-shuffled DEX scan order
 
-### 3. **Zero-Daily-Maintenance Architecture**
-Unlike traditional DeFi positions that require daily claiming, restaking, and monitoring, Flow Sentinel vaults execute autonomously on-chain:
-- `executeStrategyWithMEV()` is the single entry point for all strategy execution
-- MEV protection is applied automatically to every execution
-- Yield accrues transparently in the vault, claimable at any time
+### 3. **Built-in Protection (4 Layers)**
+Every vault is protected by a stack of 4 on-chain guards that prevent frontrunning, sandwich attacks, timing exploitation, and price manipulation. Protection levels are configurable per vault (None → Basic → Standard → Full).
 
-### 4. **Institutional-Grade UX from Day One**
-- Passkey/biometric vault authorization (via WebAuthn)
-- Professional analytics dashboard with real-time P&L charts
-- Configurable MEV protection levels (None → Basic → Standard → Full)
-- Auditor-friendly: every operation emits structured, explorable events
+### 4. **Professional Analytics Dashboard**
+Real-time performance tracking with:
+- On-chain vault balances and event history
+- Sharpe and Sortino risk-adjusted return ratios
+- Portfolio breakdown by strategy allocation
+- Performance chart from real blockchain events
+- Oracle freshness monitoring with staleness alerts
 
-### 5. **Production-Ready Testnet Deployment**
-- All 10 contracts deployed and verified on Flow Testnet
-- Full 4-layer MEV protection test suite passing
-- TypeScript frontend with zero compilation errors
-- Next.js 15 with App Router for optimal performance
+### 5. **Autonomous Execution**
+Once configured, vaults execute strategies through on-chain transactions without daily management. Yield accrues transparently and is claimable at any time. Scheduled execution via Netlify keeper functions (or your own automation).
+
+### 6. **Dual Wallet Support**
+Flow Wallet (native Cadence) and EVM wallets (MetaMask/RainbowKit via WalletConnect).
 
 ---
 
@@ -160,7 +122,7 @@ Unlike traditional DeFi positions that require daily claiming, restaking, and mo
 ┌────────────────────────────────────────────────────────────────────┐
 │                        Flow Sentinel                                │
 ├──────────────────────┬──────────────────────┬──────────────────────┤
-│   Core Contracts     │   MEV Protection     │   Strategies          │
+│   Vault Contracts    │   Protection Layer   │   Strategies          │
 │                      │                      │                      │
 │  SentinelVaultFinal  │   MEVShieldCore      │  LiquidStakingStrat   │
 │  ┌──────────────┐    │   ┌──────────────┐    │  ┌──────────────┐    │
@@ -184,12 +146,12 @@ Unlike traditional DeFi positions that require daily claiming, restaking, and mo
 └──────────────────────┴──────────────────────┴──────────────────────┘
 ```
 
-### MEV-Shield Pro — 4 Protection Layers
+### Sentinel Protection Layers
 
 ```
                     ╔═══════════════════════════════╗
-                    ║     MEV-SHIELD PRO            ║
-                    ║   Full Protection Active      ║
+                    ║  SENTINEL PROTECTION SYSTEM    ║
+                    ║  4 Layers — Always Active     ║
                     ╚═══════════════════════════════╝
                              │
           ┌──────────────────┼──────────────────┐
@@ -213,70 +175,6 @@ Unlike traditional DeFi positions that require daily claiming, restaking, and mo
                                       └──────────────┘
 ```
 
-### MEV Protection Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User/Mastermind
-    participant C as MEVShieldCore
-    participant V as SentinelVaultFinal
-    participant S as Strategy
-    participant O as YieldOracle
-
-    Note over U,O: LAYER 1 — COMMIT-REVEAL
-    U->>C: createCommit(vaultId, commitHash, level=3)
-    C-->>U: CommitCreated (stored, hidden)
-
-    Note over U,O: LAYER 2 — VRF BLOCK-DELAY JITTER
-    U->>C: revealExecution(vaultId, commitHash, preimage...)
-    C->>C: verify preimage hash ✓
-    C->>C: revertibleRandom() → jitterBlocks (0-5)
-    C-->>U: ExecutionScheduled (at block N + jitter)
-
-    Note over U,O: LAYER 3 — PRICE DEVIATION GUARD
-    V->>O: getYieldData(strategyId)
-    O-->>V: actualOracleAPY
-    V->>C: checkPriceDeviation(expectedAPY, actualAPY, slippage)
-    C-->>V: shouldExecute=true (deviation within bounds)
-
-    Note over U,O: LAYER 4 — EXECUTION QUEUE
-    V->>S: executeStrategy(vaultBalance)
-    S-->>V: yieldGenerated
-    V->>C: markExecutionProcessed(commitHash)
-    C->>C: vrfShuffle(pendingExecutions)
-    C-->>U: ExecutionCompleted (yield, status)
-```
-
-### User → Vault → Strategy Flow
-
-```mermaid
-graph TD
-    User((User)) -->|1. Create Vault<br/>(with MEV config)| CreateVault[SentinelVaultFinal.createVault]
-    CreateVault -->|2. Register| MEV[MEVShieldCore.registerVaultMEV]
-    CreateVault -->|3. Store| Collection[(VaultCollection)]
-    
-    User -->|4. Deposit FLOW| Deposit[SentinelVaultFinal.deposit]
-    Deposit --> Vault[(Vault Resource)]
-    
-    User -->|5. Trigger Strategy| Trigger[mev_reveal / mev_execute]
-    Trigger -->|6. Create Commit| MEV
-    MEV -->|7. Reveal + VRF Jitter| MEV
-    
-    subgraph "MEV-Protected Execution"
-        MEV -->|8. Price Guard| Vault
-        Vault -->|9. Execute| Strategy{Strategy Engine}
-        Strategy -->|10a. Stake| LST[Liquid Staking]
-        Strategy -->|10b. Farm| Farm[Yield Farming]
-        Strategy -->|10c. Arbitrage| Arb[DEX Arbitrage]
-    end
-    
-    Strategy -->|11. Yield Generated| Vault
-    Vault -->|12. Event Emitted| Chain[(On-Chain Log)]
-    
-    User -.->|Query Vault Info| Script[get_vault_info.cdc]
-    Script -- MEV Stats --> User
-```
-
 ### Data Flow Architecture
 
 ```mermaid
@@ -286,22 +184,22 @@ graph LR
         EV[Events]
         ST[Script Queries]
     end
-    
+
     subgraph "Service Layer"
         FCL[FCL Client<br/>@onflow/fcl]
         FSV[FlowService<br/>TypeScript Class]
     end
-    
+
     subgraph "State Layer"
         Hooks[React Hooks<br/>useVaultData<br/>useActivityFeed]
         CTX[FlowContext<br/>Wallet State]
     end
-    
+
     subgraph "UI Layer"
         Pages[Next.js Pages<br/>Dashboard / Vaults / Portfolio]
         Comp[Components<br/>VaultCard / Charts]
     end
-    
+
     SC -- Events --> FCL
     SC -- Script Results --> FCL
     FCL -- JSON Data --> FSV
@@ -320,7 +218,6 @@ Choose Flow Wallet (native Cadence) or EVM Gateway (MetaMask/RainbowKit)
 
 ### 2. **Create a Vault**
 ```bash
-# Via the CLI or frontend:
 flow transactions send transactions/init_sentinel.cdc \
     --args-json '[
         {"type": "String", "value": "My MEV-Protected Vault"},
@@ -331,7 +228,7 @@ flow transactions send transactions/init_sentinel.cdc \
 
 Your vault is created with **Full MEV Protection (Level 3)** by default:
 - ✅ Layer 1 — Commit-Reveal: Active
-- ✅ Layer 2 — VRF Block-Delay: Active  
+- ✅ Layer 2 — VRF Block-Delay: Active
 - ✅ Layer 3 — Price Deviation Guard: Active (3% slippage)
 - ✅ Layer 4 — Execution Queue: Active
 
@@ -341,20 +238,16 @@ Deposit FLOW tokens into your vault. The vault balance is tracked on-chain.
 ### 4. **Trigger Strategy Execution (MEV-Protected)**
 Two options:
 
-**🔴 Full Protection (Recommended):** Commit-Reveal flow
+**🔴 Full Protection (Recommended):** Two-step Commit-Reveal flow
 ```bash
 # Step 1: Generate commit hash off-chain
 # Step 2: Commit (hash hidden from mempool)
 flow transactions send transactions/mev_commit.cdc \
-    --args-json '[
-        {"type": "UInt64", "value": "0"},
-        {"type": "String", "value": "SENTINEL-MEV-COMMIT:0:12345:100.0:liquid-staking-pro:1000000:0xc13..."},
-        {"type": "UInt8", "value": "3"}
-    ]' --network testnet
+    --args-json '[...]' --network testnet
 
 # Step 3: Reveal + Execute (after commit window)
 flow transactions send transactions/mev_reveal.cdc \
-    --args-json '[...preimage params...]' --network testnet
+    --args-json '[...]' --network testnet
 ```
 
 **🟡 Standard Protection:** Direct execution with VRF jitter + price guard
@@ -362,6 +255,8 @@ flow transactions send transactions/mev_reveal.cdc \
 flow transactions send transactions/mev_execute_direct.cdc \
     --args-json '[...]' --network testnet
 ```
+
+> **Note:** Strategy execution requires manual transaction submission. There is no on-chain or off-chain automated scheduler. A user or keeper must call `mev_commit.cdc` + `mev_reveal.cdc` (or `mev_execute_direct.cdc`) to trigger each execution cycle.
 
 ### 5. **Monitor & Claim**
 Use the web dashboard to:
@@ -378,12 +273,13 @@ Use the web dashboard to:
 | Layer | Technology | Purpose |
 |:------|:-----------|:--------|
 | **Blockchain** | [Flow (Cadence 1.0)](https://cadence-lang.org) | Smart contract runtime with native randomness |
-| **Smart Contracts** | 10 Cadence contracts | Vault logic, MEV protection, strategy execution |
-| **Web Framework** | [Next.js 15](https://nextjs.org) (App Router) | SSR, React Server Components, optimized builds |
+| **Smart Contracts** | 9 Cadence contracts | Vault logic, MEV protection, strategy execution |
+| **Web Framework** | [Next.js 16](https://nextjs.org) (App Router) | SSR, React Server Components, optimized builds |
 | **UI Library** | [React 19](https://react.dev) | Component-based UI architecture |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com) | Utility-first CSS with glassmorphism design |
-| **Animations** | [Framer Motion](https://framer.com/motion) | 60FPS interactive UI animations |
+| **Styling** | [Tailwind CSS 3](https://tailwindcss.com) | Utility-first CSS with glassmorphism design |
+| **Animations** | [Framer Motion](https://framer.com/motion) | Interactive UI animations |
 | **Wallet Connect** | [FCL](https://developers.flow.com/tools/fcl-js) + [RainbowKit](https://rainbowkit.com) | Flow Wallet + EVM wallet support |
+| **Error Monitoring** | [Sentry](https://sentry.io) | Error tracking with session replay |
 | **Diagrams** | [Mermaid](https://mermaid.js.org) | Architecture diagrams in README |
 | **Deployment** | [Netlify](https://netlify.com) | Edge functions + SSR |
 | **Flow CLI** | [flow-cli](https://developers.flow.com/tools/flow-cli) | Contract deployment, scripts, transactions |
@@ -394,7 +290,7 @@ Use the web dashboard to:
 
 ```
 Flow-Sentinel/
-├── app/                          # Next.js 15 App Router pages
+├── app/                          # Next.js App Router pages
 │   ├── dashboard/                # Main dashboard with vault management
 │   ├── vaults/                   # Vault list and details
 │   ├── portfolio/                # Portfolio analytics
@@ -405,12 +301,12 @@ Flow-Sentinel/
 │   └── page.tsx                  # Root page
 ├── components/
 │   ├── dashboard/                # VaultCard, CreateVaultModal, Charts
-│   ├── immersive/                # Particle fields, animated text, cards
+│   ├── immersive/                # Animated text, cards, smooth scroll
 │   ├── layout/                   # Navbar, Footer
 │   └── ui/                       # Reusable UI primitives
 ├── contracts/
-│   ├── MEVShieldCore.cdc         # ⭐ 4-layer MEV protection engine
-│   ├── SentinelVaultV2.cdc       # ⭐ MEV-protected vault (deployed as SentinelVaultFinal)
+│   ├── MEVShieldCore.cdc         # 4-layer MEV protection engine
+│   ├── SentinelVaultV2.cdc       # MEV-protected vault (deployed as SentinelVaultFinal)
 │   ├── SentinelInterfaces.cdc    # Core interfaces
 │   ├── StrategyRegistry.cdc      # Strategy catalog
 │   ├── YieldOracle.cdc           # Yield data oracle
@@ -421,13 +317,13 @@ Flow-Sentinel/
 │       └── ArbitrageStrategy.cdc
 ├── transactions/                 # Cadence transactions
 │   ├── mev_commit.cdc            # Layer 1: Create commit hash
-│   ├── mev_reveal.cdc            # Layer 1-4: Reveal + execute
+│   ├── mev_reveal.cdc            # Layers 1-4: Reveal + execute
 │   ├── mev_execute_direct.cdc    # Direct execution with MEV
 │   ├── mev_set_protection.cdc    # Update protection level
 │   ├── init_sentinel.cdc         # Initialize vault
-│   └── ...
+│   └── ...                       # 16 total transaction files
 ├── scripts/                      # Shell & Cadence scripts
-│   ├── test_mev_protection.sh    # ⭐ Full MEV test suite
+│   ├── test_mev_protection.sh    # MEV test suite
 │   ├── mev_status.cdc            # Query MEV stats
 │   ├── get_vault_info.cdc        # Query vault info
 │   ├── deploy-all-contracts.sh   # Deploy all contracts
@@ -436,9 +332,10 @@ Flow-Sentinel/
 │   ├── useVaultData.ts           # Vault data with MEV fields
 │   └── useActivityFeed.ts        # On-chain event feed
 ├── lib/
-│   ├── flow-service.ts           # Cadence transaction templates
+│   ├── flow-service.ts           # Flow blockchain service layer
 │   ├── flow.tsx                  # FCL configuration + FlowProvider
-│   └── wagmi.ts                  # EVM wallet config
+│   ├── wagmi.ts                  # EVM wallet config
+│   └── addresses.ts              # Single source of truth for contract addresses
 ├── flow.json                     # Flow CLI config (networks, accounts, contracts)
 ├── .env.local.example            # Environment variable template
 ├── netlify.toml                  # Netlify deployment config
@@ -498,7 +395,7 @@ See `.env.local.example` for the complete list. Key variables:
 
 ## 🧪 Testing
 
-### Run the MEV Protection Test Suite
+### MEV Protection Test Suite
 
 The test suite verifies all 4 layers of MEV protection on-chain:
 
@@ -507,14 +404,14 @@ bash scripts/test_mev_protection.sh testnet
 ```
 
 This will:
-1. ✅ Verify MEVShieldCore deployment
-2. ✅ Create a vault with Full MEV protection
-3. ✅ **Layer 1**: Commit a hash (hidden from mempool)
-4. ✅ **Layer 2**: Reveal + VRF block-delay jitter applied
-5. ✅ **Layer 3**: Price deviation guard check
-6. ✅ **Layer 4**: Execution queue tracking
-7. ✅ Query and verify MEV statistics
-8. ✅ Update protection level settings
+1. Verify MEVShieldCore deployment
+2. Create a vault with Full MEV protection
+3. **Layer 1**: Commit a hash (hidden from mempool)
+4. **Layer 2**: Reveal + VRF block-delay jitter applied
+5. **Layer 3**: Price deviation guard check
+6. **Layer 4**: Execution queue tracking
+7. Query and verify MEV statistics
+8. Update protection level settings
 
 ### On-Chain Verification
 
@@ -532,11 +429,11 @@ flow scripts execute scripts/get_vault_info.cdc 0xc13b08053be24e87 --network tes
 ### TypeScript & Build Validation
 
 ```bash
-# TypeScript type checking
-npx tsc --noEmit
-
-# Full Next.js build
+# Full Next.js build (passes with zero errors)
 npx next build
+
+# TypeScript type checking (check known test file issues)
+npx tsc --noEmit
 ```
 
 ---
@@ -549,7 +446,7 @@ npx next build
 |:---------|:------------------|:------------|
 | **MEVShieldCore** | `0xc13b08053be24e87` | 4-layer MEV protection engine — commit-reveal, VRF jitter, price guard, execution queue |
 | **SentinelVaultFinal** | `0xc13b08053be24e87` | MEV-protected vault (V2) with full protection integration |
-| **SentinelInterfaces** | `0x136b642d0aa31ca9` | Core interfaces: `IMEVShield`, `IStrategy` |
+| **SentinelInterfaces** | `0x136b642d0aa31ca9` | Core interfaces: `IStrategy` |
 | **StrategyRegistry** | `0xc13b08053be24e87` | Strategy catalog — register, query, and update strategy TVL |
 | **YieldOracle** | `0xc13b08053be24e87` | Yield data provider for price deviation guard |
 | **MultiSigAdmin** | `0xc13b08053be24e87` | Multi-signature administration for yield reserve |
@@ -558,9 +455,9 @@ npx next build
 
 | Strategy | Description |
 |:---------|:------------|
-| **LiquidStakingStrategy** | Delegates FLOW to liquid staking protocols, generates staking yield with VRF-driven variance |
-| **YieldFarmingStrategy** | Harvests and compounds yields from DeFi farming protocols |
-| **ArbitrageStrategy** | Executes arbitrage opportunities across DEX aggregators |
+| **LiquidStakingStrategy** | Oracle-powered staking yield with ±0.5% VRF jitter for MEV privacy |
+| **YieldFarmingStrategy** | Multi-protocol allocation with VRF-shuffled execution order |
+| **ArbitrageStrategy** | Cross-DEX scanning with VRF-shuffled protocol order |
 
 ### Transactions
 
@@ -568,11 +465,16 @@ npx next build
 |:------------|:--------|
 | `mev_commit.cdc` | Create a commit hash (Layer 1 — hide execution from mempool) |
 | `mev_reveal.cdc` | Reveal hash, apply VRF jitter, check price deviation, execute (Layers 1-4) |
-| `mev_execute_direct.cdc` | Direct execution with VRF jitter + price guard (no commit-reveal) |
+| `mev_execute_direct.cdc` | Direct execution with VRF jitter + price guard (reduced Layer 1 protection) |
 | `mev_set_protection.cdc` | Update vault protection level and slippage tolerance |
 | `init_sentinel.cdc` | Initialize a new vault with MEV protection |
 | `deposit_flow.cdc` | Deposit FLOW tokens into a vault |
 | `withdraw_flow.cdc` | Withdraw FLOW tokens from a vault |
+| `claim_yield.cdc` | Claim accumulated yield to wallet |
+| `emergency_pause.cdc` | Pause a single vault |
+| `resume_vault.cdc` | Resume a paused vault |
+| `fund_yield_reserve.cdc` | Fund the yield reserve (MultiSig-guarded) |
+| `trigger_strategy_v2.cdc` | Execute strategy using `performStrategy` auto-generating MEV parameters |
 
 ### Deployment Order
 
@@ -612,12 +514,11 @@ flow deploy --network testnet --update
 // Step 1: Commit (only the hash is visible on-chain)
 MEVShieldCore.createCommit(
     vaultId: vaultId,
-    commitHash: commitHash,  // "SENTINEL-MEV-COMMIT:<vaultId>:<nonce>:..."
+    commitHash: commitHash,
     protectionLevel: 3
 )
 
 // Step 2: Reveal + Execute (after commit window)
-// The preimage is verified against the stored hash
 MEVShieldCore.revealExecution(
     vaultId: vaultId,
     commitHash: commitHash,
@@ -631,76 +532,61 @@ MEVShieldCore.revealExecution(
 ```
 
 **Security Properties**:
-- ✅ Execution is **hidden from mempool** until the commit is confirmed
-- ✅ Preimage includes a **random nonce** (generated via `revertibleRandom()`) — unpredictable
-- ✅ Commit has a **200-block deadline window** (~3 minutes) — enough time for honest reveal
-- ✅ Commits are **one-time use** — once revealed, the hash cannot be reused
-- ✅ Expired commits are automatically cleaned up
+- Execution is **hidden from mempool** until the commit is confirmed
+- Preimage includes a **random nonce** (generated via `revertibleRandom()`) — unpredictable
+- Commit has a **200-block deadline window** (~3 minutes)
+- Commits are **one-time use** — once revealed, the hash cannot be reused
+- Expired commits are automatically cleaned up
 
 ### Layer 2 — VRF Block-Delay Jitter (⏱️ Timing Games)
 
-**Concept**: Even if an execution is revealed, a sophisticated MEV bot could predict its exact execution time and frontrun it. Flow Sentinel uses Flow's native `revertibleRandom()` to add a random delay of 0-5 blocks before execution — making the exact execution time unpredictable.
+**Concept**: Even if an execution is revealed, a sophisticated MEV bot could predict its exact execution time. Flow Sentinel uses Flow's `revertibleRandom()` to add a random delay of 0-5 blocks before execution — making the exact execution time unpredictable.
 
 **Cadence Implementation**:
 ```cadence
 let jitterBlocks = revertibleRandom<UInt64>() % (self.getMEVDelayMax() + 1)
 let executeAtBlock = currentBlock + jitterBlocks + 1
-
-emit ExecutionScheduled(
-    vaultId: vaultId,
-    executeAtBlock: executeAtBlock,
-    jitterBlocks: jitterBlocks
-)
 ```
 
 **Security Properties**:
-- ✅ **Unpredictable timing** — `revertibleRandom()` is verifiable, non-deterministic randomness from Flow consensus
-- ✅ 0-5 blocks delay — short enough for acceptable UX, long enough to break bot timing
-- ✅ **Configurable max delay** via `getMEVDelayMax()` — can be updated without redeployment
+- **Unpredictable timing** — `revertibleRandom()` is verifiable, non-deterministic randomness from Flow consensus
+- 0-5 blocks delay — short enough for acceptable UX, long enough to break bot timing
+- **Configurable max delay** via `getMEVDelayMax()`
 
 ### Layer 3 — Price Deviation Guard (💹 Price Manipulation)
 
-**Concept**: Before executing any strategy, the vault fetches the **actual APY** from the YieldOracle and compares it against the **expected APY** provided by the user. If the deviation exceeds the configured slippage tolerance (default 3% = 300 bps), the execution is rejected and the MEV attack is prevented.
+**Concept**: Before executing any strategy, the vault fetches the **actual APY** from the YieldOracle and compares it against the **expected APY**. If the deviation exceeds the configured slippage tolerance (default 3% = 300 bps), the execution is rejected.
 
 **Cadence Implementation**:
 ```cadence
-// Fetch real-time oracle data
 let oracleData = YieldOracle.getYieldData(self.strategyId)
 let actualOracleAPY = oracleData?.apy ?? expectedAPY
 
-// Check deviation against slippage tolerance
 let oracleCheck = MEVShieldCore.checkPriceDeviation(
     vaultId: self.id,
     expectedAPY: expectedAPY,
     actualOracleAPY: actualOracleAPY,
-    slippageBps: self.slippageBps  // e.g., 300 = 3%
+    slippageBps: self.slippageBps
 )
 
 if !oracleCheck.shouldExecute {
-    // Execution rejected — MEV protection triggered!
-    emit MEVExecutionGuard(
-        vaultId: self.id,
-        deviation: oracleCheck.deviation,
-        allowed: false,
-        reason: "Price deviation exceeds bounds"
-    )
-    return  // Abort execution
+    emit MEVExecutionGuard(vaultId: self.id, deviation: oracleCheck.deviation, allowed: false, reason: "Price deviation exceeds bounds")
+    return
 }
 ```
 
 **Security Properties**:
-- ✅ **Real-time oracle data** — fetches current APY at execution time, not cached
-- ✅ **Configurable slippage** — vault-level setting, independent per vault
-- ✅ **Hard upper bound** — `MEV_DEVIATION_TOLERANCE` (50%) as absolute limit
-- ✅ **Auditable** — every guard trigger emits a structured event with deviation and reason
+- **Real-time oracle data** — fetches current APY at execution time
+- **Configurable slippage** — vault-level setting, independent per vault
+- **Hard upper bound** — `MEV_DEVIATION_TOLERANCE` (50%) as absolute limit
+- **Auditable** — every guard trigger emits a structured event
 
 ### Layer 4 — Execution Queue (🔄 Sandwich Attacks)
 
-**Concept**: When multiple executions are pending, they are processed through a queue that is **shuffled using VRF randomness** — ensuring no attacker can predict which execution will be processed first, effectively preventing sandwich attacks.
+**Concept**: When multiple executions are pending, they are shuffled using VRF randomness — ensuring no attacker can predict which execution will be processed first.
 
 **Cadence Implementation**:
 ```cadence
-// VRF-shuffled execution queue
 access(self) fun vrfShuffle(_ items: [PendingExecution]): [PendingExecution] {
     if items.length <= 1 { return items }
     var shuffled: [PendingExecution] = []
@@ -720,44 +606,20 @@ access(self) fun vrfShuffle(_ items: [PendingExecution]): [PendingExecution] {
 ```
 
 **Security Properties**:
-- ✅ **VRF-shuffled order** — nobody knows which execution processes next
-- ✅ **Fisher-Yates algorithm** — unbiased shuffling, every permutation equally likely
-- ✅ **Ready-only** — only executions past their scheduled block are included
+- **VRF-shuffled order** — nobody knows which execution processes next
+- **Fisher-Yates algorithm** — unbiased shuffling
+- **Ready-only** — only executions past their scheduled block are included
 
 ### MEV Protection Configuration Per Vault
 
 Each vault has independent MEV protection settings:
 
-```cadence
-// Protection level 0-3
-vault.setProtectionLevel(newLevel: 3)  // Full protection
-
-// Slippage tolerance in basis points
-vault.setSlippageBps(newSlippageBps: 300.0)  // 3%
-
-// Protection levels:
-// 0 = None      — MEV protection DISABLED
-// 1 = Basic     — VRF Block-Delay Jitter only
-// 2 = Standard  — Commit-Reveal + Block-Delay Jitter  
-// 3 = Full      — All 4 layers active ✅ (DEFAULT)
-```
-
-The vault's `executeStrategyWithMEV()` function automatically applies the correct protection layers based on the vault's configured level:
-
-```cadence
-access(StrategyExecution) fun executeStrategyWithMEV(
-    executor: @{SentinelInterfaces.IStrategy},
-    commitHash: String,
-    expectedAPY: UFix64,
-    nonce: UInt64
-) {
-    // Layer 1: Commit-Reveal guard (if enabled)
-    // Layer 2: VRF block-delay jitter (if enabled)
-    // Layer 3: Price deviation check (always for level >= 1)
-    // Layer 4: Execution queue processing (always)
-    // Execute strategy
-}
-```
+| Level | Name | Active Layers | Default |
+|:------|:-----|:--------------|:--------|
+| 0 | None | No protection | — |
+| 1 | Basic | VRF Block-Delay Jitter only | — |
+| 2 | Standard | Commit-Reveal + Block-Delay Jitter | — |
+| 3 | Full | All 4 layers active | ✅ Default |
 
 ---
 
