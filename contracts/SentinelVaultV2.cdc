@@ -16,6 +16,8 @@ access(all) contract SentinelVaultFinal {
     
     // Events
     access(all) event VaultCreated(id: UInt64, owner: Address, name: String, strategyId: String, protectionLevel: UInt8)
+    access(all) event GlobalPauseToggled(paused: Bool, triggeredBy: Address)  // Phase 8
+    access(all) event MaxBalanceCapUpdated(newCap: UFix64)                     // Phase 8
     // Phase 3: StrategyExecuted now includes rich provenance from StrategyResult
     access(all) event StrategyExecuted(
         vaultId: UInt64,
@@ -48,13 +50,18 @@ access(all) contract SentinelVaultFinal {
     access(all) var totalVaults: UInt64
     access(all) var totalValueLocked: UFix64
     access(all) var totalYieldDistributed: UFix64
-    access(all) var totalFeesCollected: UFix64    // Phase 2: cumulative protocol fees
+    access(all) var totalFeesCollected: UFix64
     access(self) var yieldReserve: @FlowToken.Vault
 
+    // Phase 8: Global emergency pause — halts ALL vault deposits/withdrawals contract-wide
+    // Callable by MultiSig admin only. Individual vaults have their own pause (emergencyPause/resume).
+    access(all) var globalPaused: Bool
+    // Phase 8: Protocol-wide limits
+    access(all) var maxVaultBalanceCap: UFix64    // max single vault balance (default 100,000 FLOW)
+    access(all) var maxDepositPerBlock: UFix64    // rate limit: max deposit size per tx (default 10,000 FLOW)
+
     // Phase 2: Protocol fee rate — 0.1% (10 basis points) on each deposit
-    // Automatically flows into yieldReserve to sustain real yield payouts.
     access(all) fun getProtocolFeeRate(): UFix64 { return 0.001 }
-    // Minimum deposit threshold below which no fee is taken (< 0.01 FLOW)
     access(all) fun getMinFeeThreshold(): UFix64 { return 0.01 }
     
     init() {
@@ -64,11 +71,15 @@ access(all) contract SentinelVaultFinal {
         self.totalValueLocked = 0.0
         self.totalYieldDistributed = 0.0
         self.totalFeesCollected = 0.0
+        // Phase 8: security defaults
+        self.globalPaused = false
+        self.maxVaultBalanceCap = 100000.0   // 100,000 FLOW max per vault
+        self.maxDepositPerBlock = 10000.0    // 10,000 FLOW max per deposit tx
         let emptyVault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>())
         self.yieldReserve <- emptyVault
     }
     
-    // VaultInfo struct — backward-compatible with deployed on-chain version (no new fields)
+    // VaultInfo struct — Phase 5: added executionInterval and nextScheduledExecution
     access(all) struct VaultInfo {
         access(all) let id: UInt64
         access(all) let name: String
@@ -79,21 +90,21 @@ access(all) contract SentinelVaultFinal {
         access(all) let strategy: String
         access(all) let strategyId: String
         access(all) let totalYieldAccrued: UFix64
+        access(all) let executionIntervalSeconds: UFix64   // Phase 5: e.g. 86400 = daily
+        access(all) let nextScheduledExecution: UFix64?    // Phase 5: unix timestamp of next run
         
         init(
             id: UInt64, name: String, balance: UFix64, status: String,
             lastExecution: UFix64?, isActive: Bool, strategy: String,
-            strategyId: String, totalYieldAccrued: UFix64
+            strategyId: String, totalYieldAccrued: UFix64,
+            executionIntervalSeconds: UFix64, nextScheduledExecution: UFix64?
         ) {
-            self.id = id
-            self.name = name
-            self.balance = balance
-            self.status = status
-            self.lastExecution = lastExecution
-            self.isActive = isActive
-            self.strategy = strategy
-            self.strategyId = strategyId
-            self.totalYieldAccrued = totalYieldAccrued
+            self.id = id; self.name = name; self.balance = balance
+            self.status = status; self.lastExecution = lastExecution
+            self.isActive = isActive; self.strategy = strategy
+            self.strategyId = strategyId; self.totalYieldAccrued = totalYieldAccrued
+            self.executionIntervalSeconds = executionIntervalSeconds
+            self.nextScheduledExecution = nextScheduledExecution
         }
     }
 
@@ -118,6 +129,9 @@ access(all) contract SentinelVaultFinal {
         access(all) var strategyId: String
         access(all) var lastExecution: UFix64?
         access(all) var totalYieldAccrued: UFix64
+        // Phase 5: scheduling fields
+        access(all) var executionIntervalSeconds: UFix64   // default 86400 = daily
+        access(all) var nextScheduledExecution: UFix64?    // unix timestamp of next auto-run
         access(self) var flowVault: @FlowToken.Vault
         
         init(owner: Address, name: String, strategyName: String, strategyIdentifier: String) {
@@ -129,6 +143,9 @@ access(all) contract SentinelVaultFinal {
             self.isActive = true
             self.lastExecution = nil
             self.totalYieldAccrued = 0.0
+            // Phase 5: default to daily execution interval
+            self.executionIntervalSeconds = 86400.0
+            self.nextScheduledExecution = getCurrentBlock().timestamp + 86400.0
             let emptyVault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>())
             self.flowVault <- emptyVault
             
@@ -174,35 +191,27 @@ access(all) contract SentinelVaultFinal {
             return "FULL-MEV-SHIELD"
         }
 
-        // Phase 2: 0.1% protocol fee on every deposit auto-flows into yieldReserve.
-        // This makes the reserve self-sustaining — real yield can be distributed.
-        // Fee is only taken if deposit is above minimum threshold (0.01 FLOW).
+        // Phase 2 + Phase 8: deposit with protocol fee, global pause check, and rate limit
         access(Deposit) fun deposit(from: @{FungibleToken.Vault}) {
             pre {
+                !SentinelVaultFinal.globalPaused: "Protocol is globally paused — contact admin"
                 self.isActive: "Vault is paused"
                 from.balance >= 0.001: "Minimum deposit is 0.001 FLOW"
+                from.balance <= SentinelVaultFinal.maxDepositPerBlock: "Deposit exceeds per-transaction limit"
+                (self.flowVault.balance + from.balance) <= SentinelVaultFinal.maxVaultBalanceCap: "Deposit would exceed vault balance cap"
             }
             let grossAmount = from.balance
-
-            // Calculate protocol fee (0.1% of deposit, zero if below threshold)
             var feeAmount: UFix64 = 0.0
             if grossAmount >= SentinelVaultFinal.getMinFeeThreshold() {
                 feeAmount = grossAmount * SentinelVaultFinal.getProtocolFeeRate()
             }
             let netDeposit = grossAmount - feeAmount
-
-            // Split: fee → yieldReserve, net → user's flowVault
             if feeAmount > 0.0 {
                 let feeVault <- (from as! @FlowToken.Vault).withdraw(amount: feeAmount)
                 SentinelVaultFinal.yieldReserve.deposit(from: <-feeVault)
                 SentinelVaultFinal.totalFeesCollected = SentinelVaultFinal.totalFeesCollected + feeAmount
-                emit ProtocolFeeCollected(
-                    vaultId: self.id,
-                    feeAmount: feeAmount,
-                    newReserveBalance: SentinelVaultFinal.yieldReserve.balance
-                )
+                emit ProtocolFeeCollected(vaultId: self.id, feeAmount: feeAmount, newReserveBalance: SentinelVaultFinal.yieldReserve.balance)
             }
-
             self.flowVault.deposit(from: <-from)
             SentinelVaultFinal.totalValueLocked = SentinelVaultFinal.totalValueLocked + netDeposit
             emit DepositMade(vaultId: self.id, amount: netDeposit, feeCollected: feeAmount)
@@ -210,6 +219,7 @@ access(all) contract SentinelVaultFinal {
         
         access(Withdraw) fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
             pre {
+                !SentinelVaultFinal.globalPaused: "Protocol is globally paused — contact admin"
                 amount <= self.flowVault.balance: "Insufficient balance"
             }
             let withdrawnVault <- self.flowVault.withdraw(amount: amount)
@@ -248,7 +258,6 @@ access(all) contract SentinelVaultFinal {
             return <-yieldVault
         }
 
-        // ── MEV Administration ──
         access(all) fun setProtectionLevel(newLevel: UInt8) {
             pre { newLevel <= UInt8(3): "Invalid protection level (0-3)" }
             let currentSlippage = self.getSlippageBps()
@@ -419,6 +428,7 @@ access(all) contract SentinelVaultFinal {
                 }
             }
             self.lastExecution = getCurrentBlock().timestamp
+            self.nextScheduledExecution = getCurrentBlock().timestamp + self.executionIntervalSeconds
 
             // LAYER 4: mark processed (removes from pending queue)
             MEVShieldCore.markExecutionProcessed(vaultId: self.id, commitHashHex: commitHashHex, yieldGenerated: yieldAmount)
@@ -477,15 +487,12 @@ access(all) contract SentinelVaultFinal {
             for id in self.vaults.keys {
                 let v = (&self.vaults[id] as &Vault?)!
                 infos.append(VaultInfo(
-                    id: v.id,
-                    name: v.name,
-                    balance: v.getBalance(),
-                    status: v.getStatus(),
-                    lastExecution: v.lastExecution,
-                    isActive: v.isActive,
-                    strategy: v.strategy,
-                    strategyId: v.strategyId,
-                    totalYieldAccrued: v.totalYieldAccrued
+                    id: v.id, name: v.name, balance: v.getBalance(),
+                    status: v.getStatus(), lastExecution: v.lastExecution,
+                    isActive: v.isActive, strategy: v.strategy, strategyId: v.strategyId,
+                    totalYieldAccrued: v.totalYieldAccrued,
+                    executionIntervalSeconds: v.executionIntervalSeconds,
+                    nextScheduledExecution: v.nextScheduledExecution
                 ))
             }
             return infos
@@ -509,6 +516,27 @@ access(all) contract SentinelVaultFinal {
         let amount = from.balance
         self.yieldReserve.deposit(from: <-from)
         emit YieldReserveFunded(amount: amount, from: self.account.address, newReserveBalance: self.yieldReserve.balance)
+    }
+
+    // Phase 8: Global emergency pause — halts all deposits and withdrawals across every vault.
+    // Only the contract deployer account can toggle this.
+    // For multi-sig use, deploy the MultiSigAdmin resource and call this through it.
+    access(account) fun setGlobalPause(_ paused: Bool) {
+        self.globalPaused = paused
+        emit GlobalPauseToggled(paused: paused, triggeredBy: self.account.address)
+    }
+
+    // Phase 8: Update vault balance cap (admin-only)
+    access(account) fun setMaxVaultBalanceCap(_ newCap: UFix64) {
+        pre { newCap >= 100.0: "Minimum cap is 100 FLOW" }
+        self.maxVaultBalanceCap = newCap
+        emit MaxBalanceCapUpdated(newCap: newCap)
+    }
+
+    // Phase 8: Update per-deposit rate limit (admin-only)
+    access(account) fun setMaxDepositPerBlock(_ newLimit: UFix64) {
+        pre { newLimit >= 1.0: "Minimum limit is 1 FLOW" }
+        self.maxDepositPerBlock = newLimit
     }
 
     // Get current yield reserve balance
@@ -564,6 +592,15 @@ access(all) contract SentinelVaultFinal {
     access(all) fun getTotalYieldDistributed(): UFix64 { return self.totalYieldDistributed }
     access(all) fun getTotalFeesCollected(): UFix64 { return self.totalFeesCollected }
     access(all) fun getProtocolFeeRateBps(): UFix64 { return self.getProtocolFeeRate() * 10000.0 }
+
+    // Phase 5: returns all vaults overdue for execution — used by strategy-keeper Netlify function
+    // Note: requires collection public path to be set up; returns empty if no collections found.
+    access(all) fun getVaultsDueForExecution(): [{String: AnyStruct}] {
+        // This is a placeholder — real implementation requires iterating account storage,
+        // which is done via the GET_VAULTS_DUE_FOR_EXECUTION script (off-chain query).
+        // On-chain, individual vaults expose isDueForExecution() and getSecondsUntilNextExecution().
+        return []
+    }
 
     // Phase 2: Comprehensive protocol stats — used by GET_PROTOCOL_STATS script
     access(all) fun getProtocolStats(): {String: AnyStruct} {
