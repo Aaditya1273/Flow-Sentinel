@@ -82,9 +82,3 @@ Native VRF Series: https://developers.flow.com/blockchain-development-tutorials/
 GitHub Examples: Check Onflow repos (e.g., https://github.com/onflow/ for Cadence scaffolds).
 Community: Join Flow Discord (linked in grant post) for real-time help on Forte integration.
 
-Pro Tips for Building:
-
-Start on Testnet + Emulator → deploy Cadence contracts with flow deploy.
-Test scheduling: Use delays in seconds; network executes autonomously.
-Security: Plan for audits (grant covers this) — Forte emphasizes post-exploit resilience.
-Public GitHub: Commit frequently (every 2-3 days) as required for grant.
