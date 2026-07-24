@@ -276,6 +276,59 @@
 }
 
 /* ─────────────────────────────────────────
+   SHIMMER SKELETON — Linear/Vercel style
+───────────────────────────────────────── */
+.dash-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(250,248,245,0.04);
+  border-radius: 8px;
+}
+.dash-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(250,248,245,0.08) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dash-skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+  width: 75%;
+}
+.dash-skeleton-text.short {
+  width: 40%;
+}
+.dash-skeleton-text.long {
+  width: 90%;
+}
+.dash-skeleton-heading {
+  height: 24px;
+  margin-bottom: 12px;
+  width: 60%;
+}
+.dash-skeleton-card {
+  height: 200px;
+  border-radius: 32px;
+}
+.dash-skeleton-chart {
+  height: 300px;
+  border-radius: 32px;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ─────────────────────────────────────────
    KEYFRAMES
 ───────────────────────────────────────── */
 @keyframes w-border-spin {

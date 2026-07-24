@@ -6,6 +6,7 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { config } from 'lib/wagmi'
 import { FlowProvider } from 'lib/flow'
 import { TransactionProvider } from 'lib/transactions'
+import { ActivityProvider } from 'hooks/useActivityFeed'
 import { useState, useEffect } from 'react'
 
 import '@rainbow-me/rainbowkit/styles.css'
@@ -37,7 +38,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         >
           <FlowProvider>
             <TransactionProvider>
-              {children}
+              <ActivityProvider>
+                {children}
+              </ActivityProvider>
             </TransactionProvider>
           </FlowProvider>
         </RainbowKitProvider>

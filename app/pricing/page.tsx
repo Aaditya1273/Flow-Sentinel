@@ -9,54 +9,60 @@ import Link from 'next/link'
 const plans = [
   {
     name: 'Starter',
-    description: 'Perfect for getting started with automated DeFi',
+    description: 'Currently active — all features available at no cost during testnet.',
     price: 'Free',
-    period: 'No fees',
+    period: 'Testnet — no fees',
+    badge: 'LIVE NOW',
+    badgeColor: '#00EF8B',
     features: [
-      '1 vault',
-      'All available strategies',
-      'MEV-Shield protection (Layer 1-4)',
-      'Real-time performance tracking',
-      'Activity feed',
+      'Unlimited vaults (testnet)',
+      'All 4 deployed strategies',
+      'MEV-Shield protection (all 4 layers)',
+      'Real-time oracle APY data',
+      'Automated execution keeper',
       'Portfolio analytics',
-    ],
-    highlighted: false,
-    cta: 'Get Started',
-    ctaLink: '/dashboard',
-  },
-  {
-    name: 'Pro',
-    description: 'For active DeFi participants',
-    price: '0.1%',
-    period: 'per transaction',
-    features: [
-      'Up to 10 vaults',
-      'All available strategies',
-      'Priority strategy execution',
-      'MEV-Shield protection (Layer 1-4)',
-      'Advanced analytics',
-      'Yield claim automation',
-      'API access',
-      'Priority support',
+      'Yield reserve auto-funded via 0.1% fee',
+      'Export data as CSV',
     ],
     highlighted: true,
     cta: 'Launch App',
     ctaLink: '/dashboard',
   },
   {
+    name: 'Pro',
+    description: 'Planned for mainnet launch — fee model will be enforced by smart contract.',
+    price: '0.1%',
+    period: 'per transaction (planned)',
+    badge: 'COMING MAINNET',
+    badgeColor: '#f59e0b',
+    features: [
+      'Priority strategy execution queue',
+      'Advanced analytics dashboard',
+      'Yield claim automation',
+      'API access with per-user keys',
+      'Priority support',
+      'Email notifications via Resend',
+      'Webhook integrations',
+    ],
+    highlighted: false,
+    cta: 'Notify Me',
+    ctaLink: '/faq',
+  },
+  {
     name: 'Enterprise',
-    description: 'For institutions and power users',
+    description: 'Institutional access — custom deployment with dedicated execution nodes.',
     price: 'Custom',
     period: 'contact us',
+    badge: 'COMING MAINNET',
+    badgeColor: '#f59e0b',
     features: [
-      'Unlimited vaults',
+      'Unlimited vaults with custom limits',
       'Custom strategy deployment',
       'Dedicated execution nodes',
       'Custom MEV protection parameters',
       'White-label analytics',
       'SLA guarantee',
       'Dedicated support engineer',
-      'Early access to new strategies',
     ],
     highlighted: false,
     cta: 'Contact Sales',
@@ -65,12 +71,13 @@ const plans = [
 ]
 
 const feeBreakdown = [
-  { operation: 'Vault Creation', fee: 'Free (gas only)', note: 'Network gas fee applies' },
-  { operation: 'Deposit', fee: 'Free (gas only)', note: 'Network gas fee applies' },
+  { operation: 'Vault Creation', fee: 'Free (gas only)', note: 'Network gas fee applies — ~0.001 FLOW' },
+  { operation: 'Deposit', fee: '0.1% protocol fee', note: 'Auto-flows into yield reserve to sustain payouts' },
   { operation: 'Withdrawal', fee: 'Free (gas only)', note: 'Network gas fee applies' },
-  { operation: 'Strategy Execution', fee: 'Free (gas only)', note: 'No protocol fee — only network gas' },
-  { operation: 'Yield Claim', fee: 'Free (gas only)', note: 'Network gas fee applies' },
-  { operation: 'Emergency Pause', fee: 'Free (gas only)', note: 'Always free for security' },
+  { operation: 'Strategy Execution', fee: 'Free (gas only)', note: 'No extra protocol fee on execution' },
+  { operation: 'Yield Claim', fee: 'Free (gas only)', note: 'Claim your yield anytime after execution' },
+  { operation: 'Emergency Pause', fee: 'Free (gas only)', note: 'Security functions always free' },
+  { operation: 'Oracle Update', fee: 'Free (automated)', note: 'Runs every 6h via Netlify cron keeper' },
 ]
 
 export default function PricingPage() {
@@ -109,15 +116,27 @@ export default function PricingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + i * 0.1 }}
                 style={{
+                  position: 'relative',
                   borderRadius: 32, padding: 40,
                   border: `2px solid ${plan.highlighted ? 'rgba(0,239,139,0.3)' : 'rgba(250,248,245,0.08)'}`,
                   background: plan.highlighted
                     ? 'linear-gradient(180deg, rgba(0,239,139,0.06) 0%, rgba(17,17,17,1) 100%)'
                     : 'rgba(250,248,245,0.02)',
                   display: 'flex', flexDirection: 'column',
-                  position: 'relative',
                 }}
               >
+                {/* Live/Coming status badge */}
+                <div style={{
+                  position: 'absolute', top: -12, left: 20, zIndex: 2,
+                  padding: '3px 12px', borderRadius: 9999,
+                  background: plan.badgeColor + '18',
+                  border: `1px solid ${plan.badgeColor}40`,
+                  fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em',
+                  color: plan.badgeColor, textTransform: 'uppercase',
+                }}>
+                  {plan.badge}
+                </div>
+                {/* Phase 7: Testnet badge in place of old "Most Popular" ribbon */}
                 {plan.highlighted && (
                   <div style={{
                     position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
@@ -126,7 +145,7 @@ export default function PricingPage() {
                     fontSize: '0.5625rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
                     whiteSpace: 'nowrap',
                   }}>
-                    Most Popular
+                    Active Now
                   </div>
                 )}
 

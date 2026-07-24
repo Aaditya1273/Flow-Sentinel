@@ -31,19 +31,20 @@ export const metadata: Metadata = {
     title: 'Flow Sentinel - Autonomous DeFi Wealth Manager',
     description: "The world's first autonomous, MEV-resistant wealth manager built on Flow blockchain",
     type: 'website',
-    images: ['/og-image.png'],
+    images: ['/og-image.svg'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Flow Sentinel - Autonomous DeFi Wealth Manager',
     description: "The world's first autonomous, MEV-resistant wealth manager built on Flow blockchain",
-    images: ['/og-image.png'],
+    images: ['/og-image.svg'],
   },
   icons: {
     icon: '/logo.png',
     shortcut: '/logo.png',
     apple: '/logo.png',
   },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://flowsentinel.io'),
   manifest: '/manifest.json',
 }
 

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp,
   Shield,
-  Zap,
   DollarSign,
   AlertTriangle,
   Plus,
@@ -14,28 +14,62 @@ import {
   ArrowUpRight,
   ChevronRight,
   Target,
-  Sparkles
+  RefreshCw
 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Navbar } from 'components/layout/Navbar'
 import { VaultCard } from 'components/dashboard/VaultCard'
-import { PortfolioChart } from 'components/dashboard/PortfolioChart'
-import { ActivityFeed } from 'components/dashboard/ActivityFeed'
-import { CreateVaultModal } from 'components/dashboard/CreateVaultModal'
+import { ReserveHealthWidget } from 'components/dashboard/ReserveHealthWidget'
+import { OracleFreshnessBar } from 'components/dashboard/OracleFreshnessBar'
 import { useFlow } from 'lib/flow'
 import { useVaultData } from 'hooks/useVaultData'
 import { formatCurrency, formatPercentage } from 'lib/utils'
-
-import { Suspense } from 'react'
+import { useTransactions } from 'lib/transactions'
 import { ErrorBoundary } from 'components/ErrorBoundary'
+
+// Lazy-loaded heavy components — not needed on initial paint
+const PortfolioChart = dynamic(() => import('components/dashboard/PortfolioChart').then(m => ({ default: m.PortfolioChart })), {
+  ssr: false,
+  loading: () => (
+    <div className="dash-skeleton-chart" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: 32, height: 32 }}>
+        <div style={{ position: 'absolute', inset: 0, border: '2px solid rgba(0,239,139,0.08)', borderRadius: '50%' }} />
+        <div style={{ position: 'absolute', inset: 0, border: '2px solid transparent', borderTopColor: '#00EF8B', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      </div>
+    </div>
+  ),
+})
+
+const ActivityFeed = dynamic(() => import('components/dashboard/ActivityFeed').then(m => ({ default: m.ActivityFeed })), {
+  ssr: false,
+  loading: () => (
+    <div className="dash-card" style={{ padding: 24 }}>
+      <h3 className="dash-label" style={{ fontSize: '1.25rem', marginBottom: 32 }}>SECURE LOGS</h3>
+      {[1, 2, 3].map((i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <div style={{ flex: 1 }}>
+            <div className="dash-skeleton dash-skeleton-text" />
+            <div className="dash-skeleton dash-skeleton-text short" />
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
+})
+
+const CreateVaultModal = dynamic(() => import('components/dashboard/CreateVaultModal').then(m => ({ default: m.CreateVaultModal })), {
+  ssr: false,
+})
 
 function DashboardContent() {
   const { user, logIn, isConnected } = useFlow()
-  const { vaults, performance, flowBalance, loading, error, refetch } = useVaultData()
+  const { vaults, performance, flowBalance, protocolStats, oracleData, loading, error, refetch } = useVaultData()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
+  const { setTxState } = useTransactions()
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
@@ -44,7 +78,10 @@ function DashboardContent() {
 
   const searchParams = useSearchParams()
   useEffect(() => {
-    if (searchParams.get('create') === 'true') { setShowCreateModal(true) }
+    if (searchParams.get('create') === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowCreateModal(true)
+    }
   }, [searchParams])
 
   if (!isConnected) {
@@ -60,7 +97,7 @@ function DashboardContent() {
             <p style={{ color: 'rgba(250,248,245,0.55)', marginBottom: 40, lineHeight: 1.6, fontWeight: 500 }}>
               Access the Sentinel Command Center by establishing a secure link with your Flow wallet.
             </p>
-            <button onClick={logIn} className="dash-cta" style={{ padding: '16px 40px' }}>
+            <button onClick={() => logIn()} className="dash-cta" style={{ padding: '16px 40px' }}>
               Connect Flow Wallet
             </button>
           </div>
@@ -134,13 +171,28 @@ function DashboardContent() {
             <div className="flex flex-col md:flex-row items-start justify-between gap-6">
               <div>
                 <h1>Command Center</h1>
+                {/* Phase 7: Testnet badge — honest about current deployment state */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 9999, fontSize: '0.5rem', fontWeight: 700,
+                    letterSpacing: '0.15em', textTransform: 'uppercase',
+                    color: '#f59e0b', background: 'rgba(245,158,11,0.10)',
+                    border: '1px solid rgba(245,158,11,0.25)',
+                  }}>
+                    ⚠ TESTNET — Not real funds
+                  </span>
+                  <span style={{ fontSize: '0.5rem', color: 'rgba(250,248,245,0.3)', letterSpacing: '0.08em' }}>
+                    Flow Testnet · Contract: 0xc13b08053be24e87
+                  </span>
+                </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <button onClick={() => setShowCreateModal(true)} className="dash-cta" style={{ padding: '14px 24px', fontSize: '0.6875rem' }}>
                   <Plus style={{ width: 16, height: 16 }} /> New Vault
                 </button>
-                <button style={{
+                <button aria-label="Open settings"
+                  style={{
                   width: 48, height: 48, borderRadius: 24,
                   border: '1px solid rgba(250,248,245,0.10)',
                   background: 'transparent', color: 'rgba(250,248,245,0.5)',
@@ -184,6 +236,10 @@ function DashboardContent() {
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                {/* Phase 4: Oracle freshness bar — shows APY data age + staleness warning */}
+                {Object.keys(oracleData).length > 0 && (
+                  <OracleFreshnessBar apyData={oracleData} onForceRefresh={refetch} />
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
                   <h2 style={{
                     fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif',
@@ -202,20 +258,23 @@ function DashboardContent() {
                       key={v.id}
                       vault={{
                         id: v.id, name: v.name, balance: v.balance,
-                        // APY fetched from YieldOracle via strategy metadata on-chain
-                        apy: v.pnlPercent && v.balance > 0
-                          ? v.pnlPercent / (v.lastExecution > 0 ? Math.max(1, (Date.now() / 1000 - v.lastExecution) / 86400) : 1)
-                          : 0,
+                        // Real APY from on-chain YieldOracle (contract-level readAllAPYs)
+                        apy: v.apy ?? 0,
                         status: v.isActive ? 'active' : 'paused',
                         lastExecution: new Date(v.lastExecution * 1000),
                         strategy: v.strategy, risk: 'low' as const,
                         pnl: v.pnl, pnlPercent: v.pnlPercent,
+                        totalYieldAccrued: v.totalYieldAccrued,  // Phase 2: real claimable yield
+                        totalDeposits: v.totalDeposits,
                         protectionLevel: v.protectionLevel,
                         slippageBps: v.slippageBps,
                         commitRevealEnabled: v.commitRevealEnabled,
                         blockDelayEnabled: v.blockDelayEnabled,
                         mevProtectionsTriggered: v.mevProtectionsTriggered,
-                        mevShieldStatus: v.mevShieldStatus
+                        mevShieldStatus: v.mevShieldStatus,
+                        // Phase 5: scheduling
+                        nextScheduledExecution: v.nextScheduledExecution,
+                        executionIntervalSeconds: v.executionIntervalSeconds,
                       }}
                     />
                   ))}
@@ -244,6 +303,15 @@ function DashboardContent() {
                 <ErrorBoundary><ActivityFeed /></ErrorBoundary>
               </motion.div>
 
+              {/* Phase 2: Reserve Health Widget — live reserve balance + fund controls */}
+              {protocolStats && (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.45 }}>
+                  <ErrorBoundary>
+                    <ReserveHealthWidget stats={protocolStats} onFunded={refetch} />
+                  </ErrorBoundary>
+                </motion.div>
+              )}
+
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
                 <div className="dash-card" style={{ padding: 32 }}>
                   <h3 style={{
@@ -255,20 +323,60 @@ function DashboardContent() {
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {[
-                      { icon: Plus, label: 'DEPLOY NEW VAULT', action: () => setShowCreateModal(true) },
-                      { icon: ArrowUpRight, label: 'EXTERNAL BRIDGE', action: () => {} },
-                      { icon: Activity, label: 'GENERATE AUDIT', action: () => {} },
+                      {
+                        icon: Plus,
+                        label: 'DEPLOY NEW VAULT',
+                        sub: 'Initialize a new strategy vault',
+                        action: () => setShowCreateModal(true),
+                        live: true,
+                      },
+                      {
+                        icon: RefreshCw,
+                        label: 'REFRESH ORACLE',
+                        sub: 'Force-fetch latest APY data',
+                        action: () => refetch(),
+                        live: true,
+                      },
+                      {
+                        icon: ArrowUpRight,
+                        label: 'EXTERNAL BRIDGE',
+                        sub: 'Mainnet launch — coming soon',
+                        action: null,
+                        live: false,
+                      },
+                      {
+                        icon: Activity,
+                        label: 'ON-CHAIN AUDIT',
+                        sub: 'Mainnet launch — coming soon',
+                        action: null,
+                        live: false,
+                      },
                     ].map((act, i) => (
                       <button
                         key={i}
-                        onClick={act.action}
-                        className="dash-timeline-item"
-                        style={{ width: '100%', cursor: 'pointer' }}
+                        onClick={act.action ?? undefined}
+                        disabled={!act.live}
+                        className={act.live ? 'dash-timeline-item' : undefined}
+                        style={{
+                          width: '100%', cursor: act.live ? 'pointer' : 'default',
+                          display: 'flex', alignItems: 'center', gap: 14,
+                          padding: '14px 16px', borderRadius: 16, border: 'none', textAlign: 'left',
+                          background: act.live ? 'rgba(250,248,245,0.02)' : 'rgba(250,248,245,0.01)',
+                          transition: 'background 0.2s',
+                          opacity: act.live ? 1 : 0.4,
+                        }}
+                        aria-label={act.label}
+                        onMouseEnter={e => { if (act.live) (e.currentTarget as HTMLElement).style.background = 'rgba(250,248,245,0.05)' }}
+                        onMouseLeave={e => { if (act.live) (e.currentTarget as HTMLElement).style.background = 'rgba(250,248,245,0.02)' }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1 }}>
-                          <span className="dash-label">{act.label}</span>
+                        <div style={{ width: 36, height: 36, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: act.live ? 'rgba(0,239,139,0.08)' : 'rgba(250,248,245,0.04)', flexShrink: 0 }}>
+                          <act.icon style={{ width: 16, height: 16, color: act.live ? '#00EF8B' : 'rgba(250,248,245,0.3)' }} />
                         </div>
-                        <ChevronRight style={{ width: 16, height: 16, opacity: 0, transition: 'all 0.2s' }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.5625rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: act.live ? '#FAF8F5' : 'rgba(250,248,245,0.4)' }}>{act.label}</div>
+                          <div style={{ fontSize: '0.5rem', color: 'rgba(250,248,245,0.35)', marginTop: 2 }}>{act.sub}</div>
+                        </div>
+                        {act.live && <ChevronRight style={{ width: 14, height: 14, color: 'rgba(250,248,245,0.3)' }} />}
                       </button>
                     ))}
                   </div>
@@ -319,11 +427,18 @@ function DashboardContent() {
           {error && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               style={{ marginTop: 48, padding: 24, borderRadius: 24, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <AlertTriangle style={{ width: 32, height: 32, color: '#ef4444' }} />
-              <div>
+              <AlertTriangle style={{ width: 32, height: 32, color: '#ef4444', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
                 <p className="dash-label" style={{ color: '#ef4444' }}>System Warning</p>
                 <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#FAF8F5' }}>{error}</p>
               </div>
+              <button
+                onClick={refetch}
+                className="dash-cta"
+                style={{ padding: '10px 20px', fontSize: '0.625rem', flexShrink: 0, whiteSpace: 'nowrap' }}
+              >
+                <RefreshCw style={{ width: 14, height: 14 }} /> Retry
+              </button>
             </motion.div>
           )}
         </div>

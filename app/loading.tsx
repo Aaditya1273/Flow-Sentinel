@@ -6,13 +6,7 @@ export default function Loading() {
           <div style={{ position: 'absolute', inset: 0, border: '2px solid rgba(250,248,245,0.06)', borderRadius: '50%' }} />
           <div style={{ position: 'absolute', inset: 0, border: '2px solid transparent', borderTopColor: '#00EF8B', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         </div>
-        <p
-          className="animate-pulse"
-          style={{
-            fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.06em',
-            textTransform: 'uppercase', color: 'rgba(250,248,245,0.4)',
-          }}
-        >
+        <p className="dash-label" style={{ color: '#00EF8B', animation: 'pulse 2s infinite', marginTop: 24 }}>
           Establishing Secure Link
         </p>
       </div>

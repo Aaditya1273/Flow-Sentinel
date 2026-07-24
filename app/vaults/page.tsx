@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import {
+  RefreshCw,
   Search,
   Shield,
   Users,
@@ -45,7 +46,7 @@ export default function VaultsPage() {
   const [filteredStrategies, setFilteredStrategies] = useState<VaultStrategy[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { isConnected } = useFlow()
+  const { isConnected, logIn } = useFlow()
   const router = useRouter()
 
   const categories = [
@@ -68,35 +69,48 @@ export default function VaultsPage() {
     { value: 'performance30d', label: 'Best 30d' }
   ]
 
+  const EMPTY_STATE_STRATEGIES: VaultStrategy[] = []
+
   useEffect(() => {
     const loadStrategies = async () => {
-      try { setLoading(true); setError(null)
+      try {
+        setLoading(true)
+        setError(null)
         const blockchainStrategies = (await FlowService.getAllStrategies()) as Array<Record<string, unknown>>
-        if (blockchainStrategies.length > 0) {
+        if (blockchainStrategies && blockchainStrategies.length > 0) {
           setStrategies(blockchainStrategies.map((s: Record<string, unknown>) => ({
-            id: String(s.id ?? ''), name: String(s.name ?? ''), description: String(s.description ?? ''),
+            id: String(s.id ?? ''),
+            name: String(s.name ?? ''),
+            description: String(s.description ?? ''),
             expectedAPY: parseFloat(String(s.expectedAPY ?? '0')),
-            tvl: parseFloat(String(s.tvl ?? '0')),
+            tvl: parseFloat(String(s.tvl ?? '0')),       // REAL: from StrategyRegistry.getTotalTVL()
             riskLevel: parseInt(String(s.riskLevel ?? '1')),
             category: String(s.category ?? ''),
-            participants: parseInt(String(s.participants ?? '0')),
+            participants: parseInt(String(s.participants ?? '0')),  // REAL: from strategy contract
             minDeposit: parseFloat(String(s.minDeposit ?? '0')),
             featured: s.featured === true,
             creator: String(s.creator ?? 'Unknown'),
             verified: s.verified === true,
-            performance24h: parseFloat(String(s.performance24h ?? '0')),
-            performance7d: parseFloat(String(s.performance7d ?? '0')),
-            performance30d: parseFloat(String(s.performance30d ?? '0')),
+            performance24h: 0,   // Not tracked per-strategy — only aggregate portfolio
+            performance7d: 0,
+            performance30d: parseFloat(String(s.totalYieldGenerated ?? '0')),
             features: (Array.isArray(s.features) ? s.features : []) as string[],
-            isActive: s.isActive !== false
+            isActive: s.isActive !== false,
           })))
+        } else {
+          // No strategies returned — show honest empty state, never fake numbers
+          setStrategies(EMPTY_STATE_STRATEGIES)
         }
       } catch (err) {
-        setError('Failed to load strategies from blockchain.'); setStrategies([])
-      } finally { setLoading(false) }
+        // Blockchain unavailable — show empty state with a clear message
+        setError('Could not load strategies from blockchain. Check your connection and try again.')
+        setStrategies(EMPTY_STATE_STRATEGIES)
+      } finally {
+        setLoading(false)
+      }
     }
     loadStrategies()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const filtered = strategies.filter(s =>
@@ -116,7 +130,10 @@ export default function VaultsPage() {
   }, [strategies, searchTerm, selectedCategory, selectedRisk, sortBy])
 
   const handleInvestClick = async (strategy: VaultStrategy) => {
-    if (!isConnected) { alert('Please connect your wallet first'); return }
+    if (!isConnected) {
+      logIn('flow')
+      return
+    }
     const params = new URLSearchParams({ create: 'true', strategy: strategy.id, name: strategy.name, minDeposit: strategy.minDeposit.toString() })
     router.push(`/dashboard?${params.toString()}`)
   }
@@ -152,6 +169,17 @@ export default function VaultsPage() {
             <p style={{ fontSize: '1rem', color: 'rgba(250,248,245,0.55)', marginTop: 12, fontWeight: 500 }}>
               Proven DeFi strategies powered by Flow blockchain smart contracts
             </p>
+            {/* Phase 7: Testnet badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+              <span style={{
+                padding: '3px 10px', borderRadius: 9999, fontSize: '0.5rem', fontWeight: 700,
+                letterSpacing: '0.15em', textTransform: 'uppercase',
+                color: '#f59e0b', background: 'rgba(245,158,11,0.10)',
+                border: '1px solid rgba(245,158,11,0.25)',
+              }}>
+                ⚠ TESTNET — Data is live on testnet, not mainnet
+              </span>
+            </div>
 
             <div className="dash-card" style={{ padding: 20, marginTop: 32 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#00EF8B', marginBottom: 8 }}>
@@ -165,9 +193,19 @@ export default function VaultsPage() {
             </div>
 
             {error && (
-              <div style={{ padding: 20, marginTop: 16, borderRadius: 20, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.12)' }}>
-                <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#ef4444' }}>{error}</p>
-              </div>
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                style={{ padding: 20, marginTop: 16, borderRadius: 20, background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <p className="dash-label" style={{ color: '#ef4444' }}>Connection Error</p>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#FAF8F5' }}>{error}</p>
+                </div>
+                <button onClick={() => window.location.reload()} className="dash-cta" style={{ padding: '8px 16px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  aria-label="Retry loading strategies">
+                  <RefreshCw style={{ width: 12, height: 12 }} /> Retry
+                </button>
+              </motion.div>
             )}
 
             {strategies.length > 0 && (
@@ -237,7 +275,7 @@ export default function VaultsPage() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid rgba(250,248,245,0.06)' }}>
                         <div className="dash-label">Min: {strategy.minDeposit} FLOW</div>
-                        <button onClick={() => handleInvestClick(strategy)} className="dash-cta" style={{ padding: '12px 24px', fontSize: '0.625rem' }}>
+                        <button onClick={() => handleInvestClick(strategy)} className="dash-cta" style={{ padding: '12px 24px', fontSize: '0.625rem' }} aria-label={`Create vault with ${strategy.name}`}>
                           {isConnected ? 'Create Vault' : 'Connect Wallet'} <ArrowUpRight style={{ width: 12, height: 12 }} />
                         </button>
                       </div>
@@ -279,7 +317,7 @@ export default function VaultsPage() {
                       </div>
                       <div className="dash-label">Min: {strategy.minDeposit} FLOW</div>
                     </div>
-                    <button onClick={() => handleInvestClick(strategy)} className="dash-cta" style={{ width: '100%', padding: '12px 0', fontSize: '0.625rem' }}>
+                    <button onClick={() => handleInvestClick(strategy)} className="dash-cta" style={{ width: '100%', padding: '12px 0', fontSize: '0.625rem' }} aria-label={`Create vault with ${strategy.name}`}>
                       {isConnected ? 'Create Vault' : 'Connect Wallet'}
                     </button>
                   </div>
@@ -290,22 +328,54 @@ export default function VaultsPage() {
           </ErrorBoundary>
 
           {filteredStrategies.length === 0 && !loading && (
-            <div style={{ textAlign: 'center', padding: '80px 0' }}>
-              {/* Only show the icon when strategies were loaded (filtering returned nothing), hide on first load */}
-              {strategies.length > 0 && (
-                <div style={{ width: 64, height: 64, borderRadius: 24, border: '1px solid rgba(250,248,245,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', background: 'rgba(250,248,245,0.02)' }}>
-                  <Search style={{ width: 32, height: 32, color: 'rgba(250,248,245,0.2)' }} />
-                </div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{ textAlign: 'center', padding: '80px 0' }}
+            >
+              {strategies.length === 0 ? (
+                // Blockchain returned no strategies — honest empty state
+                <>
+                  <div style={{ width: 72, height: 72, borderRadius: 24, border: '1px solid rgba(250,248,245,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', background: 'rgba(250,248,245,0.02)' }}>
+                    <Shield style={{ width: 32, height: 32, color: 'rgba(250,248,245,0.2)' }} />
+                  </div>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 500, color: '#FAF8F5', marginBottom: 8 }}>
+                    {error ? 'Blockchain Unavailable' : 'No Strategies Deployed Yet'}
+                  </h3>
+                  <p style={{ fontSize: '0.75rem', color: 'rgba(250,248,245,0.4)', maxWidth: 400, margin: '0 auto 24px', lineHeight: 1.7 }}>
+                    {error
+                      ? error
+                      : 'The strategy registry returned no active strategies. This may mean the contracts are still being initialized on testnet.'}
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="dash-cta"
+                    style={{ padding: '12px 24px', fontSize: '0.625rem' }}
+                    aria-label="Retry loading strategies from blockchain"
+                  >
+                    <RefreshCw style={{ width: 12, height: 12 }} /> Retry
+                  </button>
+                </>
+              ) : (
+                // Strategies loaded but filtered to nothing
+                <>
+                  <div style={{ width: 64, height: 64, borderRadius: 24, border: '1px solid rgba(250,248,245,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', background: 'rgba(250,248,245,0.02)' }}>
+                    <Search style={{ width: 32, height: 32, color: 'rgba(250,248,245,0.2)' }} />
+                  </div>
+                  <p className="dash-label" style={{ marginBottom: 24 }}>
+                    No strategies match your criteria
+                  </p>
+                  <button
+                    onClick={() => { setSearchTerm(''); setSelectedCategory('all'); setSelectedRisk('all') }}
+                    className="dash-cta"
+                    style={{ padding: '12px 24px' }}
+                    aria-label="Clear all search and filter criteria"
+                  >
+                    Clear Filters
+                  </button>
+                </>
               )}
-              <p className="dash-label" style={{ marginBottom: 24 }}>
-                {strategies.length === 0 ? 'No strategies on blockchain' : 'No strategies match your criteria'}
-              </p>
-              {strategies.length > 0 && (
-                <button onClick={() => { setSearchTerm(''); setSelectedCategory('all'); setSelectedRisk('all') }} className="dash-cta" style={{ padding: '12px 24px' }}>
-                  Clear Filters
-                </button>
-              )}
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

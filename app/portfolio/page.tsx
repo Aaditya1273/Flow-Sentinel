@@ -38,7 +38,7 @@ export default function PortfolioPage() {
             <p style={{ color: 'rgba(250,248,245,0.55)', marginBottom: 40, lineHeight: 1.6, fontWeight: 500 }}>
               Access your Portfolio Analytics by establishing a secure link with your Flow wallet.
             </p>
-            <button onClick={logIn} className="dash-cta" style={{ padding: '16px 40px' }}>
+            <button onClick={() => logIn()} className="dash-cta" style={{ padding: '16px 40px' }}>
               Connect Flow Wallet
             </button>
           </div>
@@ -86,6 +86,8 @@ export default function PortfolioPage() {
                     key={tf.value}
                     onClick={() => setTimeframe(tf.value)}
                     className={`dash-filter-btn ${timeframe === tf.value ? 'active' : ''}`}
+                    aria-label={`Show ${tf.label} portfolio data`}
+                    aria-pressed={timeframe === tf.value}
                   >
                     {tf.label}
                   </button>
@@ -221,7 +223,7 @@ export default function PortfolioPage() {
                         </div>
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.625rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(250,248,245,0.4)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
+                        <button aria-label={`View details for ${vault.name}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.625rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(250,248,245,0.4)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
                           onMouseEnter={e => e.currentTarget.style.color = '#00EF8B'}
                           onMouseLeave={e => e.currentTarget.style.color = 'rgba(250,248,245,0.4)'}>
                           Details <ChevronRight style={{ width: 12, height: 12 }} />

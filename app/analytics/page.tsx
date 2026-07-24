@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   TrendingUp, BarChart3, Activity,
@@ -10,7 +10,7 @@ import { Navbar } from 'components/layout/Navbar'
 import { formatCurrency, formatPercentage } from 'lib/utils'
 import { useVaultData } from 'hooks/useVaultData'
 import { useFlow } from 'lib/flow'
-import { FlowService, VaultEvent, PerformanceDataPoint } from 'lib/flow-service'
+import { FlowService, VaultEvent, PerformanceDataPoint, getVaultAgeInDays, buildPerformanceHistory, hasEnoughDataForTimeframe, getRemainingTimeForTimeframe } from 'lib/flow-service'
 import { errorReporter } from '@/lib/sentry-wrapper'
 
 export default function AnalyticsPage() {
@@ -30,10 +30,10 @@ export default function AnalyticsPage() {
       try {
         const events = await FlowService.getVaultEvents(user.addr)
         setVaultEvents(events)
-        const ageDays = FlowService.getVaultAgeInDays(events)
+        const ageDays = getVaultAgeInDays(events)
         setVaultAgeDays(ageDays)
         const totalBalance = vaults.reduce((sum, v) => sum + v.balance, 0)
-        const history = FlowService.buildPerformanceHistory(events, totalBalance)
+        const history = buildPerformanceHistory(events, totalBalance)
         setRealPerformanceHistory(history)
       } catch (error) {
         errorReporter.captureException(error, { component: 'AnalyticsPage', action: 'fetchEvents' })
@@ -46,8 +46,8 @@ export default function AnalyticsPage() {
     }
   }, [user.addr, user.loggedIn, vaults])
 
-  const hasEnoughData = FlowService.hasEnoughDataForTimeframe(vaultAgeDays, timeframe)
-  const remainingTime = FlowService.getRemainingTimeForTimeframe(vaultAgeDays, timeframe)
+  const hasEnoughData = hasEnoughDataForTimeframe(vaultAgeDays, timeframe)
+  const remainingTime = getRemainingTimeForTimeframe(vaultAgeDays, timeframe)
 
   const timeframes = [
     { label: '24H', value: '1d' }, { label: '7D', value: '7d' },
@@ -55,7 +55,7 @@ export default function AnalyticsPage() {
     { label: '1Y', value: '1y' }, { label: 'All', value: 'all' }
   ]
 
-  const generateAnalyticsData = () => {
+  const generateAnalyticsData = useCallback(() => {
     if (!vaults || vaults.length === 0 || !performance) {
       return {
         totalPortfolioValue: 0, totalPnL: 0, totalPnLPercent: 0,
@@ -168,14 +168,20 @@ export default function AnalyticsPage() {
         annualizedReturn,
         winRate
       },
-      recentTransactions: vaults.flatMap(v => [
-        { type: 'vault_created', amount: 0, vault: v.name, timestamp: 'Recently' },
-        { type: 'deposit', amount: v.totalDeposits, vault: v.name, timestamp: 'Recently' }
-      ]).slice(0, 5)
+      recentTransactions: vaultEvents.length > 0
+        ? vaultEvents.slice(-5).reverse().map(e => ({
+            type: e.type === 'deposit' ? 'deposit' : e.type === 'withdraw' ? 'withdraw' : 'vault_created',
+            amount: e.amount,
+            vault: `Vault #${e.vaultId}`,
+            timestamp: e.timestamp > 0 ? new Date(e.timestamp * 1000).toLocaleDateString() : 'Recently'
+          }))
+        : vaults.flatMap(v => [
+            { type: 'deposit' as const, amount: v.totalDeposits, vault: v.name, timestamp: 'Just now' }
+          ]).slice(0, 5)
     }
-  }
+  }, [vaults, performance, flowBalance, vaultEvents, realPerformanceHistory])
 
-  const analyticsData = generateAnalyticsData()
+  const analyticsData = useMemo(() => generateAnalyticsData(), [generateAnalyticsData])
 
   const chartWidth = 600, chartHeight = 300, padding = 40
 
@@ -232,12 +238,12 @@ export default function AnalyticsPage() {
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
-                <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}
+                <button aria-label="Export analytics data" className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}
                   onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.4)'}
                   onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.15)'}>
                   <Download style={{ width: 14, height: 14 }} /> Export
                 </button>
-                <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}
+                <button aria-label="Refresh analytics data" className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem', background: 'transparent', border: '1px solid rgba(250,248,245,0.15)', color: '#FAF8F5' }}
                   onClick={refetch} disabled={loading}
                   onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.4)'}
                   onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(250,248,245,0.15)'}>
@@ -281,7 +287,9 @@ export default function AnalyticsPage() {
                     <div className="dash-filter-bar">
                       {timeframes.map((tf) => (
                         <button key={tf.value} onClick={() => setTimeframe(tf.value)}
-                          className={`dash-filter-btn ${timeframe === tf.value ? 'active' : ''}`}>
+                          className={`dash-filter-btn ${timeframe === tf.value ? 'active' : ''}`}
+                          aria-label={`Show ${tf.label} performance analytics`}
+                          aria-pressed={timeframe === tf.value}>
                           {tf.label}
                         </button>
                       ))}
@@ -310,7 +318,7 @@ export default function AnalyticsPage() {
                         <p style={{ fontSize: '0.75rem', color: 'rgba(250,248,245,0.55)', marginBottom: 16 }}>
                           Your vault needs to be active for <span style={{ color: '#00EF8B', fontWeight: 500 }}>{remainingTime}</span> more to display this chart.
                         </p>
-                        <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem' }} onClick={() => setTimeframe('all')}>
+                        <button className="dash-cta" style={{ padding: '10px 20px', fontSize: '0.625rem' }} onClick={() => setTimeframe('all')} aria-label="View all time performance data">
                           View All Time Data
                         </button>
                       </div>

@@ -64,6 +64,7 @@ export default function DocsPage() {
   const [copiedCode, setCopiedCode] = useState(false)
   const [mounted, setMounted] = useState(false)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true) }, [])
 
   const handleCopyCode = () => {
