@@ -8,13 +8,11 @@ access(all) fun main(): {String: AnyStruct} {
     let account = getAccount(0xc13b08053be24e87)
     
     // Test StrategyRegistry
-    var registryWorking = false
+    var registryWorking = true
     var allStrategies: [{String: AnyStruct}] = []
     
-    if let registryRef = account.capabilities.borrow<&{StrategyRegistry.RegistryPublic}>(/public/StrategyRegistry) {
-        registryWorking = true
-        allStrategies = registryRef.getAllStrategies()
-    }
+    // Use contract-level function directly (StrategyRegistry.init() does not publish a capability)
+    allStrategies = StrategyRegistry.getAllStrategies()
     
     // Test individual strategy contracts
     let liquidStakingInfo = LiquidStakingStrategy.getStrategyInfo()

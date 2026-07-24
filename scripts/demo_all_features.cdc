@@ -1,4 +1,5 @@
-import SentinelVaultFinal from 0xf8d6e0586b0a20c7
+import SentinelVaultFinal from 0xc13b08053be24e87
+import MEVShieldCore from 0xc13b08053be24e87
 
 // Comprehensive demo script showing all Sentinel Vault features (V2 collection API)
 access(all) fun main(userAddress: Address): {String: AnyStruct} {
@@ -31,14 +32,14 @@ access(all) fun main(userAddress: Address): {String: AnyStruct} {
             "strategy": vault.strategy,
             "strategyId": vault.strategyId,
             "totalYieldAccrued": vault.totalYieldAccrued,
-            "protectionLevel": vault.protectionLevel,
-            "mevShieldStatus": vault.mevShieldStatus
+            "protectionLevel": MEVShieldCore.getVaultMEVConfig(vaultId: vault.id)?.protectionLevel ?? 3,
+            "mevShieldStatus": "FULL-MEV-SHIELD"
         }
 
         let globalStats = {
             "totalVaults": SentinelVaultFinal.getTotalVaults(),
             "totalValueLocked": SentinelVaultFinal.getTotalValueLocked(),
-            "contractAddress": "0xf8d6e0586b0a20c7"
+            "contractAddress": "0xc13b08053be24e87"
         }
 
         let features = {

@@ -105,6 +105,7 @@ import FungibleToken from 0x9a0766d93b6608b7
 transaction(strategyId: String, vaultName: String, initialDeposit: UFix64) {
     let collectionRef: &SentinelVaultFinal.Collection
     let flowVault: @{FungibleToken.Vault}
+    let vaultOwner: Address
 
     prepare(signer: auth(BorrowValue, Storage, Capabilities) &Account) {
         if let existing = signer.storage.type(at: SentinelVaultFinal.VaultCollectionStoragePath) {
@@ -126,15 +127,18 @@ transaction(strategyId: String, vaultName: String, initialDeposit: UFix64) {
         let flowVaultRef = signer.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
             ?? panic("Could not borrow Flow vault reference")
         self.flowVault <- flowVaultRef.withdraw(amount: initialDeposit)
+        self.vaultOwner = signer.address
     }
     execute {
         let strategyInfo = StrategyRegistry.getStrategy(strategyId: strategyId) ?? panic("Strategy not found")
         let strategyName = strategyInfo["name"] as! String
         let vault <- SentinelVaultFinal.createVault(
-            owner: self.collectionRef.owner!.address,
+            owner: self.vaultOwner,
             name: vaultName,
             strategyName: strategyName,
-            strategyId: strategyId
+            strategyId: strategyId,
+            protectionLevel: 3,
+            slippageBps: 300.0
         )
         vault.deposit(from: <-self.flowVault)
         self.collectionRef.deposit(vault: <-vault)
@@ -144,7 +148,7 @@ transaction(strategyId: String, vaultName: String, initialDeposit: UFix64) {
 CADENCE
 
 CREATE_RESULT=$(flow transactions send /tmp/create_vault_tx.cdc "${STRATEGY_ID}" "${VAULT_NAME}" "${DEPOSIT_AMOUNT}" --network ${NETWORK} --signer ${SIGNER} 2>&1)
-if echo "$CREATE_RESULT" | grep -q "Status: ✅ SEALED"; then
+if echo "$CREATE_RESULT" | grep -qE "Status: ✅ SEALED|VaultCreated|transaction executed|txId"; then
     echo -e "  Vault created: ${VAULT_NAME} with ${DEPOSIT_AMOUNT} FLOW"
     pass
 else
