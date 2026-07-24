@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Clock, Database } from 'lucide-react'
 import { useVaultData } from 'hooks/useVaultData'
@@ -116,7 +116,7 @@ export function PortfolioChart() {
     return []
   }
 
-  const chartData = generateChartData()
+  const chartData = useMemo(() => generateChartData(), [vaults, performance, realEvents, timeframe])
   const dataSource = realEvents.length >= 2 ? 'blockchain-events' : 'vault-state'
   const chartWidth = 600
   const chartHeight = 300
@@ -127,16 +127,16 @@ export function PortfolioChart() {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
-            <div style={{ height: 32, width: 160, background: 'rgba(250,248,245,0.04)', borderRadius: 8, marginBottom: 8, animation: 'pulse 2s infinite' }} />
-            <div style={{ height: 16, width: 96, background: 'rgba(250,248,245,0.04)', borderRadius: 8, animation: 'pulse 2s infinite' }} />
+            <div className="dash-skeleton" style={{ height: 32, width: 160, marginBottom: 8 }} />
+            <div className="dash-skeleton" style={{ height: 16, width: 96 }} />
           </div>
           <div className="dash-filter-bar">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} style={{ width: 40, height: 32, background: 'rgba(250,248,245,0.04)', borderRadius: 8, animation: 'pulse 2s infinite' }} />
+              <div key={i} className="dash-skeleton" style={{ width: 40, height: 32, borderRadius: 8 }} />
             ))}
           </div>
         </div>
-        <div className="dash-chart" style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="dash-skeleton dash-skeleton-chart" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
           <div style={{ position: 'relative', width: 48, height: 48 }}>
             <div style={{ position: 'absolute', inset: 0, border: '3px solid rgba(0,239,139,0.08)', borderRadius: '50%' }} />
             <div style={{ position: 'absolute', inset: 0, border: '3px solid transparent', borderTopColor: '#00EF8B', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
@@ -184,6 +184,8 @@ export function PortfolioChart() {
               key={tf.value}
               onClick={() => setTimeframe(tf.value)}
               className={`dash-filter-btn ${timeframe === tf.value ? 'active' : ''}`}
+              aria-label={`Show ${tf.label} portfolio performance`}
+              aria-pressed={timeframe === tf.value}
             >
               {tf.label}
             </button>
@@ -197,6 +199,8 @@ export function PortfolioChart() {
           height={chartHeight}
           style={{ width: '100%', height: 'auto', overflow: 'visible' }}
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          role="img"
+          aria-label={`Portfolio performance chart showing ${chartData.length} data points over ${timeframe === '1d' ? '24 hours' : timeframe === '7d' ? '7 days' : timeframe === '30d' ? '30 days' : '90 days'}. Current value: ${formatCurrency(currentValue)}.`}
         >
           <defs>
             <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowUpRight,
@@ -11,100 +10,21 @@ import {
   TrendingUp,
   Activity as ActivityIcon
 } from 'lucide-react'
-import { useFlow } from 'lib/flow'
-import { useVaultData } from 'hooks/useVaultData'
 import { ClientOnly } from 'components/ClientOnly'
 import { formatCurrency } from 'lib/utils'
-import { errorReporter } from '@/lib/sentry-wrapper'
-
-interface Activity {
-  id: string
-  type: 'deposit' | 'withdrawal' | 'yield' | 'strategy' | 'system'
-  amount?: number
-  description: string
-  timestamp: Date
-  status: 'completed' | 'pending' | 'failed'
-  txHash?: string
-}
+import { useActivityFeed } from 'hooks/useActivityFeed'
 
 export function ActivityFeed() {
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [loading, setLoading] = useState(true)
-  const { user } = useFlow()
-  const { vaults, performance } = useVaultData()
-
-  useEffect(() => {
-    const loadActivities = async () => {
-      if (!user.addr) { setLoading(false); return }
-      try {
-        setLoading(true)
-        const realActivities: Activity[] = []
-
-        if (vaults.length === 0) {
-          realActivities.push({
-            id: 'system-ready', type: 'system',
-            description: 'Sentinel Network Ready',
-            timestamp: new Date(), status: 'completed'
-          })
-        } else {
-          vaults.forEach((vault, idx) => {
-            realActivities.push({
-              id: `vault-active-${vault.id}`, type: 'system',
-              description: `Protocol Active: ${vault.name}`,
-              timestamp: new Date(Date.now() - (idx + 1) * 3600000),
-              status: 'completed'
-            })
-            if (vault.totalDeposits > 0) {
-              realActivities.push({
-                id: `deposit-${vault.id}`, type: 'deposit',
-                amount: vault.totalDeposits,
-                description: `Capital Inflow: ${vault.name}`,
-                timestamp: new Date(Date.now() - (idx + 2) * 3600000),
-                status: 'completed'
-              })
-            }
-            if (vault.lastExecution > 0) {
-              realActivities.push({
-                id: `strategy-${vault.id}`, type: 'strategy',
-                description: `Forte Execution: ${vault.strategy}`,
-                timestamp: new Date(vault.lastExecution * 1000),
-                status: 'completed'
-              })
-            }
-          })
-          if (performance?.totalPnl && performance.totalPnl > 0) {
-            realActivities.push({
-              id: 'total-yield', type: 'yield',
-              amount: performance.totalPnl,
-              description: 'Aggregated Yield Harvested',
-              timestamp: new Date(), status: 'completed'
-            })
-          }
-        }
-
-        realActivities.push({
-          id: 'mev-protection', type: 'system',
-          description: 'MEV-Shield Active Monitoring',
-          timestamp: new Date(Date.now() - 24 * 3600000),
-          status: 'completed'
-        })
-
-        realActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-        setActivities(realActivities)
-      } catch (error) {
-        errorReporter.captureException(error, { component: 'ActivityFeed', action: 'loadActivities' })
-      } finally { setLoading(false) }
-    }
-    loadActivities()
-  }, [user.addr, vaults, performance])
+  const { activities, loading } = useActivityFeed()
 
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'deposit': return <ArrowUpRight style={{ width: 20, height: 20, color: '#00EF8B' }} />
       case 'withdrawal': return <ArrowDownLeft style={{ width: 20, height: 20, color: '#ef4444' }} />
-      case 'yield': return <TrendingUp style={{ width: 20, height: 20, color: '#00EF8B' }} />
-      case 'strategy': return <Zap style={{ width: 20, height: 20, color: '#37DDDF' }} />
-      case 'system': return <Shield style={{ width: 20, height: 20, color: '#FAF8F5' }} />
+      case 'execution': return <Zap style={{ width: 20, height: 20, color: '#37DDDF' }} />
+      case 'success': return <TrendingUp style={{ width: 20, height: 20, color: '#00EF8B' }} />
+      case 'vault_created': return <Shield style={{ width: 20, height: 20, color: '#00EF8B' }} />
+      case 'alert': return <Shield style={{ width: 20, height: 20, color: '#FAF8F5' }} />
       default: return <Clock style={{ width: 20, height: 20 }} />
     }
   }
@@ -114,10 +34,10 @@ export function ActivityFeed() {
       <div className="dash-card" style={{ padding: 24 }}>
         <h3 className="dash-label" style={{ fontSize: '1.25rem', marginBottom: 32 }}>SECURE LOGS</h3>
         {[1, 2, 3].map((i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, animation: 'pulse 2s infinite' }}>
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ height: 16, width: '75%', background: 'rgba(250,248,245,0.04)', borderRadius: 4, marginBottom: 8 }} />
-              <div style={{ height: 12, width: '25%', background: 'rgba(250,248,245,0.04)', borderRadius: 4 }} />
+              <div className="dash-skeleton dash-skeleton-text" />
+              <div className="dash-skeleton dash-skeleton-text short" />
             </div>
           </div>
         ))}
@@ -162,27 +82,34 @@ export function ActivityFeed() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                     <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#FAF8F5', margin: 0 }}>
-                      {activity.description}
+                      {activity.title}
                     </p>
-                    <span style={{
-                      fontSize: '0.5625rem', fontWeight: 500, letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                      color: activity.status === 'completed' ? '#00EF8B' : '#f59e0b',
-                    }}>
-                      {activity.status}
-                    </span>
+                    {activity.transactionId && (
+                      <span style={{
+                        fontSize: '0.4375rem', fontWeight: 500, letterSpacing: '0.08em',
+                        color: 'rgba(250,248,245,0.3)', fontFamily: 'monospace',
+                      }}>
+                        {activity.transactionId.slice(0, 10)}...
+                      </span>
+                    )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'rgba(250,248,245,0.25)' }}>
-                      {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  •  {new Date(activity.timestamp).toLocaleDateString()}
+                      {activity.description}
                     </span>
-                    {activity.amount && (                    <span style={{ fontSize: '1rem', fontWeight: 500, fontVariantNumeric: 'tabular-nums',
-                        color: (activity.type === 'deposit' || activity.type === 'yield') ? '#00EF8B' : '#ef4444',
-                      }}>
-                        {(activity.type === 'deposit' || activity.type === 'yield') ? '+' : '-'}
-                        {formatCurrency(activity.amount)}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '0.5625rem', fontWeight: 700, color: 'rgba(250,248,245,0.25)' }}>
+                        {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}  •  {new Date(activity.timestamp).toLocaleDateString()}
                       </span>
-                    )}
+                      {activity.amount && (
+                        <span style={{ fontSize: '0.875rem', fontWeight: 500, fontVariantNumeric: 'tabular-nums',
+                          color: (activity.type === 'deposit' || activity.type === 'success') ? '#00EF8B' : '#ef4444',
+                        }}>
+                          {(activity.type === 'deposit' || activity.type === 'success') ? '+' : '-'}
+                          {formatCurrency(activity.amount)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>

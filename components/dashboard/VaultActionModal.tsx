@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { FlowService } from 'lib/flow-service'
 import { useTransactions } from 'lib/transactions'
+import { useActivityFeed } from 'hooks/useActivityFeed'
 import { formatCurrency } from 'lib/utils'
 
 interface VaultActionModalProps {
@@ -32,6 +33,7 @@ export function VaultActionModal({
     const isDeposit = type === 'deposit'
     const maxAmount = isDeposit ? availableFlow : balance
     const { setTxState } = useTransactions()
+    const { addActivity } = useActivityFeed()
 
     const handleAction = async () => {
         if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -40,23 +42,46 @@ export function VaultActionModal({
         if (Number(amount) > maxAmount) {
             setError(`Insufficient ${isDeposit ? 'Flow balance' : 'vault balance'}`); return
         }
-        try {
-            setLoading(true); setError(null)
-            const actionTitle = isDeposit ? 'Capital Injection' : 'Funds Extraction'
-            setTxState({ status: 'executing', txId: null, error: null, title: actionTitle })
-            const result = isDeposit
-                ? await FlowService.deposit(vaultId, Number(amount))
-                : await FlowService.withdraw(vaultId, Number(amount))
-            const { transactionId, sealed } = result
-            setTxState({ status: 'pending', txId: transactionId, error: null, title: actionTitle })
-            onClose()
-            await sealed
-            setTxState({ status: 'sealed', txId: transactionId, error: null, title: isDeposit ? 'Injection Successful' : 'Extraction Successful' })
-        } catch (err: unknown) {
-            const errorMessage = err instanceof Error ? err.message : `Failed to ${type}. Please try again.`
-            setError(errorMessage)
-            setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Transaction Failed' })
-        } finally { setLoading(false) }
+    setLoading(true); setError(null)
+    const actionTitle = isDeposit ? 'Capital Injection' : 'Funds Extraction'
+    try {
+        const retryHandler = async () => {
+            setTxState({ status: 'idle', txId: null, error: null, title: actionTitle })
+            await handleAction()
+        }
+        setTxState({
+            status: 'executing', txId: null, error: null, title: actionTitle,
+            onRetry: retryHandler,
+        })
+        const result = isDeposit
+            ? await FlowService.deposit(vaultId, Number(amount))
+            : await FlowService.withdraw(vaultId, Number(amount))
+        const { transactionId, sealed } = result
+        setTxState({ status: 'submitting', txId: transactionId, error: null, title: actionTitle })
+        setTxState({ status: 'pending', txId: transactionId, error: null, title: actionTitle })
+        await sealed
+        // Only close the action modal after on-chain confirmation
+        onClose()
+        addActivity({
+          type: isDeposit ? 'deposit' : 'withdrawal',
+          title: isDeposit ? 'Capital Injected' : 'Funds Extracted',
+          description: `${isDeposit ? 'Deposited' : 'Withdrew'} ${Number(amount).toFixed(2)} FLOW ${isDeposit ? 'to' : 'from'} ${vaultName}`,
+          amount: Number(amount),
+          vault: vaultName,
+          transactionId
+        })
+        setTxState({ status: 'sealed', txId: transactionId, error: null, title: isDeposit ? 'Capital Injected' : 'Funds Extracted' })
+    } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : `Failed to ${type}. Please try again.`
+        setError(errorMessage)
+        const retryHandler = async () => {
+            setTxState({ status: 'idle', txId: null, error: null, title: actionTitle })
+            setError(null)
+            setAmount('')
+            await handleAction()
+        }
+        setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Transaction Failed', onRetry: retryHandler })
+    } finally { setLoading(false) }
     }
 
     return (
@@ -105,7 +130,8 @@ export function VaultActionModal({
                                         <p className="dash-label">{vaultName}</p>
                                     </div>
                                 </div>
-                                <button onClick={onClose} style={{
+                                <button onClick={onClose} aria-label="Close action dialog"
+                                    style={{
                                     width: 40, height: 40, borderRadius: 16,
                                     border: '1px solid rgba(250,248,245,0.10)',
                                     background: 'transparent', color: 'rgba(250,248,245,0.5)',
@@ -139,6 +165,7 @@ export function VaultActionModal({
                                             onClick={() => setAmount((maxAmount * 0.5).toFixed(2))}
                                             className="dash-badge dash-badge-muted"
                                             style={{ cursor: 'pointer', padding: '8px 14px' }}
+                                            aria-label={`Set ${isDeposit ? 'deposit' : 'withdrawal'} amount to 50% of available`}
                                         >
                                             50%
                                         </button>
@@ -146,6 +173,7 @@ export function VaultActionModal({
                                             onClick={() => setAmount(maxAmount.toFixed(2))}
                                             className="dash-badge dash-badge-green"
                                             style={{ cursor: 'pointer', padding: '8px 14px' }}
+                                            aria-label={`Set ${isDeposit ? 'deposit' : 'withdrawal'} amount to maximum available`}
                                         >
                                             MAX
                                         </button>
@@ -195,6 +223,7 @@ export function VaultActionModal({
                                         onClick={handleAction}
                                         disabled={loading || !amount}
                                         className="dash-cta"
+                                        aria-label={isDeposit ? 'Authorize capital injection' : 'Confirm fund extraction'}
                                         style={{
                                             width: '100%', padding: '20px 0',
                                             boxShadow: isDeposit ? '0 10px 40px rgba(0,239,139,0.2)' : 'none',

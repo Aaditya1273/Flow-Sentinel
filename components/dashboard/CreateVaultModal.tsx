@@ -16,6 +16,7 @@ import { useVaultData } from 'hooks/useVaultData'
 import { FlowService } from 'lib/flow-service'
 import { errorReporter } from '@/lib/sentry-wrapper'
 import { useTransactions } from 'lib/transactions'
+import { useActivityFeed } from 'hooks/useActivityFeed'
 import { formatCurrency } from 'lib/utils'
 
 interface CreateVaultModalProps {
@@ -91,18 +92,37 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
   }, [preselectedStrategy, strategies])
 
   const { setTxState } = useTransactions()
+  const { addActivity } = useActivityFeed()
 
   const handleCreateVault = async () => {
     if (!selectedStrategyData || !vaultName || !depositAmount) return
     try {
       setStep(4)
-      setTxState({ status: 'executing', txId: null, error: null, title: 'Launching Sentinel' })
+      const retryHandler = async () => {
+        setTxState({ status: 'idle', txId: null, error: null, title: 'Launching Sentinel' })
+        setError(null)
+        await handleCreateVault()
+      }
+      setTxState({
+        status: 'executing', txId: null, error: null, title: 'Launching Sentinel',
+        onRetry: retryHandler,
+      })
       const { transactionId, sealed } = await FlowService.createVaultWithStrategy(
         selectedStrategyData.id, vaultName, Number(depositAmount)
       )
+      setTxState({ status: 'submitting', txId: transactionId, error: null, title: 'Deploying Protocol' })
       setTxState({ status: 'pending', txId: transactionId, error: null, title: 'Deploying Protocol' })
-      onClose()
       await sealed
+      // Only close the create vault modal after the transaction is confirmed on-chain
+      onClose()
+      addActivity({
+        type: 'vault_created',
+        title: 'Vault Deployed',
+        description: `Sentinel ${vaultName} created with ${depositAmount} FLOW`,
+        amount: Number(depositAmount),
+        vault: vaultName,
+        transactionId
+      })
       setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Sentinel Deployed' })
       if (onSuccess) onSuccess()
     } catch (err: unknown) {
@@ -110,7 +130,13 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
       const errorMessage = err instanceof Error ? err.message : 'Failed to create vault on blockchain.'
       setError(errorMessage)
       setStep(3)
-      setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Deployment Failed' })
+      const retryHandler = async () => {
+        setTxState({ status: 'idle', txId: null, error: null, title: 'Launching Sentinel' })
+        setError(null)
+        setStep(3)
+        await handleCreateVault()
+      }
+      setTxState({ status: 'error', txId: null, error: errorMessage, title: 'Deployment Failed', onRetry: retryHandler })
     }
   }
 
@@ -159,7 +185,8 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
               {step === 4 && 'Deploying Sentinel'}
             </h2>
           </div>
-          <button onClick={onClose} style={{
+          <button onClick={onClose} aria-label="Close create vault dialog"
+            style={{
             width: 48, height: 48, borderRadius: 20,
             border: '1px solid rgba(250,248,245,0.10)',
             background: 'transparent', color: 'rgba(250,248,245,0.5)',
@@ -190,21 +217,21 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
+                role="radiogroup"
+                aria-label="Select a strategy"
                 style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}
               >
                 {loading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} style={{
-                      borderRadius: 32, border: '1px solid rgba(250,248,245,0.06)',
-                      background: 'rgba(250,248,245,0.02)', height: 280,
-                      animation: 'pulse 2s infinite',
-                    }} />
+                    <div key={i} className="dash-skeleton dash-skeleton-card" />
                   ))
                 ) : (
-                  strategies.map((strategy) => (
-                    <div
+                  strategies.map((strategy) => (                      <div
                       key={strategy.id}
                       onClick={() => setSelectedStrategy(strategy.id)}
+                      role="radio"
+                      aria-checked={selectedStrategy === strategy.id}
+                      aria-label={`Select ${strategy.name} strategy with ${strategy.expectedAPY}% expected APY`}
                       style={{
                         borderRadius: 32, padding: 32,
                         border: `2px solid ${selectedStrategy === strategy.id ? 'rgba(0,239,139,0.3)' : 'rgba(250,248,245,0.08)'}`,
@@ -301,6 +328,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                         onClick={() => setDepositAmount((flowBalance * 0.5).toFixed(1))}
                         className="dash-badge dash-badge-muted"
                         style={{ cursor: 'pointer', padding: '8px 16px' }}
+                        aria-label="Set deposit amount to 50% of available balance"
                       >
                         50%
                       </button>
@@ -308,6 +336,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                         onClick={() => setDepositAmount(flowBalance.toFixed(1))}
                         className="dash-badge dash-badge-green"
                         style={{ cursor: 'pointer', padding: '8px 16px' }}
+                        aria-label="Set deposit amount to maximum available balance"
                       >
                         MAX
                       </button>
@@ -450,6 +479,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
           }}>
             <button
               onClick={() => step > 1 ? setStep(step - 1) : onClose()}
+              aria-label={step === 1 ? 'Cancel vault creation' : 'Go back to previous step'}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 fontSize: '0.625rem', fontWeight: 500, letterSpacing: '0.12em',
@@ -469,6 +499,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                 onClick={() => setStep(step + 1)}
                 disabled={step === 1 ? !selectedStrategy : (!vaultName || !depositAmount || Number(depositAmount) < (selectedStrategyData?.minDeposit || 0))}
                 className="dash-cta"
+                aria-label={step === 1 ? 'Continue to configure vault' : 'Continue to verify vault details'}
               >
                 Continue <ChevronRight style={{ width: 16, height: 16 }} />
               </button>
@@ -478,6 +509,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                 disabled={vaultLoading}
                 className="dash-cta"
                 style={{ boxShadow: '0 10px 40px rgba(0,239,139,0.25)' }}
+                aria-label="Finalize vault deployment on blockchain"
               >
                 <Lock style={{ width: 20, height: 20 }} />
                 Finalize Deployment
