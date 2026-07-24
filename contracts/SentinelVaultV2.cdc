@@ -402,8 +402,9 @@ access(all) contract SentinelVaultFinal {
                 protectionStatus = protectionStatus.concat("|PG-OK(").concat(oracleCheck.deviation.toString()).concat(")")
             }
 
-            // EXECUTE STRATEGY
-            let yieldAmount = executor.executeStrategy(vaultBalance: currentBalance)
+            // Phase 3: EXECUTE STRATEGY — now returns StrategyResult with full provenance
+            let result = executor.executeStrategy(vaultBalance: currentBalance)
+            let yieldAmount = result.yieldAmount
 
             if yieldAmount > 0.0 {
                 let availableReserve = SentinelVaultFinal.yieldReserve.balance
@@ -419,10 +420,22 @@ access(all) contract SentinelVaultFinal {
             }
             self.lastExecution = getCurrentBlock().timestamp
 
-            // LAYER 4: EXECUTION QUEUE — mark processed, remove from pending
+            // LAYER 4: mark processed (removes from pending queue)
             MEVShieldCore.markExecutionProcessed(vaultId: self.id, commitHashHex: commitHashHex, yieldGenerated: yieldAmount)
 
-            emit StrategyExecuted(vaultId: self.id, amount: currentBalance, yieldGenerated: yieldAmount, jitterApplied: jitterBlocks, mevShieldStatus: protectionStatus)
+            // Phase 3: emit rich StrategyExecuted with all provenance fields
+            emit StrategyExecuted(
+                vaultId: self.id,
+                amount: currentBalance,
+                yieldGenerated: yieldAmount,
+                realYieldFromProtocol: yieldAmount,
+                protocolSource: result.protocolSource,
+                realizedAPY: result.realizedAPY,
+                usedRealProtocol: result.usedRealProtocol,
+                confidence: result.confidence,
+                jitterApplied: jitterBlocks,
+                mevShieldStatus: protectionStatus.concat("|").concat(result.executionNote)
+            )
 
             destroy executor
         }
