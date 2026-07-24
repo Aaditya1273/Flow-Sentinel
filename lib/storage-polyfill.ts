@@ -1,5 +1,21 @@
 "use client";
 
+// Polyfill indexedDB for wagmi v2 during SSR/build (wagmi checks for indexedDB compatibility
+// during module initialization, which breaks server-side rendering)
+if (typeof globalThis !== 'undefined' && typeof (globalThis as any).indexedDB === 'undefined') {
+  try {
+    (globalThis as any).indexedDB = {
+      open: () => ({
+        result: { createObjectStore: () => {}, transaction: () => ({ objectStore: () => ({ put: () => {}, get: () => {} }) }) },
+        onerror: null,
+        onupgradeneeded: null,
+        onsuccess: null,
+      }),
+      deleteDatabase: () => ({}),
+    }
+  } catch { /* SSR-safe: polyfill failure is non-critical */ }
+}
+
 if (typeof window !== 'undefined') {
   const createMockStorage = () => {
     const storage: Record<string, string> = {};
