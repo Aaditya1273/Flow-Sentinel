@@ -1,5 +1,5 @@
 import SentinelVaultFinal from 0xc13b08053be24e87
-import SentinelInterfaces from 0xc13b08053be24e87
+import SentinelInterfaces from 0x136b642d0aa31ca9
 import LiquidStakingStrategy from 0xc13b08053be24e87
 import YieldFarmingStrategy from 0xc13b08053be24e87
 import ArbitrageStrategy from 0xc13b08053be24e87

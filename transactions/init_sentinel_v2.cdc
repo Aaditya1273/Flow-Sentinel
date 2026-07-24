@@ -41,10 +41,12 @@ transaction(strategyId: String) {
         let strategyName = strategyInfo["name"] as? String ?? strategyId
 
         let vault <- SentinelVaultFinal.createVault(
-            owner: self.collectionRef.owner!.address,
+            owner: signer.address,
             name: strategyName,
             strategyName: strategyName,
-            strategyId: strategyId
+            strategyId: strategyId,
+            protectionLevel: 3,
+            slippageBps: 300.0
         )
 
         self.collectionRef.deposit(vault: <-vault)

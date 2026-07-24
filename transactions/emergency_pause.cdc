@@ -1,4 +1,4 @@
-import SentinelVaultFinal from 0xf8d6e0586b0a20c7
+import SentinelVaultFinal from 0xc13b08053be24e87
 
 // Emergency pause a Sentinel Vault (V2 Collection API)
 transaction(vaultId: UInt64) {

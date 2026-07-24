@@ -6,7 +6,7 @@ import MEVShieldCore from 0xc13b08053be24e87
 // Initialize a new Sentinel Vault (MEV) with MEV Shield protection
 transaction(vaultName: String, strategyName: String, strategyId: String) {
 
-    prepare(signer: auth(BorrowValue, IssueStorageCapabilityController, PublishCapability, SaveValue) &Account) {
+    prepare(signer: auth(Storage, Capabilities) &Account) {
         if signer.storage.borrow<&SentinelVaultFinal.Collection>(from: SentinelVaultFinal.VaultCollectionStoragePath) != nil {
             log("Sentinel MEV Collection already exists")
             return
