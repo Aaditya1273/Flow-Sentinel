@@ -31,7 +31,9 @@ module.exports = withSentryConfig(
     silent: true,
     telemetry: false,
     widenClientFileUpload: true,
-    reactComponentAnnotation: { enabled: true },
+    webpack: {
+      reactComponentAnnotation: { enabled: true },
+    },
     sourcemaps: {
       deleteSourcemapsAfterUpload: true,
     },

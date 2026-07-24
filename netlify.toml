@@ -1,22 +1,85 @@
 [build]
-  command = "npm run build"
-  publish = ".next"
+  command   = "npm run build"
+  publish   = ".next"
+  functions = "netlify/functions"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
 [build.environment]
   NEXT_USE_NETLIFY_EDGE = "true"
+  NODE_OPTIONS          = "--max-old-space-size=4096"
 
-# ── Environment Variables (set these in Netlify dashboard) ──
-# These are the defaults for testnet. Override in Netlify UI for mainnet.
-# [context.production.environment]
-#   NEXT_PUBLIC_FLOW_ACCESS_NODE = "https://rest-mainnet.onflow.org"
-#   NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS = "0x..."
-#   NEXT_PUBLIC_SENTINEL_INTERFACES_ADDRESS = "0x..."
-#   NEXT_PUBLIC_STRATEGY_REGISTRY_ADDRESS = "0x..."
-#   NEXT_PUBLIC_FLOW_TOKEN_ADDRESS = "0x1654653399040a61"
-#   NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS = "0xf233dcee88fe0abe"
-#   NEXT_PUBLIC_LIQUID_STAKING_STRATEGY_ADDRESS = "0x..."
-#   NEXT_PUBLIC_YIELD_FARMING_STRATEGY_ADDRESS = "0x..."
-#   NEXT_PUBLIC_ARBITRAGE_STRATEGY_ADDRESS = "0x..."
+# ── Phase 4: Oracle keeper — runs every 6 hours ──────────────────────────────
+# Fetches live APY from FlowIDTableStaking + IncrementFi, updates YieldOracle on-chain.
+[[scheduled_functions]]
+  function = "oracle-keeper"
+  schedule = "0 */6 * * *"
+
+# ── Phase 5: Strategy keeper — runs every hour ───────────────────────────────
+# Queries all active vaults due for execution and triggers strategy execution automatically.
+[[scheduled_functions]]
+  function = "strategy-keeper"
+  schedule = "0 * * * *"
+
+# ── Security headers ─────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options            = "DENY"
+    X-Content-Type-Options     = "nosniff"
+    X-XSS-Protection           = "1; mode=block"
+    Referrer-Policy            = "strict-origin-when-cross-origin"
+    Permissions-Policy         = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security  = "max-age=63072000; includeSubDomains; preload"
+
+# Content-Security-Policy — allow Flow access node and Supabase
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://rest-testnet.onflow.org https://rest-mainnet.onflow.org https://*.supabase.co wss://*.supabase.co https://api.increment.fi https://flowscan.io; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'none'"
+
+# ── Cache: Next.js static assets ─────────────────────────────────────────────
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Cache: API routes — no caching ───────────────────────────────────────────
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+
+# ── Redirects ─────────────────────────────────────────────────────────────────
+[[redirects]]
+  from   = "/"
+  to     = "/landing"
+  status = 302
+
+# ── Production environment (override in Netlify dashboard for real secrets) ──
+[context.production.environment]
+  NEXT_PUBLIC_FLOW_ACCESS_NODE                = "https://rest-testnet.onflow.org"
+  NEXT_PUBLIC_FLOW_NETWORK                    = "testnet"
+  NEXT_PUBLIC_SENTINEL_VAULT_ADDRESS          = "0xc13b08053be24e87"
+  NEXT_PUBLIC_SENTINEL_INTERFACES_ADDRESS     = "0x136b642d0aa31ca9"
+  NEXT_PUBLIC_STRATEGY_REGISTRY_ADDRESS       = "0xc13b08053be24e87"
+  NEXT_PUBLIC_FLOW_TOKEN_ADDRESS              = "0x7e60df042a9c0868"
+  NEXT_PUBLIC_FUNGIBLE_TOKEN_ADDRESS          = "0x9a0766d93b6608b7"
+  NEXT_PUBLIC_LIQUID_STAKING_STRATEGY_ADDRESS = "0xc13b08053be24e87"
+  NEXT_PUBLIC_YIELD_FARMING_STRATEGY_ADDRESS  = "0xc13b08053be24e87"
+  NEXT_PUBLIC_ARBITRAGE_STRATEGY_ADDRESS      = "0xc13b08053be24e87"
+  # Secrets (set in Netlify UI — never hardcode here):
+  # ORACLE_ADMIN_ADDRESS
+  # ORACLE_ADMIN_PRIVATE_KEY
+  # ORACLE_ADMIN_KEY_INDEX
+  # KEEPER_ADDRESS
+  # KEEPER_PRIVATE_KEY
+  # CRON_SECRET
+  # NEXT_PUBLIC_SUPABASE_URL
+  # NEXT_PUBLIC_SUPABASE_ANON_KEY
+  # SUPABASE_SERVICE_KEY
+  # RESEND_API_KEY
+  # NEXT_PUBLIC_SENTRY_DSN
+  # NEXT_PUBLIC_BASE_URL
+  # NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID
