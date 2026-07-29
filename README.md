@@ -30,14 +30,14 @@
 - [💡 The Solution](#-the-solution)
 - [🌟 Key Features](#-key-features)
 - [🏗️ System Architecture](#️-system-architecture)
-  - [MEV-Shield Pro — 4 Protection Layers](#mev-shield-pro--4-protection-layers)
+  - [Protection System — 4 Layers](#protection-system--4-layers)
 - [🔄 User Workflow](#-user-workflow)
 - [🛠️ Technical Stack](#️-technical-stack)
 - [📁 Project Structure](#-project-structure)
 - [🚀 Getting Started](#-getting-started)
 - [🧪 Testing](#-testing)
 - [📜 Smart Contracts](#-smart-contracts)
-- [🔬 MEV Protection Comparison](#-mev-protection-comparison)
+- [🔬 Protection System Comparison](#-protection-system-comparison)
 - [🗺️ Roadmap](#️-roadmap)
 - [📄 License](#-license)
 
@@ -205,7 +205,7 @@ graph LR
     FCL -- JSON Data --> FSV
     FSV -- Typed Data --> Hooks
     Hooks -- VaultInfo[] --> Pages
-    Hooks -- MEV Config --> Comp
+    Hooks -- Protection Config --> Comp
     CTX -- Wallet Status --> Pages
 ```
 
@@ -220,22 +220,22 @@ Choose Flow Wallet (native Cadence) or EVM Gateway (MetaMask/RainbowKit)
 ```bash
 flow transactions send transactions/init_sentinel.cdc \
     --args-json '[
-        {"type": "String", "value": "My MEV-Protected Vault"},
+        {"type": "String", "value": "My Yield Vault"},
         {"type": "String", "value": "Liquid Staking Pro"},
         {"type": "String", "value": "liquid-staking-pro"}
     ]' --network testnet
 ```
 
-Your vault is created with **Full MEV Protection (Level 3)** by default:
-- ✅ Layer 1 — Commit-Reveal: Active
-- ✅ Layer 2 — VRF Block-Delay: Active
-- ✅ Layer 3 — Price Deviation Guard: Active (3% slippage)
-- ✅ Layer 4 — Execution Queue: Active
+Your vault is created with **Full Protection (Level 3)** by default:
+- ✅ Layer 1 — Commit-Reveal: Active (hides execution details from mempool)
+- ✅ Layer 2 — VRF Block-Delay: Active (random 0-5 block delay)
+- ✅ Layer 3 — Price Deviation Guard: Active (3% slippage tolerance)
+- ✅ Layer 4 — Execution Queue: Active (random processing order)
 
 ### 3. **Deposit Capital**
 Deposit FLOW tokens into your vault. The vault balance is tracked on-chain.
 
-### 4. **Trigger Strategy Execution (MEV-Protected)**
+### 4. **Trigger Strategy Execution (Protected)**
 Two options:
 
 **🔴 Full Protection (Recommended):** Two-step Commit-Reveal flow
@@ -261,7 +261,7 @@ flow transactions send transactions/mev_execute_direct.cdc \
 ### 5. **Monitor & Claim**
 Use the web dashboard to:
 - View real-time vault balance and yield accrued
-- Monitor MEV protection triggers and rejections
+- Monitor protection events and execution history
 - Adjust protection level (None → Basic → Standard → Full)
 - Claim accumulated yield
 - View performance history with P&L charts
@@ -273,7 +273,7 @@ Use the web dashboard to:
 | Layer | Technology | Purpose |
 |:------|:-----------|:--------|
 | **Blockchain** | [Flow (Cadence 1.0)](https://cadence-lang.org) | Smart contract runtime with native randomness |
-| **Smart Contracts** | 9 Cadence contracts | Vault logic, MEV protection, strategy execution |
+| **Smart Contracts** | 9 Cadence contracts | Vault logic, execution protection, strategy execution |
 | **Web Framework** | [Next.js 16](https://nextjs.org) (App Router) | SSR, React Server Components, optimized builds |
 | **UI Library** | [React 19](https://react.dev) | Component-based UI architecture |
 | **Styling** | [Tailwind CSS 3](https://tailwindcss.com) | Utility-first CSS with glassmorphism design |
@@ -305,8 +305,8 @@ Flow-Sentinel/
 │   ├── layout/                   # Navbar, Footer
 │   └── ui/                       # Reusable UI primitives
 ├── contracts/
-│   ├── MEVShieldCore.cdc         # 4-layer MEV protection engine
-│   ├── SentinelVaultV2.cdc       # MEV-protected vault (deployed as SentinelVaultFinal)
+│   ├── MEVShieldCore.cdc         # 4-layer execution protection engine
+│   ├── SentinelVaultV2.cdc       # Yield vault with protection (deployed as SentinelVaultFinal)
 │   ├── SentinelInterfaces.cdc    # Core interfaces
 │   ├── StrategyRegistry.cdc      # Strategy catalog
 │   ├── YieldOracle.cdc           # Yield data oracle
@@ -316,20 +316,20 @@ Flow-Sentinel/
 │       ├── YieldFarmingStrategy.cdc
 │       └── ArbitrageStrategy.cdc
 ├── transactions/                 # Cadence transactions
-│   ├── mev_commit.cdc            # Layer 1: Create commit hash
-│   ├── mev_reveal.cdc            # Layers 1-4: Reveal + execute
-│   ├── mev_execute_direct.cdc    # Direct execution with MEV
-│   ├── mev_set_protection.cdc    # Update protection level
-│   ├── init_sentinel.cdc         # Initialize vault
+│   ├── mev_commit.cdc            # Create execution commitment
+│   ├── mev_reveal.cdc            # Reveal and execute strategy
+│   ├── mev_execute_direct.cdc    # Direct execution with protections
+│   ├── mev_set_protection.cdc    # Update vault protection settings
+│   ├── init_sentinel.cdc         # Initialize new yield vault
 │   └── ...                       # 16 total transaction files
 ├── scripts/                      # Shell & Cadence scripts
-│   ├── test_mev_protection.sh    # MEV test suite
-│   ├── mev_status.cdc            # Query MEV stats
+│   ├── test_mev_protection.sh    # Protection system test suite
+│   ├── mev_status.cdc            # Query protection status
 │   ├── get_vault_info.cdc        # Query vault info
 │   ├── deploy-all-contracts.sh   # Deploy all contracts
 │   └── verify_deployment.js      # Verify deployment
 ├── hooks/                        # React hooks
-│   ├── useVaultData.ts           # Vault data with MEV fields
+│   ├── useVaultData.ts           # Vault data fetching and transformation
 │   └── useActivityFeed.ts        # On-chain event feed
 ├── lib/
 │   ├── flow-service.ts           # Flow blockchain service layer
@@ -395,31 +395,31 @@ See `.env.local.example` for the complete list. Key variables:
 
 ## 🧪 Testing
 
-### MEV Protection Test Suite
+### Protection System Test Suite
 
-The test suite verifies all 4 layers of MEV protection on-chain:
+The test suite verifies all 4 protection layers on-chain:
 
 ```bash
 bash scripts/test_mev_protection.sh testnet
 ```
 
 This will:
-1. Verify MEVShieldCore deployment
-2. Create a vault with Full MEV protection
-3. **Layer 1**: Commit a hash (hidden from mempool)
+1. Verify contract deployment status
+2. Create a vault with Full protection
+3. **Layer 1**: Commit a hash (execution hidden from mempool)
 4. **Layer 2**: Reveal + VRF block-delay jitter applied
 5. **Layer 3**: Price deviation guard check
 6. **Layer 4**: Execution queue tracking
-7. Query and verify MEV statistics
+7. Query and verify protection statistics
 8. Update protection level settings
 
 ### On-Chain Verification
 
 ```bash
-# Query global MEV stats
+# Query global protection stats
 flow scripts execute scripts/mev_status.cdc nil --network testnet
 
-# Query vault-specific MEV config
+# Query vault-specific config
 flow scripts execute scripts/mev_status.cdc 0 --network testnet
 
 # Query all vault info
@@ -444,11 +444,11 @@ npx tsc --noEmit
 
 | Contract | Address (Testnet) | Description |
 |:---------|:------------------|:------------|
-| **MEVShieldCore** | `0xc13b08053be24e87` | 4-layer MEV protection engine — commit-reveal, VRF jitter, price guard, execution queue |
-| **SentinelVaultFinal** | `0xc13b08053be24e87` | MEV-protected vault (V2) with full protection integration |
+| **MEVShieldCore** | `0xc13b08053be24e87` | 4-layer execution protection engine — commit-reveal, VRF jitter, price guard, execution queue |
+| **SentinelVaultFinal** | `0xc13b08053be24e87` | Protected yield vault with full execution protection integration |
 | **SentinelInterfaces** | `0x136b642d0aa31ca9` | Core interfaces: `IStrategy` |
 | **StrategyRegistry** | `0xc13b08053be24e87` | Strategy catalog — register, query, and update strategy TVL |
-| **YieldOracle** | `0xc13b08053be24e87` | Yield data provider for price deviation guard |
+| **YieldOracle** | `0xc13b08053be24e87` | On-chain yield data feed for price deviation guard |
 | **MultiSigAdmin** | `0xc13b08053be24e87` | Multi-signature administration for yield reserve |
 
 ### Strategy Contracts
@@ -463,18 +463,18 @@ npx tsc --noEmit
 
 | Transaction | Purpose |
 |:------------|:--------|
-| `mev_commit.cdc` | Create a commit hash (Layer 1 — hide execution from mempool) |
-| `mev_reveal.cdc` | Reveal hash, apply VRF jitter, check price deviation, execute (Layers 1-4) |
-| `mev_execute_direct.cdc` | Direct execution with VRF jitter + price guard (reduced Layer 1 protection) |
-| `mev_set_protection.cdc` | Update vault protection level and slippage tolerance |
-| `init_sentinel.cdc` | Initialize a new vault with MEV protection |
+| `mev_commit.cdc` | Create execution commitment (hides strategy details from mempool) |
+| `mev_reveal.cdc` | Reveal commitment, apply protections, execute strategy |
+| `mev_execute_direct.cdc` | Direct execution with protection (no commit-reveal) |
+| `mev_set_protection.cdc` | Update vault protection level and slippage settings |
+| `init_sentinel.cdc` | Initialize a new yield vault |
 | `deposit_flow.cdc` | Deposit FLOW tokens into a vault |
 | `withdraw_flow.cdc` | Withdraw FLOW tokens from a vault |
 | `claim_yield.cdc` | Claim accumulated yield to wallet |
 | `emergency_pause.cdc` | Pause a single vault |
 | `resume_vault.cdc` | Resume a paused vault |
 | `fund_yield_reserve.cdc` | Fund the yield reserve (MultiSig-guarded) |
-| `trigger_strategy_v2.cdc` | Execute strategy using `performStrategy` auto-generating MEV parameters |
+| `trigger_strategy_v2.cdc` | Execute strategy with auto-generated protection parameters |
 
 ### Deployment Order
 
@@ -503,15 +503,15 @@ flow deploy --network testnet --update
 
 ---
 
-## 📊 MEV Protection (Full Technical Deep Dive)
+## 📊 Protection System (Technical Deep Dive)
 
-### Layer 1 — Commit-Reveal (🔴 Mempool Frontrunning)
+### Layer 1 — Commit-Reveal (Mempool Frontrunning Prevention)
 
-**Concept**: Adapted from Flashbots' Proposer-Builder Separation (PBS). Instead of submitting the actual execution parameters to the mempool where bots can see them, the user first submits a **commitment hash** — a one-way hash of the execution preimage. The actual execution details are revealed later, after the commit has been confirmed.
+**Concept**: Instead of submitting execution parameters to the mempool where bots can see them, the vault first submits a **commitment hash** — a one-way SHA3-256 hash of the execution preimage. The actual execution details are revealed later, after the commit has been confirmed. Bots see only the hash and cannot reverse it to discover your strategy.
 
 **Cadence Implementation**:
 ```cadence
-// Step 1: Commit (only the hash is visible on-chain)
+// Step 1: Commit (only the 32-byte SHA3-256 hash is visible on-chain)
 MEVShieldCore.createCommit(
     vaultId: vaultId,
     commitHash: commitHash,
@@ -531,16 +531,15 @@ MEVShieldCore.revealExecution(
 )
 ```
 
-**Security Properties**:
-- Execution is **hidden from mempool** until the commit is confirmed
-- Preimage includes a **random nonce** (generated via `revertibleRandom()`) — unpredictable
-- Commit has a **200-block deadline window** (~3 minutes)
-- Commits are **one-time use** — once revealed, the hash cannot be reused
-- Expired commits are automatically cleaned up
+**Properties**:
+- Execution details **hidden from mempool** until commit is confirmed
+- Preimage includes a **random nonce** — unpredictable
+- **200-block deadline window** (~3 minutes) for honest reveal
+- Commits are **one-time use** — cannot be reused after reveal
 
-### Layer 2 — VRF Block-Delay Jitter (⏱️ Timing Games)
+### Layer 2 — VRF Block-Delay Jitter (Timing Protection)
 
-**Concept**: Even if an execution is revealed, a sophisticated MEV bot could predict its exact execution time. Flow Sentinel uses Flow's `revertibleRandom()` to add a random delay of 0-5 blocks before execution — making the exact execution time unpredictable.
+**Concept**: Even after execution is revealed, bots could predict its exact execution time. Flow's `revertibleRandom()` adds a random delay of 0-5 blocks — making execution timing unpredictable.
 
 **Cadence Implementation**:
 ```cadence
@@ -548,14 +547,14 @@ let jitterBlocks = revertibleRandom<UInt64>() % (self.getMEVDelayMax() + 1)
 let executeAtBlock = currentBlock + jitterBlocks + 1
 ```
 
-**Security Properties**:
-- **Unpredictable timing** — `revertibleRandom()` is verifiable, non-deterministic randomness from Flow consensus
-- 0-5 blocks delay — short enough for acceptable UX, long enough to break bot timing
-- **Configurable max delay** via `getMEVDelayMax()`
+**Properties**:
+- **Verifiable random delay** — from Flow consensus, not external oracles
+- 0-5 blocks — short enough for UX, long enough to break bot timing
+- **Configurable max delay** adjustable without redeploying
 
-### Layer 3 — Price Deviation Guard (💹 Price Manipulation)
+### Layer 3 — Price Deviation Guard (Price Manipulation Prevention)
 
-**Concept**: Before executing any strategy, the vault fetches the **actual APY** from the YieldOracle and compares it against the **expected APY**. If the deviation exceeds the configured slippage tolerance (default 3% = 300 bps), the execution is rejected.
+**Concept**: Before executing any strategy, the vault compares the **expected APY** against the **real-time oracle APY**. If deviation exceeds the vault's configured slippage tolerance (default 3%), execution is rejected — protecting against price manipulation.
 
 **Cadence Implementation**:
 ```cadence
@@ -575,15 +574,15 @@ if !oracleCheck.shouldExecute {
 }
 ```
 
-**Security Properties**:
+**Properties**:
 - **Real-time oracle data** — fetches current APY at execution time
-- **Configurable slippage** — vault-level setting, independent per vault
-- **Hard upper bound** — `MEV_DEVIATION_TOLERANCE` (50%) as absolute limit
-- **Auditable** — every guard trigger emits a structured event
+- **Per-vault slippage** — independent setting for each vault
+- **Hard upper bound** — 50% absolute deviation limit as safety net
+- **Every guard trigger is auditable** via on-chain events
 
-### Layer 4 — Execution Queue (🔄 Sandwich Attacks)
+### Layer 4 — Execution Queue (Sandwich Attack Prevention)
 
-**Concept**: When multiple executions are pending, they are shuffled using VRF randomness — ensuring no attacker can predict which execution will be processed first.
+**Concept**: When multiple executions are pending, they are shuffled using VRF randomness. No attacker can predict which execution processes first, preventing sandwich attacks.
 
 **Cadence Implementation**:
 ```cadence
@@ -594,7 +593,6 @@ access(self) fun vrfShuffle(_ items: [PendingExecution]): [PendingExecution] {
     while remaining.length > 0 {
         let randomIndex = revertibleRandom<UInt64>() % UInt64(remaining.length)
         shuffled.append(remaining[randomIndex])
-        // Remove selected element
         var newRemaining: [PendingExecution] = []
         for i, item in remaining {
             if UInt64(i) != randomIndex { newRemaining.append(item) }
@@ -605,14 +603,14 @@ access(self) fun vrfShuffle(_ items: [PendingExecution]): [PendingExecution] {
 }
 ```
 
-**Security Properties**:
-- **VRF-shuffled order** — nobody knows which execution processes next
-- **Fisher-Yates algorithm** — unbiased shuffling
-- **Ready-only** — only executions past their scheduled block are included
+**Properties**:
+- **VRF-shuffled order** — execution sequence is unpredictable
+- **Fisher-Yates algorithm** — unbiased statistical shuffling
+- **Ready-only filter** — only executions past their scheduled block are included
 
-### MEV Protection Configuration Per Vault
+### Protection Configuration Per Vault
 
-Each vault has independent MEV protection settings:
+Each vault has independent protection settings:
 
 | Level | Name | Active Layers | Default |
 |:------|:-----|:--------------|:--------|
@@ -623,7 +621,7 @@ Each vault has independent MEV protection settings:
 
 ---
 
-## 🔬 MEV Protection Comparison
+## 🔬 Protection System Comparison
 
 | Feature | Flow Sentinel | Typical DeFi Protocol | Ethereum mev-boost |
 |:--------|:-------------|:---------------------|:-------------------|
@@ -640,7 +638,7 @@ Each vault has independent MEV protection settings:
 ## 🗺️ Roadmap
 
 - [x] **Phase 1**: Core Vault Logic & Testnet Deployment
-- [x] **Phase 2**: MEV-Shield Pro — 4-Layer Protection
+- [x] **Phase 2**: Protection System — 4-Layer Architecture
 - [x] **Phase 3**: Professional Analytics Dashboard
 - [ ] **Phase 4**: Multi-sig Governance for Community Vaults
 - [ ] **Phase 5**: Mainnet Launch
@@ -655,9 +653,9 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE.txt
 ---
 
 <p align="center">
-  <b>Built for the future of finance on the Flow Blockchain</b>
+  <b>Protected yield vaults on the Flow Blockchain</b>
   <br />
-  <i>Flow Sentinel — Where DeFi meets Autonomy</i>
+  <i>Higher net yield · Safer execution · Simpler DeFi</i>
   <br /><br />
   <a href="https://codebuff.com">Built with Codebuff</a>
   ·
