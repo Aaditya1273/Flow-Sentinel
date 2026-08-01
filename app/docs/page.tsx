@@ -26,7 +26,7 @@ const docSections: DocSection[] = [
     id: 'getting-started',
     title: 'Deployment Sequence',
     items: [
-      { title: 'Core Architecture', description: 'Deep dive into the autonomous sentinel engine.', difficulty: 'beginner', readTime: '5 min' },
+      { title: 'Core Architecture', description: 'Deep dive into the testnet custody prototype and its disabled integrations.', difficulty: 'beginner', readTime: '5 min' },
       { title: 'Vault Initialization', description: 'Complete technical walkthrough of the multisig deployment process.', difficulty: 'beginner', readTime: '10 min' },
       { title: 'Security Tier Analysis', description: 'Evaluate risk vectors across conservative and aggressive protocols.', difficulty: 'beginner', readTime: '8 min' },
     ]
@@ -43,7 +43,7 @@ const docSections: DocSection[] = [
 ]
 
 const codeExample = `// Initialize Private Sentinel Vault
-import SentinelVaultFinal from 0xc13b08053be24e87
+import SentinelVaultFinal from 0x60320435dd7725c1
 
 transaction(vaultName: String, strategy: String) {
     prepare(signer: auth(Storage, Capabilities) &Account) {

@@ -31,11 +31,11 @@ export default function TermsPage() {
             </Section>
 
             <Section title="2. Protocol Description">
-              <p>Flow Sentinel is an autonomous DeFi wealth management protocol deployed on the Flow blockchain. It enables users to:</p>
+              <p>Flow Sentinel is currently a testnet FLOW custody prototype on the Flow blockchain. New yield vault creation and strategy execution are disabled until external integrations are audited.</p>
               <ul>
                 <li>Create and manage automated investment vaults</li>
                 <li>Deposit FLOW tokens for strategy execution</li>
-                <li>Participate in yield-generating strategies</li>
+                <li>Review existing vault state and use owner-controlled withdrawal where available</li>
                 <li>Utilize MEV protection mechanisms</li>
               </ul>
             </Section>
@@ -80,9 +80,9 @@ export default function TermsPage() {
               <p>The Protocol may charge fees for certain operations. Current fee structure:</p>
               <ul>
                 <li>Vault creation: Gas costs only</li>
-                <li>Deposits: Gas costs only</li>
+                <li>Deposits: Disabled in the current release</li>
                 <li>Withdrawals: Gas costs only</li>
-                <li>Strategy execution: Gas costs only + potential protocol fees</li>
+                <li>Strategy execution: Disabled until audited adapters are deployed</li>
               </ul>
               <p>Fee structures may change with notice posted in the Protocol interface.</p>
             </Section>

@@ -9,7 +9,7 @@ const steps = [
   {
     title: 'Welcome to Flow Sentinel',
     subtitle: 'The Autonomous DeFi Wealth Manager',
-    description: 'Flow Sentinel is the first fully autonomous, MEV-resistant wealth manager built on the Flow blockchain. Your vaults work for you — 24/7, without manual intervention.',
+    description: 'Flow Sentinel currently provides FLOW custody and withdrawal infrastructure. Yield integrations and autonomous execution are disabled until audited production adapters are deployed.',
     icon: Rocket,
     color: '#00EF8B',
   },
@@ -23,14 +23,14 @@ const steps = [
   {
     title: 'Choose a Strategy',
     subtitle: 'Select Your Risk Profile',
-    description: 'Pick from multiple automated strategies — from conservative liquid staking to high-yield farming. Each strategy has a different risk level and expected APY range.',
+    description: 'Review the available testnet strategy demonstrations. Current returns are oracle-driven and reserve-funded; external protocol execution is not enabled.',
     icon: Shield,
     color: '#00EF8B',
   },
   {
     title: 'Deploy & Earn',
     subtitle: 'Your Vault Runs Automatically',
-    description: 'Deposit FLOW tokens into your vault, and the protocol handles the rest — strategy execution, yield compounding, and MEV protection. Monitor your performance in real-time.',
+    description: 'New vault creation and yield execution are currently disabled. Existing vault owners can review state and withdraw through the audited custody path.',
     icon: Zap,
     color: '#37DDDF',
   },

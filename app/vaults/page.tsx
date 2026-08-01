@@ -54,7 +54,6 @@ export default function VaultsPage() {
     { value: 'liquid-staking', label: 'Liquid Staking' },
     { value: 'yield-farming', label: 'Yield Farming' },
     { value: 'lending', label: 'Lending' },
-    { value: 'arbitrage', label: 'Arbitrage' }
   ]
   const riskLevels = [
     { value: 'all', label: 'All Risk Levels' },

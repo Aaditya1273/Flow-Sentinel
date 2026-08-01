@@ -17,7 +17,8 @@ import {
   ExternalLink,
   ChevronUp,
   Activity,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from 'lucide-react'
 import { Badge } from 'components/ui/badge'
 import { Progress } from 'components/ui/progress'
@@ -25,9 +26,11 @@ import { formatCurrency, formatPercentage } from 'lib/utils'
 import { FlowService } from 'lib/flow-service'
 import { errorReporter } from '@/lib/sentry-wrapper'
 import { VaultActionModal } from './VaultActionModal'
+import { YieldProvenancePanel } from './YieldProvenancePanel'
 import { useVaultData } from 'hooks/useVaultData'
 import { useTransactions } from 'lib/transactions'
 import { useActivityFeed } from 'hooks/useActivityFeed'
+import type { ProvenanceEntry } from 'hooks/useVaultData'
 
 interface Vault {
   id: string
@@ -52,10 +55,14 @@ interface Vault {
   blockDelayEnabled?: boolean
   mevProtectionsTriggered?: number
   mevShieldStatus?: string
+  // Auto-compound fields
+  autoCompoundEnabled?: boolean
+  totalYieldCompounded?: number
 }
 
 interface VaultCardProps {
   vault: Vault
+  provenance?: ProvenanceEntry
 }
 
 // Custom comparator: only re-render when critical data changes
@@ -67,7 +74,8 @@ const vaultCardComparator = (prev: VaultCardProps, next: VaultCardProps) =>
   prev.vault.status === next.vault.status &&
   prev.vault.pnl === next.vault.pnl &&
   prev.vault.pnlPercent === next.vault.pnlPercent &&
-  prev.vault.mevProtectionsTriggered === next.vault.mevProtectionsTriggered
+  prev.vault.mevProtectionsTriggered === next.vault.mevProtectionsTriggered &&
+  prev.vault.autoCompoundEnabled === next.vault.autoCompoundEnabled
 
 // Phase 5: Execution history panel — shows last executions from the activity feed
 function ExecutionHistoryPanel({ vaultId, vaultName }: { vaultId: string; vaultName: string }) {
@@ -144,7 +152,7 @@ function ExecutionHistoryPanel({ vaultId, vaultName }: { vaultId: string; vaultN
   )
 }
 
-export const VaultCard = memo(function VaultCard({ vault }: VaultCardProps) {
+export const VaultCard = memo(function VaultCard({ vault, provenance }: VaultCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -282,6 +290,30 @@ export const VaultCard = memo(function VaultCard({ vault }: VaultCardProps) {
     } finally { setLoading(false) }
   }
 
+  // Auto-compound state: persisted in localStorage (yield always compounds on-chain)
+  // The toggle controls whether the frontend shows "claimable" vs "compounding" state.
+  // Yield is ALWAYS reinvested into the vault balance on-chain — this is a UX toggle.
+  const AUTO_COMPOUND_KEY = `sentinel-auto-compound-${vault.id}`
+  const [localAutoCompound, setLocalAutoCompound] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true
+    const stored = localStorage.getItem(AUTO_COMPOUND_KEY)
+    return stored !== null ? stored === 'true' : true
+  })
+
+  useEffect(() => {
+    localStorage.setItem(AUTO_COMPOUND_KEY, String(localAutoCompound))
+  }, [localAutoCompound, AUTO_COMPOUND_KEY])
+
+  const handleToggleAutoCompound = () => {
+    setLocalAutoCompound(prev => !prev)
+    addActivity({
+      type: 'alert',
+      title: localAutoCompound ? 'Auto-Compound Deactivated' : 'Auto-Compound Activated',
+      description: `${vault.name} auto-compound ${localAutoCompound ? 'disabled' : 'enabled'}`,
+      vault: vault.name,
+    })
+  }
+
   const execManualStrategy = async () => {
     setTxState({ status: 'executing', txId: null, error: null, title: 'Triggering Strategy' })
     // Phase 1 Fix: generate real SHA3-256 commit hash off-chain before submitting
@@ -359,13 +391,13 @@ export const VaultCard = memo(function VaultCard({ vault }: VaultCardProps) {
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <span className="dash-badge dash-badge-green">
-                <Zap style={{ width: 12, height: 12 }} /> FORTE AUTONOMY
+                <Zap style={{ width: 12, height: 12 }} /> AUTOMATED YIELD
               </span>
               <span className="dash-badge dash-badge-cyan" title={`Protection Level: ${vault.protectionLevel ?? 3}/3 | Slippage: ${(vault.slippageBps ?? 300) / 100}% | Protections Triggered: ${vault.mevProtectionsTriggered ?? 0}`}>
                 <Shield style={{ width: 12, height: 12 }} /> 
-                {vault.mevShieldStatus === 'FULL-MEV-SHIELD' ? 'MEV-SHIELD PRO' : 
-                 vault.protectionLevel === 1 ? 'MEV-VRF' : 
-                 vault.protectionLevel === 2 ? 'MEV-CR' : 'MEV-SHIELD'}
+                {vault.mevShieldStatus === 'FULL-MEV-SHIELD' || (vault.protectionLevel ?? 3) >= 3 ? 'SHIELD-PROTECTED' :
+                 vault.protectionLevel === 1 ? 'BASIC-SHIELD' :
+                 vault.protectionLevel === 2 ? 'ADVANCED-SHIELD' : 'PROTECTED'}
               </span>
               <span className="dash-badge dash-badge-muted">
                 <span style={{
@@ -411,7 +443,7 @@ export const VaultCard = memo(function VaultCard({ vault }: VaultCardProps) {
                 </span>
                 <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'rgba(250,248,245,0.3)', fontFamily: 'monospace' }}>FLOW</span>
               </div>
-              {(vault.totalYieldAccrued ?? 0) > 0 && (
+              {(vault.totalYieldAccrued ?? 0) > 0 && !localAutoCompound && (
                 <button
                   onClick={handleClaimYield}
                   disabled={loading}
@@ -465,6 +497,23 @@ export const VaultCard = memo(function VaultCard({ vault }: VaultCardProps) {
                     Every {vault.executionIntervalSeconds >= 86400 ? `${vault.executionIntervalSeconds / 86400}d` : `${vault.executionIntervalSeconds / 3600}h`}
                   </div>
                 )}
+              </div>
+            </div>
+            {/* Auto-compound indicator — yield always compounds on-chain */}
+            <div>
+              <p className="dash-label">Yield Reinvested</p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                <span style={{
+                  fontSize: '1.2rem', fontWeight: 500,
+                  color: (vault.totalYieldAccrued ?? 0) > 0 ? '#00EF8B' : 'rgba(250,248,245,0.25)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {(vault.totalYieldAccrued ?? 0).toFixed(4)}
+                </span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(250,248,245,0.3)', fontFamily: 'monospace' }}>FLOW</span>
+                <span style={{ fontSize: '0.5rem', color: '#00EF8B', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <RotateCcw style={{ width: 10, height: 10 }} /> COMPOUNDING
+                </span>
               </div>
             </div>
           </div>
@@ -590,7 +639,7 @@ export const VaultCard = memo(function VaultCard({ vault }: VaultCardProps) {
                       Trigger Forte Task
                     </button>
 
-                    {(vault.totalYieldAccrued || 0) > 0 && (
+                    {(vault.totalYieldAccrued || 0) > 0 && !localAutoCompound && (
                       <button
                         onClick={handleClaimYield}
                         disabled={loading}
@@ -612,13 +661,81 @@ export const VaultCard = memo(function VaultCard({ vault }: VaultCardProps) {
                     )}
                   </div>
 
+                  {/* Yield Provenance Panel — shows where returns come from */}
+                  {provenance && (
+                    <YieldProvenancePanel
+                      provenance={provenance}
+                      apy={vault.apy}
+                      source={provenance.protocolName || vault.strategy}
+                      confidence={0.85}
+                    />
+                  )}
+
+                  {/* Auto-Compound Settings Panel */}
                   <div style={{
                     borderRadius: 24, padding: 24,
                     border: '1px solid rgba(250,248,245,0.06)',
                     background: 'rgba(250,248,245,0.02)',
                   }}>
                     <h4 className="dash-label" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Shield style={{ width: 12, height: 12 }} /> MEV-Shield Pro — Security Report
+                      <RotateCcw style={{ width: 12, height: 12 }} /> Auto-Compound
+                    </h4>
+                    <p style={{ fontSize: '0.75rem', color: 'rgba(250,248,245,0.4)', lineHeight: 1.6, marginBottom: 16 }}>
+                      When enabled, yield is automatically reinvested into your vault balance — compounding your returns with every execution cycle. Disable to claim yield separately.
+                    </p>                      <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '16px 20px', borderRadius: 16,
+                      border: `1px solid ${localAutoCompound ? 'rgba(0,239,139,0.2)' : 'rgba(250,248,245,0.08)'}`,
+                      background: localAutoCompound ? 'rgba(0,239,139,0.04)' : 'transparent',
+                      marginBottom: 16,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{
+                          width: 10, height: 10, borderRadius: '50%',
+                          background: localAutoCompound ? '#00EF8B' : 'rgba(250,248,245,0.3)',
+                          transition: 'background 0.3s',
+                        }} />
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#FAF8F5' }}>
+                          {localAutoCompound ? 'Compounding Active' : 'Manual Claim Mode'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={handleToggleAutoCompound}
+                        aria-label={localAutoCompound ? 'Disable auto-compound' : 'Enable auto-compound'}
+                        style={{
+                          position: 'relative', width: 48, height: 26, borderRadius: 13,
+                          border: 'none', cursor: 'pointer',
+                          background: localAutoCompound ? '#00EF8B' : 'rgba(250,248,245,0.15)',
+                          transition: 'background 0.3s', padding: 0,
+                        }}
+                      >
+                        <span style={{
+                          position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%',
+                          background: '#111',
+                          left: localAutoCompound ? '25px' : '3px',
+                          transition: 'left 0.3s',
+                        }} />
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ fontSize: '0.6875rem', color: 'rgba(250,248,245,0.4)', fontWeight: 500 }}>Total Accrued Yield</span>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#00EF8B' }}>+{(vault.pnl ?? 0).toFixed(4)} FLOW</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.6875rem', color: 'rgba(250,248,245,0.4)', fontWeight: 500 }}>Claimable</span>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: (vault.totalYieldAccrued ?? 0) > 0 && !localAutoCompound ? '#00EF8B' : 'rgba(250,248,245,0.25)' }}>
+                        {localAutoCompound ? '— (reinvested)' : (vault.totalYieldAccrued ?? 0).toFixed(4) + ' FLOW'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    borderRadius: 24, padding: 24,
+                    border: '1px solid rgba(250,248,245,0.06)',
+                    background: 'rgba(250,248,245,0.02)',
+                  }}>
+                    <h4 className="dash-label" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Shield style={{ width: 12, height: 12 }} /> Protection Report
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

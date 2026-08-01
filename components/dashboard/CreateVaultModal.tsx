@@ -418,7 +418,7 @@ export function CreateVaultModal({ onClose, onSuccess, preselectedStrategy }: Cr
                         <span className="dash-label" style={{ color: '#ef4444' }}>Protocol Confirmation</span>
                       </div>
                       <p style={{ fontSize: '0.6875rem', color: 'rgba(250,248,245,0.4)', lineHeight: 1.6, margin: 0 }}>
-                        Deployment to the blockchain is irreversible. Your capital will be managed autonomously by the Flow Sentinel protocol. By proceeding, you authorize the smart contract to execute transactions on your behalf.
+                        Vault creation is disabled in this release. No capital will be accepted until a real audited protocol adapter and production controls are deployed.
                       </p>
                     </div>
                   </div>
