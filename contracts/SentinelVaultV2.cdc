@@ -1,8 +1,8 @@
-import FungibleToken from 0x9a0766d93b6608b7
-import FlowToken from 0x7e60df042a9c0868
-import SentinelInterfaces from 0x136b642d0aa31ca9
-import MEVShieldCore from 0xc13b08053be24e87
-import YieldOracle from 0xc13b08053be24e87
+import FungibleToken
+import FlowToken
+import SentinelInterfaces
+import MEVShieldCore
+import YieldOracle
 
 // SentinelVaultFinal — Upgrade v2: ADDITIVE ONLY
 // KEPT: all original events (exact signatures), VaultInfo (9 fields), Vault resource fields,
@@ -421,6 +421,9 @@ access(all) contract SentinelVaultFinal {
         owner: Address, name: String, strategyName: String,
         strategyId: String, protectionLevel: UInt8, slippageBps: UFix64
     ): @Vault {
+        pre {
+            false: "Vault creation disabled until a real audited yield adapter is deployed"
+        }
         let v <- create Vault(owner: owner, name: name, strategyName: strategyName, strategyIdentifier: strategyId)
         v.setProtectionLevel(newLevel: protectionLevel)
         v.setSlippageBps(newSlippageBps: slippageBps)
