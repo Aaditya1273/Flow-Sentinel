@@ -1,25 +1,42 @@
 // YieldOracle — Decentralized APY data feed for Sentinel strategies
-// Phase 1 Fix #5: Entitlement-based OracleAdminResource
-// Previously: setAPY(caller: Address) — caller address was a function argument,
-//             NOT verified by the Cadence runtime. Any address could be passed.
-// Now: access(OracleAdmin) entitlement on the resource function.
-//     Only the account that holds the OracleAdminResource in storage can update APYs.
-//     The Cadence runtime enforces this — no self-reported address needed.
+// Upgrade v2: ADDITIVE ONLY — no new stored fields.
+// New: readAllAPYsV2, readYieldDataV2, isDataFresh, getDataAge (computed from existing yieldData)
+//      OracleAdminResource + OracleAdmin entitlement (stored in account storage, not contract var)
+//      APYBatchUpdated + OracleAdminResourceCreated events
 access(all) contract YieldOracle {
 
-    // ── Entitlement: gates write access to APY data ──
-    access(all) entitlement OracleAdmin
-
-    access(all) event APYUpdated(strategyId: String, newAPY: UFix64, source: String, timestamp: UFix64)
-    access(all) event OracleAdminResourceCreated(recipient: Address)
+    // ── KEPT: all original events ──
+    access(all) event APYUpdated(strategyId: String, newAPY: UFix64, timestamp: UFix64)
+    access(all) event AdminAdded(admin: Address)
+    access(all) event AdminRemoved(admin: Address)
+    // NEW: additive events only
     access(all) event APYBatchUpdated(count: Int, timestamp: UFix64)
+    access(all) event OracleAdminResourceCreated(recipient: Address)
 
+    // ── KEPT: original paths ──
     access(all) let OracleStoragePath: StoragePath
     access(all) let OraclePublicPath: PublicPath
-    access(all) let OracleAdminStoragePath: StoragePath
+    // NOTE: OracleAdminStoragePath cannot be added as a new contract field (Cadence upgrade rule).
+    // Use the literal path /storage/SentinelYieldOracleAdmin directly in transactions.
 
-    // ── YieldData struct: immutable snapshot of APY at a point in time ──
+    // ── KEPT: original YieldData struct — 5 fields, UNCHANGED ──
     access(all) struct YieldData {
+        access(all) let apy: UFix64
+        access(all) let dailyRate: UFix64
+        access(all) let source: String
+        access(all) let updatedAt: UFix64
+        access(all) let confidence: UFix64
+        init(apy: UFix64, source: String, confidence: UFix64) {
+            self.apy = apy
+            self.dailyRate = apy / 365.0 / 100.0
+            self.source = source
+            self.updatedAt = getCurrentBlock().timestamp
+            self.confidence = confidence
+        }
+    }
+
+    // NEW: V2 struct — return type only, never stored as a contract-level var
+    access(all) struct YieldDataV2 {
         access(all) let apy: UFix64
         access(all) let dailyRate: UFix64
         access(all) let weeklyRate: UFix64
@@ -27,163 +44,131 @@ access(all) contract YieldOracle {
         access(all) let updatedAt: UFix64
         access(all) let updatedAtBlock: UInt64
         access(all) let confidence: UFix64
-
-        init(apy: UFix64, source: String, confidence: UFix64) {
-            self.apy = apy
-            self.dailyRate = apy / 365.0 / 100.0
-            self.weeklyRate = apy / 52.0 / 100.0
-            self.source = source
-            self.updatedAt = getCurrentBlock().timestamp
+        init(from base: YieldData) {
+            self.apy          = base.apy
+            self.dailyRate    = base.dailyRate
+            self.weeklyRate   = base.apy / 52.0 / 100.0
+            self.source       = base.source
+            self.updatedAt    = base.updatedAt
             self.updatedAtBlock = getCurrentBlock().height
-            self.confidence = confidence
+            self.confidence   = base.confidence
         }
     }
 
-    // ── OracleAdminResource: the ONLY way to update APY data ──
-    // Stored in the contract deployer's account storage.
-    // access(OracleAdmin) means: you must hold this resource AND have the entitlement.
-    // This is enforced by the Cadence runtime — no address spoofing possible.
-    access(all) resource OracleAdminResource {
+    // ── KEPT: Admin resource (cannot remove) ──
+    access(all) resource Admin {
+        access(all) fun setAPY(strategyId: String, apy: UFix64, source: String, confidence: UFix64, caller: Address) {
+            if !YieldOracle.isAdmin(caller) { panic("Only registered admins can update APY data") }
+            YieldOracle.storeYieldData(strategyId: strategyId, data: YieldData(apy: apy, source: source, confidence: confidence))
+            emit APYUpdated(strategyId: strategyId, newAPY: apy, timestamp: getCurrentBlock().timestamp)
+        }
+        access(all) fun batchSetAPY(strategies: {String: {String: AnyStruct}}, caller: Address) {
+            if !YieldOracle.isAdmin(caller) { panic("Only registered admins can update APY data") }
+            for strategyId in strategies.keys {
+                if let d = strategies[strategyId] {
+                    let apy    = d["apy"]        as? UFix64 ?? panic("Missing apy for ".concat(strategyId))
+                    let source = d["source"]     as? String ?? panic("Missing source for ".concat(strategyId))
+                    let conf   = d["confidence"] as? UFix64 ?? panic("Missing confidence for ".concat(strategyId))
+                    self.setAPY(strategyId: strategyId, apy: apy, source: source, confidence: conf, caller: caller)
+                }
+            }
+        }
+    }
 
-        /// Update APY for a single strategy.
-        access(OracleAdmin) fun setAPY(
-            strategyId: String,
-            apy: UFix64,
-            source: String,
-            confidence: UFix64
-        ) {
+    // NEW: entitlement-based admin resource — stored in account storage, not a contract var
+    access(all) entitlement OracleAdmin
+    access(all) resource OracleAdminResource {
+        access(OracleAdmin) fun setAPY(strategyId: String, apy: UFix64, source: String, confidence: UFix64) {
             pre {
-                apy >= 0.0: "APY cannot be negative"
-                apy <= 10000.0: "APY exceeds maximum (10000%)"
+                apy >= 0.0 && apy <= 10000.0: "APY out of range"
                 confidence >= 0.0 && confidence <= 1.0: "Confidence must be 0.0-1.0"
                 strategyId.length > 0: "Strategy ID cannot be empty"
             }
-            let data = YieldData(apy: apy, source: source, confidence: confidence)
-            YieldOracle.storeYieldData(strategyId: strategyId, data: data)
-            emit APYUpdated(
-                strategyId: strategyId, newAPY: apy,
-                source: source, timestamp: getCurrentBlock().timestamp
-            )
+            YieldOracle.storeYieldData(strategyId: strategyId, data: YieldData(apy: apy, source: source, confidence: confidence))
+            emit APYUpdated(strategyId: strategyId, newAPY: apy, timestamp: getCurrentBlock().timestamp)
         }
-
-        /// Batch update multiple strategies in one transaction (gas efficient).
         access(OracleAdmin) fun batchSetAPY(updates: [{String: AnyStruct}]) {
             pre { updates.length > 0: "No updates provided" }
-            for update in updates {
-                let strategyId = update["strategyId"] as? String ?? panic("Missing strategyId")
-                let apy = update["apy"] as? UFix64 ?? panic("Missing apy for ".concat(strategyId))
-                let source = update["source"] as? String ?? "oracle"
-                let confidence = update["confidence"] as? UFix64 ?? 0.80
-                self.setAPY(strategyId: strategyId, apy: apy, source: source, confidence: confidence)
+            for u in updates {
+                let id   = u["strategyId"] as? String ?? panic("Missing strategyId")
+                let apy  = u["apy"]        as? UFix64 ?? panic("Missing apy for ".concat(id))
+                let src  = u["source"]     as? String ?? "oracle"
+                let conf = u["confidence"] as? UFix64 ?? 0.80
+                self.setAPY(strategyId: id, apy: apy, source: src, confidence: conf)
             }
             emit APYBatchUpdated(count: updates.length, timestamp: getCurrentBlock().timestamp)
         }
-
-        /// Remove stale oracle data for a strategy (e.g. strategy deprecated).
         access(OracleAdmin) fun removeStrategy(strategyId: String) {
             YieldOracle.removeYieldData(strategyId: strategyId)
         }
     }
 
-    // ── Public read-only resource interface ──
+    // ── KEPT: OraclePublic interface + PublicReader resource ──
     access(all) resource interface OraclePublic {
-        access(all) view fun getAPY(_ strategyId: String): UFix64?
-        access(all) view fun getDailyRate(_ strategyId: String): UFix64?
-        access(all) view fun getYieldData(_ strategyId: String): YieldData?
-        access(all) view fun getAllAPYs(): {String: YieldData}
-        access(all) view fun isDataFresh(_ strategyId: String, maxAgeSeconds: UFix64): Bool
+        access(all) fun getAPY(_ strategyId: String): UFix64?
+        access(all) fun getDailyRate(_ strategyId: String): UFix64?
+        access(all) fun getYieldData(_ strategyId: String): YieldData?
+        access(all) fun getAllAPYs(): {String: YieldData}
     }
-
     access(all) resource PublicReader: OraclePublic {
-        access(all) view fun getAPY(_ strategyId: String): UFix64? {
-            return YieldOracle.readYieldData(strategyId: strategyId)?.apy
-        }
-        access(all) view fun getDailyRate(_ strategyId: String): UFix64? {
-            return YieldOracle.readYieldData(strategyId: strategyId)?.dailyRate
-        }
-        access(all) view fun getYieldData(_ strategyId: String): YieldData? {
-            return YieldOracle.readYieldData(strategyId: strategyId)
-        }
-        access(all) view fun getAllAPYs(): {String: YieldData} {
-            return YieldOracle.readAllAPYs()
-        }
-        access(all) view fun isDataFresh(_ strategyId: String, maxAgeSeconds: UFix64): Bool {
-            if let data = YieldOracle.readYieldData(strategyId: strategyId) {
-                return getCurrentBlock().timestamp - data.updatedAt <= maxAgeSeconds
-            }
-            return false
-        }
+        access(all) fun getAPY(_ strategyId: String): UFix64?       { return YieldOracle.readYieldData(strategyId: strategyId)?.apy }
+        access(all) fun getDailyRate(_ strategyId: String): UFix64? { return YieldOracle.readYieldData(strategyId: strategyId)?.dailyRate }
+        access(all) fun getYieldData(_ strategyId: String): YieldData? { return YieldOracle.readYieldData(strategyId: strategyId) }
+        access(all) fun getAllAPYs(): {String: YieldData}            { return YieldOracle.readAllAPYs() }
     }
 
-    // ── Contract-level state ──
+    // ── KEPT: original stored state — ZERO new vars added ──
     access(self) var yieldData: {String: YieldData}
+    access(self) var admins: {Address: Bool}
+    access(all) var totalAdmins: UInt64
 
     init() {
         self.OracleStoragePath = /storage/SentinelYieldOracle
-        self.OraclePublicPath = /public/SentinelYieldOracle
-        self.OracleAdminStoragePath = /storage/SentinelYieldOracleAdmin
-        self.yieldData = {}
-
-        // Save OracleAdminResource to deployer's storage
-        // Only the deployer account (and accounts they explicitly share it with) can update APYs
-        let adminResource <- create OracleAdminResource()
-        self.account.storage.save(<-adminResource, to: self.OracleAdminStoragePath)
+        self.OraclePublicPath  = /public/SentinelYieldOracle
+        self.yieldData   = {}
+        self.admins      = {}
+        self.totalAdmins = 0
+        self.admins[self.account.address] = true
+        self.totalAdmins = 1
+        emit AdminAdded(admin: self.account.address)
+        let adminRes <- create OracleAdminResource()
+        self.account.storage.save(<-adminRes, to: /storage/SentinelYieldOracleAdmin)
         emit OracleAdminResourceCreated(recipient: self.account.address)
-
-        // Seed initial APY data from real Flow DeFi market conditions
-        self.yieldData["liquid-staking-pro"] = YieldData(apy: 6.5, source: "flow-staking-protocol", confidence: 0.95)
-        self.yieldData["defi-yield-maximizer"] = YieldData(apy: 8.2, source: "incrementfi-lending", confidence: 0.80)
-        self.yieldData["high-yield-farming"] = YieldData(apy: 15.5, source: "defi-aggregator", confidence: 0.65)
-        self.yieldData["arbitrage-hunter"] = YieldData(apy: 5.8, source: "dex-spread-analysis", confidence: 0.70)
-        self.yieldData["conservative-lending"] = YieldData(apy: 4.2, source: "lending-protocol-avg", confidence: 0.90)
-        self.yieldData["stable-yield-plus"] = YieldData(apy: 3.5, source: "stable-protocol", confidence: 0.95)
+        // Do not seed APYs. Until real audited adapters publish verified
+        // position-backed data, an absent value must mean zero yield.
     }
 
-    // ── Internal storage helpers ──
-    access(contract) fun storeYieldData(strategyId: String, data: YieldData) {
-        self.yieldData[strategyId] = data
-    }
+    // ── KEPT: internal helpers ──
+    access(contract) fun storeYieldData(strategyId: String, data: YieldData) { self.yieldData[strategyId] = data }
+    access(contract) fun removeYieldData(strategyId: String)                  { self.yieldData.remove(key: strategyId) }
+    access(all) fun isAdmin(_ address: Address): Bool                         { return self.admins[address] ?? false }
 
-    access(contract) fun removeYieldData(strategyId: String) {
-        self.yieldData.remove(key: strategyId)
-    }
+    // ── KEPT: original public reads ──
+    access(all) view fun readYieldData(strategyId: String): YieldData?    { return self.yieldData[strategyId] }
+    access(all) view fun readAPY(strategyId: String): UFix64?              { return self.yieldData[strategyId]?.apy }
+    access(all) view fun readDailyRate(strategyId: String): UFix64?        { return self.yieldData[strategyId]?.dailyRate }
+    access(all) view fun readAllAPYs(): {String: YieldData}                { return self.yieldData }
+    access(all) view fun getYieldData(_ strategyId: String): YieldData?    { return self.yieldData[strategyId] }
 
-    // ── Public read functions (callable by any contract or script) ──
-    access(all) view fun readYieldData(strategyId: String): YieldData? {
-        return self.yieldData[strategyId]
-    }
-
-    access(all) view fun readAPY(strategyId: String): UFix64? {
-        return self.yieldData[strategyId]?.apy
-    }
-
-    access(all) view fun readDailyRate(strategyId: String): UFix64? {
-        return self.yieldData[strategyId]?.dailyRate
-    }
-
-    access(all) view fun readAllAPYs(): {String: YieldData} {
-        return self.yieldData
-    }
-
-    // Convenience alias for strategy contracts
-    access(all) view fun getYieldData(_ strategyId: String): YieldData? {
-        return self.readYieldData(strategyId: strategyId)
-    }
-
-    /// Check how many seconds ago the oracle data was last updated.
-    access(all) view fun getDataAge(_ strategyId: String): UFix64? {
-        if let data = self.yieldData[strategyId] {
-            return getCurrentBlock().timestamp - data.updatedAt
-        }
+    // NEW: V2 reads — computed from existing yieldData, no stored state
+    // Not view: YieldDataV2.init calls getCurrentBlock().height (impure)
+    access(all) fun readYieldDataV2(strategyId: String): YieldDataV2? {
+        if let b = self.yieldData[strategyId] { return YieldDataV2(from: b) }
         return nil
     }
-
-    // Factory functions
-    access(all) fun createPublicReader(): @PublicReader {
-        return <- create PublicReader()
+    access(all) fun readAllAPYsV2(): {String: YieldDataV2} {
+        let out: {String: YieldDataV2} = {}
+        for id in self.yieldData.keys { out[id] = YieldDataV2(from: self.yieldData[id]!) }
+        return out
+    }
+    access(all) view fun getDataAge(_ strategyId: String): UFix64? {
+        if let d = self.yieldData[strategyId] { return getCurrentBlock().timestamp - d.updatedAt }
+        return nil
+    }
+    access(all) view fun isDataFresh(_ strategyId: String, maxAgeSeconds: UFix64): Bool {
+        if let d = self.yieldData[strategyId] { return getCurrentBlock().timestamp - d.updatedAt <= maxAgeSeconds }
+        return false
     }
 
-    // REMOVED: createAdmin() — no longer returns an unauthenticated Admin resource.
-    // Admin access is via the OracleAdminResource stored at OracleAdminStoragePath.
-    // To borrow it: signer.storage.borrow<auth(YieldOracle.OracleAdmin) &YieldOracle.OracleAdminResource>(from: YieldOracle.OracleAdminStoragePath)
+    access(all) fun createPublicReader(): @PublicReader { return <- create PublicReader() }
 }
