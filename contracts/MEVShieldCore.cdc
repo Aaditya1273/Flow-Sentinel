@@ -1,16 +1,15 @@
 // MEVShieldCore — 4-Layer MEV Protection Engine
-// Phase 1 Fix: Real SHA3_256 cryptographic commit hashing (not plaintext concat)
 // Phase 1 Fix: Price deviation guard uses correct OR logic (vault slippage respected)
 access(all) contract MEVShieldCore {
 
-    access(all) event CommitCreated(vaultId: UInt64, commitHashHex: String, committedBy: Address, commitBlock: UInt64, deadlineBlock: UInt64)
-    access(all) event CommitRevealed(vaultId: UInt64, commitHashHex: String, revealedBy: Address, actualAmount: UFix64, actualStrategyId: String, blockDelay: UInt64)
+    access(all) event CommitCreated(vaultId: UInt64, commitHash: String, committedBy: Address, commitBlock: UInt64, deadlineBlock: UInt64)
+    access(all) event CommitRevealed(vaultId: UInt64, commitHash: String, revealedBy: Address, actualAmount: UFix64, actualStrategyId: String, blockDelay: UInt64)
     access(all) event ExecutionScheduled(vaultId: UInt64, executeAtBlock: UInt64, jitterBlocks: UInt64)
     access(all) event ExecutionStarted(vaultId: UInt64, amount: UFix64, queuePosition: UInt64)
     access(all) event ExecutionCompleted(vaultId: UInt64, yieldGenerated: UFix64, slippageApplied: UFix64, mevShieldStatus: String)
     access(all) event ExecutionRejected(vaultId: UInt64, reason: String, deviation: UFix64)
     access(all) event SlippageBoundsUpdated(vaultId: UInt64, oldSlippageBps: UFix64, newSlippageBps: UFix64)
-    access(all) event CommitExpired(vaultId: UInt64, commitHashHex: String, blocksOverdue: UInt64)
+    access(all) event CommitExpired(vaultId: UInt64, commitHash: String, blocksOverdue: UInt64)
 
     access(all) enum ProtectionLevel: UInt8 {
         access(all) case None
@@ -19,74 +18,16 @@ access(all) contract MEVShieldCore {
         access(all) case Full
     }
 
-    // ═══ Config accessors ═══
+    // Config accessors
     access(all) fun getMEVCommitBlocks(): UInt64 { return 200 }
     access(all) fun getMEVDelayMax(): UInt64 { return 5 }
-    access(all) fun getMEVDeviationTolerance(): UFix64 { return 0.50 }
-    access(all) fun getMEVSlippageBps(): UFix64 { return 300.0 }
+    // Phase 9: Hard limits for circuit breakers — cannot be exceeded by any vault config
+    access(all) fun getMEVDeviationTolerance(): UFix64 { return 0.50 }       // 50% absolute max deviation
+    access(all) fun getMEVSlippageBps(): UFix64 { return 300.0 }              // default 3%
+    access(all) fun getMEVMaxSlippageHardCap(): UFix64 { return 5000.0 }      // 50% absolute max slippage
+    access(all) fun getMEVOracleStaleSeconds(): UFix64 { return 21600.0 }     // 6 hours max stale age
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  PHASE 1 FIX #1 — REAL SHA3_256 CRYPTOGRAPHIC HASHING
-    //  Previously: plaintext string concatenation (security theater)
-    //  Now: real HashAlgorithm.SHA3_256.hash() — preimage hidden from mempool
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// Build a SHA3-256 hash of the commit preimage.
-    /// The preimage is a deterministic encoding of all execution parameters.
-    /// Only the 32-byte hash is stored on-chain — the actual params stay off-chain until reveal.
-    access(all) fun buildCommitHash(
-        vaultId: UInt64,
-        nonce: UInt64,
-        amount: UFix64,
-        strategyId: String,
-        deadlineBlock: UInt64,
-        committer: Address
-    ): [UInt8] {
-        // Canonical preimage: pipe-delimited to avoid ambiguity
-        let preimage = "SENTINEL|"
-            .concat(vaultId.toString()).concat("|")
-            .concat(nonce.toString()).concat("|")
-            .concat(amount.toString()).concat("|")
-            .concat(strategyId).concat("|")
-            .concat(deadlineBlock.toString()).concat("|")
-            .concat(committer.toString())
-        return HashAlgorithm.SHA3_256.hash(preimage.utf8)
-    }
-
-    /// Verify a submitted hash matches the recomputed hash for given params.
-    access(all) fun verifyCommitHash(
-        vaultId: UInt64,
-        nonce: UInt64,
-        amount: UFix64,
-        strategyId: String,
-        deadlineBlock: UInt64,
-        committer: Address,
-        submittedHash: [UInt8]
-    ): Bool {
-        let computed = self.buildCommitHash(
-            vaultId: vaultId, nonce: nonce, amount: amount,
-            strategyId: strategyId, deadlineBlock: deadlineBlock, committer: committer
-        )
-        if computed.length != submittedHash.length { return false }
-        for i, byte in computed {
-            if byte != submittedHash[i] { return false }
-        }
-        return true
-    }
-
-    /// Convert [UInt8] hash to hex string for events/display.
-    access(all) fun hashToHex(_ hash: [UInt8]): String {
-        let hexChars: [Character] = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]
-        var result = ""
-        for byte in hash {
-            result = result.concat(hexChars[Int(byte >> 4)].toString())
-            result = result.concat(hexChars[Int(byte & 0x0f)].toString())
-        }
-        return result
-    }
-
-    // Legacy compatibility: kept for any scripts querying the old string format
-    // Returns the preimage string (NOT secure — use buildCommitHash for security)
+    // Legacy preimage builder — returns plaintext string (NOT secure)
     access(all) fun buildCommitPreimage(vaultId: UInt64, nonce: UInt64, amount: UFix64, strategyId: String, deadlineBlock: UInt64, committer: Address): String {
         return "SENTINEL|"
             .concat(vaultId.toString()).concat("|")
@@ -97,12 +38,10 @@ access(all) contract MEVShieldCore {
             .concat(committer.toString())
     }
 
-
-    // ═══ CommitRecord now stores [UInt8] hash — cryptographically secure ═══
+    // CommitRecord stores commitHash as String (hex) — backward-compatible
     access(all) struct CommitRecord {
         access(all) let vaultId: UInt64
-        access(all) let commitHash: [UInt8]       // SHA3-256 hash bytes
-        access(all) let commitHashHex: String      // hex for display/events
+        access(all) let commitHash: String
         access(all) let committedBy: Address
         access(all) let committedAtBlock: UInt64
         access(all) let deadlineBlock: UInt64
@@ -111,13 +50,12 @@ access(all) contract MEVShieldCore {
         access(all) let protectionLevel: UInt8
 
         init(
-            vaultId: UInt64, commitHash: [UInt8], commitHashHex: String,
+            vaultId: UInt64, commitHash: String,
             committedBy: Address, committedAtBlock: UInt64, deadlineBlock: UInt64,
             isRevealed: Bool, isExpired: Bool, protectionLevel: UInt8
         ) {
             self.vaultId = vaultId
             self.commitHash = commitHash
-            self.commitHashHex = commitHashHex
             self.committedBy = committedBy
             self.committedAtBlock = committedAtBlock
             self.deadlineBlock = deadlineBlock
@@ -129,7 +67,7 @@ access(all) contract MEVShieldCore {
 
     access(all) struct PendingExecution {
         access(all) let vaultId: UInt64
-        access(all) let commitHashHex: String
+        access(all) let commitHash: String
         access(all) let executeAtBlock: UInt64
         access(all) let amount: UFix64
         access(all) let strategyId: String
@@ -140,12 +78,12 @@ access(all) contract MEVShieldCore {
         access(all) let isProcessed: Bool
 
         init(
-            vaultId: UInt64, commitHashHex: String, executeAtBlock: UInt64,
+            vaultId: UInt64, commitHash: String, executeAtBlock: UInt64,
             amount: UFix64, strategyId: String, slippageBps: UFix64,
             expectedAPY: UFix64, nonce: UInt64, enqueuedAt: UFix64, isProcessed: Bool
         ) {
             self.vaultId = vaultId
-            self.commitHashHex = commitHashHex
+            self.commitHash = commitHash
             self.executeAtBlock = executeAtBlock
             self.amount = amount
             self.strategyId = strategyId
@@ -183,7 +121,7 @@ access(all) contract MEVShieldCore {
         }
     }
 
-    // Contract state — keyed by hex string for O(1) lookup
+    // Contract state
     access(self) var commits: {String: CommitRecord}
     access(self) var pendingExecutions: [PendingExecution]
     access(self) var vaultConfigs: {UInt64: VaultMEVConfig}
@@ -204,13 +142,11 @@ access(all) contract MEVShieldCore {
         self.totalExecutionsRejected = 0
     }
 
-
-    // ═══ Internal setters — only way to mutate stored structs ═══
-
-    access(self) fun setCommitRevealed(hashHex: String) {
-        if let c = self.commits[hashHex] {
-            self.commits[hashHex] = CommitRecord(
-                vaultId: c.vaultId, commitHash: c.commitHash, commitHashHex: c.commitHashHex,
+    // Internal setters
+    access(self) fun setCommitRevealed(hashStr: String) {
+        if let c = self.commits[hashStr] {
+            self.commits[hashStr] = CommitRecord(
+                vaultId: c.vaultId, commitHash: c.commitHash,
                 committedBy: c.committedBy, committedAtBlock: c.committedAtBlock,
                 deadlineBlock: c.deadlineBlock, isRevealed: true,
                 isExpired: c.isExpired, protectionLevel: c.protectionLevel
@@ -218,10 +154,10 @@ access(all) contract MEVShieldCore {
         }
     }
 
-    access(self) fun setCommitExpired(hashHex: String) {
-        if let c = self.commits[hashHex] {
-            self.commits[hashHex] = CommitRecord(
-                vaultId: c.vaultId, commitHash: c.commitHash, commitHashHex: c.commitHashHex,
+    access(self) fun setCommitExpired(hashStr: String) {
+        if let c = self.commits[hashStr] {
+            self.commits[hashStr] = CommitRecord(
+                vaultId: c.vaultId, commitHash: c.commitHash,
                 committedBy: c.committedBy, committedAtBlock: c.committedAtBlock,
                 deadlineBlock: c.deadlineBlock, isRevealed: c.isRevealed,
                 isExpired: true, protectionLevel: c.protectionLevel
@@ -256,46 +192,38 @@ access(all) contract MEVShieldCore {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  LAYER 1 — COMMIT-REVEAL (now with real SHA3_256 hash)
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// Submit a commit. The hash must be computed off-chain via buildCommitHash().
-    /// Only the 32-byte hash is stored — execution params are hidden from the mempool.
+    // LAYER 1 — COMMIT-REVEAL
     access(all) fun createCommit(
         vaultId: UInt64,
-        commitHash: [UInt8],
+        commitHash: String,
         protectionLevel: UInt8,
         committedBy: Address
     ) {
         pre {
-            commitHash.length == 32: "Invalid commit hash: must be 32 bytes (SHA3-256)"
+            commitHash.length > 0: "Commit hash must not be empty"
             self.vaultConfigs[vaultId] != nil: "Vault not registered with MEV shield"
         }
-        let hashHex = self.hashToHex(commitHash)
-        pre {
-            self.commits[hashHex] == nil: "Commit already exists — nonce reuse detected"
+        if self.commits[commitHash] != nil {
+            panic("Commit already exists — nonce reuse detected")
         }
         let currentBlock = getCurrentBlock().height
         let deadlineBlock = currentBlock + self.getMEVCommitBlocks()
-        self.commits[hashHex] = CommitRecord(
-            vaultId: vaultId, commitHash: commitHash, commitHashHex: hashHex,
+        self.commits[commitHash] = CommitRecord(
+            vaultId: vaultId, commitHash: commitHash,
             committedBy: committedBy, committedAtBlock: currentBlock,
             deadlineBlock: deadlineBlock, isRevealed: false,
             isExpired: false, protectionLevel: protectionLevel
         )
         self.totalCommitsCreated = self.totalCommitsCreated + UInt64(1)
         emit CommitCreated(
-            vaultId: vaultId, commitHashHex: hashHex,
+            vaultId: vaultId, commitHash: commitHash,
             committedBy: committedBy, commitBlock: currentBlock, deadlineBlock: deadlineBlock
         )
     }
 
-    /// Reveal a commit. Caller must provide all original params.
-    /// The contract recomputes the hash and verifies it matches the stored commit.
     access(all) fun revealExecution(
         vaultId: UInt64,
-        commitHash: [UInt8],
+        commitHash: String,
         nonce: UInt64,
         amount: UFix64,
         strategyId: String,
@@ -303,48 +231,52 @@ access(all) contract MEVShieldCore {
         expectedAPY: UFix64,
         slippageBps: UFix64
     ): UInt64 {
-        pre { commitHash.length == 32: "Invalid commit hash length" }
-        let hashHex = self.hashToHex(commitHash)
-        pre { self.commits[hashHex] != nil: "Commit does not exist" }
+        pre { commitHash.length > 0: "Invalid commit hash" }
 
-        let storedCommit = self.commits[hashHex]!
+        if self.commits[commitHash] == nil {
+            panic("Commit does not exist")
+        }
+
+        let storedCommit = self.commits[commitHash]!
         if storedCommit.isRevealed { panic("Commit already revealed") }
 
         let currentBlock = getCurrentBlock().height
         if currentBlock > storedCommit.deadlineBlock {
-            self.setCommitExpired(hashHex: hashHex)
+            self.setCommitExpired(hashStr: commitHash)
             self.totalCommitsExpired = self.totalCommitsExpired + UInt64(1)
             emit CommitExpired(
-                vaultId: vaultId, commitHashHex: hashHex,
+                vaultId: vaultId, commitHash: commitHash,
                 blocksOverdue: currentBlock - storedCommit.deadlineBlock
             )
             panic("Commit expired: reveal window passed")
         }
 
-        // Recompute hash and verify — this is the cryptographic proof
-        let verified = self.verifyCommitHash(
+        // Verify preimage matches stored hash
+        let computedHash = self.buildCommitPreimage(
             vaultId: vaultId, nonce: nonce, amount: amount,
             strategyId: strategyId, deadlineBlock: deadlineBlock,
-            committer: storedCommit.committedBy, submittedHash: commitHash
+            committer: storedCommit.committedBy
         )
-        if !verified { panic("Commit hash mismatch: params do not match original commitment") }
+        if computedHash != commitHash {
+            panic("Commit hash mismatch: params do not match original commitment")
+        }
 
-        // LAYER 2: VRF Block-Delay Jitter — unpredictable execution timing
+        // LAYER 2: VRF Block-Delay Jitter
         let jitterBlocks = revertibleRandom<UInt64>() % (self.getMEVDelayMax() + UInt64(1))
         let executeAtBlock = currentBlock + jitterBlocks + UInt64(1)
 
-        self.setCommitRevealed(hashHex: hashHex)
+        self.setCommitRevealed(hashStr: commitHash)
         self.totalMEVProtectionsTriggered = self.totalMEVProtectionsTriggered + UInt64(1)
         self.setVaultConfigTriggered(vaultId: vaultId, executionBlock: currentBlock)
 
         emit CommitRevealed(
-            vaultId: vaultId, commitHashHex: hashHex,
+            vaultId: vaultId, commitHash: commitHash,
             revealedBy: self.account.address, actualAmount: amount,
             actualStrategyId: strategyId, blockDelay: jitterBlocks
         )
 
         self.pendingExecutions.append(PendingExecution(
-            vaultId: vaultId, commitHashHex: hashHex,
+            vaultId: vaultId, commitHash: commitHash,
             executeAtBlock: executeAtBlock, amount: amount,
             strategyId: strategyId, slippageBps: slippageBps,
             expectedAPY: expectedAPY, nonce: nonce,
@@ -354,15 +286,7 @@ access(all) contract MEVShieldCore {
         return executeAtBlock
     }
 
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  LAYER 3 — PRICE DEVIATION GUARD (Phase 1 Fix: correct OR logic)
-    //  Previously: absDeviation > slippageBps && absDeviation > hardCap (50%)
-    //  = guard only fired if BOTH exceeded → vault slippage (3%) was ignored
-    //  Now: absDeviation > slippageBps OR absDeviation > hardCap
-    //  = vault's slippage setting is respected; hard cap is a secondary safety net
-    // ═══════════════════════════════════════════════════════════════════════
-
+    // LAYER 3 — PRICE DEVIATION GUARD (OR logic: vault slippage OR hard cap)
     access(all) struct PriceDeviationResult {
         access(all) let shouldExecute: Bool
         access(all) let deviation: UFix64
@@ -380,25 +304,16 @@ access(all) contract MEVShieldCore {
         actualOracleAPY: UFix64,
         slippageBps: UFix64
     ): PriceDeviationResult {
-        // No baseline → can't guard, allow execution
         if expectedAPY == 0.0 {
             return PriceDeviationResult(shouldExecute: true, deviation: 0.0, reason: "No APY baseline configured")
         }
-
-        // Calculate absolute fractional deviation
-        // e.g. expected=6.5, actual=7.2 → deviation = |7.2-6.5|/6.5 = 0.1077 = 10.77%
         let diff = actualOracleAPY > expectedAPY
             ? actualOracleAPY - expectedAPY
             : expectedAPY - actualOracleAPY
         let absDeviation = diff / expectedAPY
-
-        // Convert slippageBps to fraction: 300 bps → 0.03 (3%)
         let slippageFraction = slippageBps / 10000.0
-
-        // Hard cap (50%) — catches extreme oracle manipulation regardless of vault settings
         let hardCap = self.getMEVDeviationTolerance()
 
-        // FIXED: OR logic — reject if vault slippage OR hard cap exceeded
         if absDeviation > slippageFraction {
             self.totalExecutionsRejected = self.totalExecutionsRejected + UInt64(1)
             self.totalMEVProtectionsTriggered = self.totalMEVProtectionsTriggered + UInt64(1)
@@ -421,10 +336,7 @@ access(all) contract MEVShieldCore {
         return PriceDeviationResult(shouldExecute: true, deviation: absDeviation, reason: "Within bounds")
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  LAYER 4 — EXECUTION QUEUE (VRF-shuffled Fisher-Yates)
-    // ═══════════════════════════════════════════════════════════════════════
-
+    // LAYER 4 — EXECUTION QUEUE
     access(all) fun getReadyExecutions(maxResults: UInt64): [PendingExecution] {
         let currentBlock = getCurrentBlock().height
         var ready: [PendingExecution] = []
@@ -452,10 +364,10 @@ access(all) contract MEVShieldCore {
         return shuffled
     }
 
-    access(all) fun markExecutionProcessed(vaultId: UInt64, commitHashHex: String, yieldGenerated: UFix64) {
+    access(all) fun markExecutionProcessed(vaultId: UInt64, commitHash: String, yieldGenerated: UFix64) {
         var foundIndex: Int? = nil
         for i, execution in self.pendingExecutions {
-            if execution.vaultId == vaultId && execution.commitHashHex == commitHashHex && !execution.isProcessed {
+            if execution.vaultId == vaultId && execution.commitHash == commitHash && !execution.isProcessed {
                 foundIndex = i
                 break
             }
@@ -465,16 +377,12 @@ access(all) contract MEVShieldCore {
             self.totalExecutionsProcessed = self.totalExecutionsProcessed + UInt64(1)
             emit ExecutionCompleted(
                 vaultId: vaultId, yieldGenerated: yieldGenerated,
-                slippageApplied: 0.0, mevShieldStatus: "MEV-SHIELD-ACTIVE|SHA3-HASH|VRF-JITTER|PRICE-GUARD|QUEUE-SHUFFLE"
+                slippageApplied: 0.0, mevShieldStatus: "MEV-SHIELD-ACTIVE|VRF-JITTER|PRICE-GUARD|QUEUE-SHUFFLE"
             )
         }
     }
 
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  VAULT MEV CONFIGURATION
-    // ═══════════════════════════════════════════════════════════════════════
-
+    // VAULT MEV CONFIGURATION
     access(all) fun registerVaultMEV(vaultId: UInt64, protectionLevel: UInt8, defaultSlippageBps: UFix64) {
         if self.vaultConfigs[vaultId] != nil {
             self.setVaultConfigProtection(
@@ -507,19 +415,10 @@ access(all) contract MEVShieldCore {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  QUERY FUNCTIONS
-    // ═══════════════════════════════════════════════════════════════════════
-
+    // QUERY FUNCTIONS
     access(all) fun getVaultMEVConfig(vaultId: UInt64): VaultMEVConfig? { return self.vaultConfigs[vaultId] }
 
-    /// Look up a commit by its hex hash string
-    access(all) fun getCommit(commitHashHex: String): CommitRecord? { return self.commits[commitHashHex] }
-
-    /// Look up a commit by its raw [UInt8] hash (converts to hex internally)
-    access(all) fun getCommitByBytes(commitHash: [UInt8]): CommitRecord? {
-        return self.commits[self.hashToHex(commitHash)]
-    }
+    access(all) fun getCommit(commitHash: String): CommitRecord? { return self.commits[commitHash] }
 
     access(all) fun getPendingExecutionCount(): UInt64 { return UInt64(self.pendingExecutions.length) }
 
@@ -544,8 +443,6 @@ access(all) contract MEVShieldCore {
             "mevCommitWindowBlocks": self.getMEVCommitBlocks(),
             "mevDeviationTolerance": self.getMEVDeviationTolerance(),
             "mevDefaultSlippageBps": self.getMEVSlippageBps(),
-            "hashAlgorithm": "SHA3_256",
-            "commitHashType": "[UInt8] (32 bytes)",
             "priceGuardLogic": "OR (vault slippage respected)",
             "protectionLevels": ["None", "Basic (VRF Jitter)", "Standard (Commit-Reveal+VRF)", "Full (All 4 Layers)"]
         }
@@ -558,11 +455,11 @@ access(all) contract MEVShieldCore {
             if cleaned >= maxCleanup { break }
             if let commit = self.commits[key] {
                 if !commit.isRevealed && !commit.isExpired && currentBlock > commit.deadlineBlock {
-                    self.setCommitExpired(hashHex: key)
+                    self.setCommitExpired(hashStr: key)
                     self.totalCommitsExpired = self.totalCommitsExpired + UInt64(1)
                     cleaned = cleaned + UInt64(1)
                     emit CommitExpired(
-                        vaultId: commit.vaultId, commitHashHex: key,
+                        vaultId: commit.vaultId, commitHash: key,
                         blocksOverdue: currentBlock - commit.deadlineBlock
                     )
                 }
