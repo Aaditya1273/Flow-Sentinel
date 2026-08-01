@@ -159,7 +159,7 @@ export default function PortfolioPage() {
                     </div>
                     <span className="dash-badge dash-badge-cyan">Managed</span>
                   </div>
-                  <div className="dash-label">{vaults.reduce((s, v) => s + (v.mevProtectionsTriggered || 0), 0)} MEV protections triggered</div>
+                  <div className="dash-label">{vaults.reduce((s, v) => s + (v.mevProtectionsTriggered || 0), 0)} protection events triggered</div>
                 </div>
               </div>
 

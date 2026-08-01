@@ -159,7 +159,7 @@ export function ReserveHealthWidget({ stats, onFunded }: ReserveHealthWidgetProp
                   { label: 'Fees Collected', value: `${stats.totalFeesCollected.toFixed(4)} FLOW` },
                   { label: 'Protocol Fee', value: `${stats.protocolFeeRateBps} bps (0.1%)` },
                   { label: 'Total Vaults', value: stats.totalVaults.toString() },
-                  { label: 'MEV Protections', value: stats.mevTotalProtections.toLocaleString() },
+                  { label: 'Protection Events', value: stats.mevTotalProtections.toLocaleString() },
                   { label: 'Pending Exec.', value: stats.mevPendingExecutions.toString() },
                 ].map((item, i) => (
                   <div key={i} style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(250,248,245,0.03)', border: '1px solid rgba(250,248,245,0.06)' }}>

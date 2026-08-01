@@ -23,20 +23,20 @@ const trust = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Flow Sentinel - Autonomous DeFi Wealth Manager',
-  description: "The world's first autonomous, MEV-resistant wealth manager built on Flow blockchain",
-  keywords: ['DeFi', 'Flow', 'Blockchain', 'Autonomous', 'MEV Protection', 'Wealth Management'],
+  title: 'Flow Sentinel - Protected Yield Vaults on Flow Blockchain',
+  description: "FLOW custody infrastructure on the Flow blockchain. Yield integrations and autonomous execution are disabled until audited production adapters are deployed.",
+  keywords: ['DeFi', 'Flow', 'Blockchain', 'Yield Vaults', 'Protected DeFi', 'Wealth Management'],
   authors: [{ name: 'Flow Sentinel Team' }],
   openGraph: {
-    title: 'Flow Sentinel - Autonomous DeFi Wealth Manager',
-    description: "The world's first autonomous, MEV-resistant wealth manager built on Flow blockchain",
+    title: 'Flow Sentinel - Protected Yield Vaults on Flow Blockchain',
+    description: "Protected yield vaults on the Flow blockchain. Higher net yield, safer execution, simpler DeFi.",
     type: 'website',
     images: ['/og-image.svg'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Flow Sentinel - Autonomous DeFi Wealth Manager',
-    description: "The world's first autonomous, MEV-resistant wealth manager built on Flow blockchain",
+    title: 'Flow Sentinel - Protected Yield Vaults on Flow Blockchain',
+    description: "Protected yield vaults on the Flow blockchain. Higher net yield, safer execution, simpler DeFi.",
     images: ['/og-image.svg'],
   },
   icons: {

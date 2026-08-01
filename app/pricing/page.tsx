@@ -72,12 +72,12 @@ const plans = [
 
 const feeBreakdown = [
   { operation: 'Vault Creation', fee: 'Free (gas only)', note: 'Network gas fee applies — ~0.001 FLOW' },
-  { operation: 'Deposit', fee: '0.1% protocol fee', note: 'Auto-flows into yield reserve to sustain payouts' },
+  { operation: 'Deposit', fee: 'Disabled', note: 'New vault creation is disabled until audited integrations are deployed' },
   { operation: 'Withdrawal', fee: 'Free (gas only)', note: 'Network gas fee applies' },
-  { operation: 'Strategy Execution', fee: 'Free (gas only)', note: 'No extra protocol fee on execution' },
-  { operation: 'Yield Claim', fee: 'Free (gas only)', note: 'Claim your yield anytime after execution' },
+  { operation: 'Strategy Execution', fee: 'Disabled', note: 'No external strategy execution is currently available' },
+  { operation: 'Yield Claim', fee: 'Disabled', note: 'No externally generated yield is currently available' },
   { operation: 'Emergency Pause', fee: 'Free (gas only)', note: 'Security functions always free' },
-  { operation: 'Oracle Update', fee: 'Free (automated)', note: 'Runs every 6h via Netlify cron keeper' },
+  { operation: 'Oracle Update', fee: 'Disabled', note: 'APY publication is fail-closed until a verified data source exists' },
 ]
 
 export default function PricingPage() {

@@ -15,12 +15,12 @@ const faqs: FAQItem[] = [
   {
     category: 'General',
     q: 'What is Flow Sentinel?',
-    a: 'Flow Sentinel is an autonomous DeFi wealth management protocol built on the Flow blockchain. It enables users to create automated investment vaults that execute yield-generating strategies with built-in MEV (Maximal Extractable Value) protection across 4 security layers.'
+    a: 'Flow Sentinel is currently a testnet FLOW custody prototype. New vault creation, external yield integrations, and autonomous strategy execution are disabled until audited production adapters are deployed.'
   },
   {
     category: 'General',
     q: 'How is this different from a regular DeFi dashboard?',
-    a: 'Flow Sentinel is fully autonomous. Once you deploy a vault and fund it, the protocol handles strategy execution, yield compounding, and MEV protection automatically. You don\'t need to manually rebalance, harvest yields, or monitor positions. The smart contracts handle everything.'
+    a: 'No. Autonomous yield execution is not enabled in the current release. Existing vault users should treat the product as custody/withdrawal infrastructure only.'
   },
   {
     category: 'General',
@@ -30,12 +30,12 @@ const faqs: FAQItem[] = [
   {
     category: 'Vaults',
     q: 'What is a Sentinel Vault?',
-    a: 'A Sentinel Vault is an autonomous smart contract that holds your FLOW tokens and executes strategies on your behalf. Each vault has its own strategy, MEV protection settings, and performance tracking. You can create multiple vaults with different strategies to diversify your approach.'
+    a: 'A Sentinel Vault is a Flow resource that can custody FLOW and expose owner-controlled withdrawal. Strategy execution and new vault enrollment are disabled until external integrations are audited.'
   },
   {
     category: 'Vaults',
     q: 'How do I create a vault?',
-    a: 'Connect your Flow wallet, navigate to the Dashboard, and click "Initialize First Vault." Select a strategy, name your vault, choose your initial deposit amount, and confirm the transaction in your wallet. The entire process takes less than 2 minutes.'
+    a: 'New vault creation is disabled in the current release. Existing testnet vaults can be viewed and withdrawn from; do not deposit funds expecting yield.'
   },
   {
     category: 'Vaults',
@@ -64,12 +64,12 @@ const faqs: FAQItem[] = [
   },
   {
     category: 'Strategies',
-    q: 'What strategies are available?',      a: 'Flow Sentinel offers multiple strategies including: Liquid Staking Pro (low risk, ~6.5% APY from Flow staking), DeFi Yield Maximizer (medium risk, ~8.2% APY from DeFi aggregation), Arbitrage Hunter (medium risk, ~5.8% APY from cross-DEX), and High-Yield Farming (high risk, ~15.5% APY). All APY values are sourced from the on-chain YieldOracle and reflect realistic market conditions on Flow.'
+    q: 'What strategies are available?',      a: 'None are enabled for production use in the current release. The strategy contracts are retained as disabled development scaffolding until they execute real audited external positions.'
   },
   {
     category: 'Strategies',
     q: 'How are yields generated?',
-    a: 'Yields are generated through real DeFi protocol integrations including Flow native staking, liquidity provision on Flow DEXs, lending protocols, and cross-DEX arbitrage. The YieldOracle provides real-time APY data from integrated sources. Actual returns may vary based on market conditions.'
+    a: 'In the current testnet prototype, strategy contracts calculate reserve-funded yield from oracle APY data. They do not yet create Flow staking positions or execute lending, liquidity, or arbitrage transactions. Do not treat displayed APY as a guaranteed or externally generated return.'
   },
   {
     category: 'Strategies',

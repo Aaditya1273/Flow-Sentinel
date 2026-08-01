@@ -11,8 +11,18 @@ interface OracleAPYEntry {
   confidence: number
 }
 
+interface OracleProvenanceEntry {
+  protocolName: string
+  protocolAddress: string
+  methodology: string
+  methodologyUrl: string
+  verified: boolean
+  riskScore: number
+}
+
 interface OracleFreshnessBarProps {
   apyData: Record<string, OracleAPYEntry>
+  provenanceData?: Record<string, OracleProvenanceEntry>
   onForceRefresh?: () => void
 }
 
@@ -26,7 +36,7 @@ function formatAge(seconds: number): string {
 const STALE_WARN_SECONDS = 6 * 3600   // 6 hours — warn
 const STALE_CRIT_SECONDS = 24 * 3600  // 24 hours — critical
 
-export function OracleFreshnessBar({ apyData, onForceRefresh }: OracleFreshnessBarProps) {
+export function OracleFreshnessBar({ apyData, provenanceData, onForceRefresh }: OracleFreshnessBarProps) {
   const [now, setNow] = useState(Date.now() / 1000)
 
   // Tick every 30 seconds so the "X ago" label stays fresh
@@ -73,26 +83,38 @@ export function OracleFreshnessBar({ apyData, onForceRefresh }: OracleFreshnessB
            `⚠ Stale data — last update ${formatAge(ageSeconds)}`}
         </span>
 
-        {/* Per-strategy APY pills */}
+        {/* Per-strategy APY pills with provenance badges */}
         <div style={{ display: 'flex', gap: 6, marginLeft: 8, flexWrap: 'wrap' }}>
-          {entries.slice(0, 4).map(([id, v]) => (
-            <span
-              key={id}
-              title={`Source: ${v.source} | Confidence: ${(v.confidence * 100).toFixed(0)}%`}
-              style={{
-                padding: '2px 8px', borderRadius: 20,
-                background: 'rgba(250,248,245,0.05)',
-                border: '1px solid rgba(250,248,245,0.08)',
-                fontSize: '0.5rem', fontWeight: 600,
-                color: '#FAF8F5', letterSpacing: '0.08em',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              {id.replace('liquid-staking-pro', 'LS').replace('defi-yield-maximizer', 'DFY').replace('arbitrage-hunter', 'ARB').replace('high-yield-farming', 'HYF')}
-              {' '}
-              <span style={{ color }}>{v.apy.toFixed(2)}%</span>
-            </span>
-          ))}
+          {entries.slice(0, 4).map(([id, v]) => {
+            const prov = provenanceData?.[id]
+            const badgeBg = prov?.verified ? 'rgba(0,239,139,0.10)' : 'rgba(250,248,245,0.05)'
+            const badgeBorder = prov?.verified ? '1px solid rgba(0,239,139,0.20)' : '1px solid rgba(250,248,245,0.08)'
+            return (
+              <span
+                key={id}
+                title={prov
+                  ? `${prov.protocolName} · ${prov.methodology} · Verified: ${prov.verified} · Risk: ${(prov.riskScore * 100).toFixed(0)}%`
+                  : `Source: ${v.source} | Confidence: ${(v.confidence * 100).toFixed(0)}%`
+                }
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '2px 8px', borderRadius: 20,
+                  background: badgeBg,
+                  border: badgeBorder,
+                  fontSize: '0.5rem', fontWeight: 600,
+                  color: '#FAF8F5', letterSpacing: '0.08em',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {prov?.verified && (
+                  <span style={{ color: '#00EF8B', fontSize: '0.4375rem' }}>✓</span>
+                )}
+                {prov?.protocolName ?? id.replace('liquid-staking-pro', 'LS').replace('defi-yield-maximizer', 'DFY')}
+                {' '}
+                <span style={{ color }}>{v.apy.toFixed(2)}%</span>
+              </span>
+            )
+          })}
         </div>
       </div>
 

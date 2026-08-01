@@ -19,10 +19,13 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Navbar } from 'components/layout/Navbar'
 import { VaultCard } from 'components/dashboard/VaultCard'
+import { IdleBalanceWidget } from 'components/dashboard/IdleBalanceWidget'
 import { ReserveHealthWidget } from 'components/dashboard/ReserveHealthWidget'
 import { OracleFreshnessBar } from 'components/dashboard/OracleFreshnessBar'
+import { CircuitBreakerStatus } from 'components/dashboard/CircuitBreakerStatus'
 import { useFlow } from 'lib/flow'
 import { useVaultData } from 'hooks/useVaultData'
+import { FlowService } from 'lib/flow-service'
 import { formatCurrency, formatPercentage } from 'lib/utils'
 import { useTransactions } from 'lib/transactions'
 import { ErrorBoundary } from 'components/ErrorBoundary'
@@ -63,7 +66,7 @@ const CreateVaultModal = dynamic(() => import('components/dashboard/CreateVaultM
 
 function DashboardContent() {
   const { user, logIn, isConnected } = useFlow()
-  const { vaults, performance, flowBalance, protocolStats, oracleData, loading, error, refetch } = useVaultData()
+  const { vaults, performance, flowBalance, protocolStats, oracleData, provenanceData, loading, error, refetch } = useVaultData()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
@@ -71,6 +74,16 @@ function DashboardContent() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true) }, [])
+
+  // Phase 9: Fetch circuit breaker data on mount
+  const [circuitBreakerData, setCircuitBreakerData] = useState<Record<string, unknown> | null>(null)
+  useEffect(() => {
+    if (isConnected) {
+      import('lib/flow-service').then(({ FlowService }) => {
+        FlowService.getCircuitBreakerStatus().then(setCircuitBreakerData)
+      })
+    }
+  }, [isConnected])
 
   useEffect(() => {
     if (mounted && !isConnected && !loading) { router.push('/') }
@@ -134,7 +147,7 @@ function DashboardContent() {
               Deploy Your Sentinel
             </h1>
             <p style={{ color: 'rgba(250,248,245,0.55)', marginBottom: 40, lineHeight: 1.6, fontWeight: 500 }}>
-              Your command center is ready. Initialize your first autonomous vault to start capturing on-chain growth.
+              The dashboard currently supports testnet balance visibility only. Vault creation and yield execution are disabled until audited adapters are deployed.
             </p>
 
             <div className="dash-stat" style={{ marginBottom: 40, textAlign: 'center' }}>
@@ -143,8 +156,8 @@ function DashboardContent() {
               <div className="dash-label">Flow Token (Testnet)</div>
             </div>
 
-            <button onClick={() => setShowCreateModal(true)} className="dash-cta" style={{ padding: '20px 48px' }}>
-              Initialize First Vault
+            <button disabled className="dash-cta" style={{ padding: '20px 48px', opacity: 0.45, cursor: 'not-allowed' }}>
+              Vault Creation Disabled
             </button>
           </div>
         </div>
@@ -182,7 +195,7 @@ function DashboardContent() {
                     ⚠ TESTNET — Not real funds
                   </span>
                   <span style={{ fontSize: '0.5rem', color: 'rgba(250,248,245,0.3)', letterSpacing: '0.08em' }}>
-                    Flow Testnet · Contract: 0xc13b08053be24e87
+                    Flow Testnet · Contract: 0x60320435dd7725c1
                   </span>
                 </div>
               </div>
@@ -208,13 +221,44 @@ function DashboardContent() {
             </div>
           </motion.div>
 
+          {/* Idle Balance Earning Widget — turns wallet FLOW into active yield */}
+          <ErrorBoundary>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={{ marginBottom: 32 }}>
+            <IdleBalanceWidget
+              flowBalance={flowBalance}
+              hasVaults={vaults.length > 0}
+              vaultBalance={vaults.length > 0 ? vaults.reduce((s, v) => s + v.balance, 0) : 0}
+              vaultApy={vaults.length > 0
+                ? vaults.reduce((sum, v) => sum + v.balance * (v.apy ?? 0), 0) / vaults.reduce((sum, v) => sum + v.balance, 0)
+                : 0}
+              vaultYieldAccrued={vaults.length > 0 ? vaults.reduce((s, v) => s + (v.totalYieldAccrued ?? 0), 0) : 0}
+              vaultId={vaults.length > 0 ? vaults[0].id : undefined}
+              vaultName={vaults.length > 0 ? vaults[0].name : undefined}
+              onActivate={async () => {
+                try {
+                  setTxState({ status: 'executing', txId: null, error: null, title: 'Activating Wallet Earning' })
+                  const { transactionId, sealed } = await FlowService.quickEarn(flowBalance)
+                  setTxState({ status: 'submitting', txId: transactionId, error: null, title: 'Activating Wallet Earning' })
+                  setTxState({ status: 'pending', txId: transactionId, error: null, title: 'Activating Wallet Earning' })
+                  await sealed
+                  setTxState({ status: 'sealed', txId: transactionId, error: null, title: 'Wallet Earning Active' })
+                  refetch()
+                } catch (err: unknown) {
+                  const errMsg = err instanceof Error ? err.message : 'Failed to activate earning'
+                  setTxState({ status: 'error', txId: null, error: errMsg, title: 'Activation Failed' })
+                }
+              }}
+              onRefresh={refetch}
+            />
+          </motion.div>
+          </ErrorBoundary>
+
           {/* Stats Overview */}
           <ErrorBoundary>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 48 }}>
             {[
               { label: 'Total Net Asset Value', value: formatCurrency(performance?.totalBalance || 0), sub: performance?.totalPnlPercent ? formatPercentage(performance.totalPnlPercent) : '+0%', icon: DollarSign },
-              { label: 'Available Capital', value: formatCurrency(flowBalance), sub: 'Ready for Deployment', icon: TrendingUp },
               { label: 'Managed Sentinels', value: vaults.length.toString(), sub: 'Secured & Active', icon: Shield },
               { label: 'Total Captured PnL', value: formatCurrency(performance?.totalPnl || 0), sub: 'Across All Vaults', icon: Target },
             ].map((stat, i) => (
@@ -238,7 +282,7 @@ function DashboardContent() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                 {/* Phase 4: Oracle freshness bar — shows APY data age + staleness warning */}
                 {Object.keys(oracleData).length > 0 && (
-                  <OracleFreshnessBar apyData={oracleData} onForceRefresh={refetch} />
+                  <OracleFreshnessBar apyData={oracleData} provenanceData={provenanceData} onForceRefresh={refetch} />
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
                   <h2 style={{
@@ -276,6 +320,7 @@ function DashboardContent() {
                         nextScheduledExecution: v.nextScheduledExecution,
                         executionIntervalSeconds: v.executionIntervalSeconds,
                       }}
+                      provenance={provenanceData?.[v.strategyId]}
                     />
                   ))}
                 </div>
@@ -313,6 +358,10 @@ function DashboardContent() {
               )}
 
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
+                <CircuitBreakerStatus data={circuitBreakerData as any} />
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.55 }}>
                 <div className="dash-card" style={{ padding: 32 }}>
                   <h3 style={{
                     fontFamily: 'var(--font-authority), "Host Grotesk", sans-serif',
@@ -387,15 +436,15 @@ function DashboardContent() {
                 <div className="dash-card" style={{ padding: 32 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                     <Shield style={{ width: 24, height: 24, color: '#00EF8B' }} />
-                    <h3 className="dash-label" style={{ fontSize: '0.875rem', color: '#FAF8F5' }}>Protocol Guard</h3>
+                    <h3 className="dash-label" style={{ fontSize: '0.875rem', color: '#FAF8F5' }}>Protection Status</h3>
                   </div>
                   <p style={{ fontSize: '0.75rem', color: 'rgba(250,248,245,0.55)', marginBottom: 24, lineHeight: 1.6 }}>
-                    Your Sentinels are protected by MEV-Shield Pro — a 4-layer MEV resistance system adapted from Flashbots MEV-Boost architecture for Flow blockchain.
+                    Your vaults are protected by a 4-layer execution protection system built directly into Flow blockchain smart contracts. Guarding against frontrunning, sandwich attacks, timing exploitation, and price manipulation.
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="dash-label">Protection Level</span>
-                      <span style={{ fontSize: '0.625rem', fontWeight: 500, color: '#00EF8B', letterSpacing: '0.1em' }}>Full (4 Layers)</span>
+                  <span className="dash-label">Protection Level</span>
+                  <span style={{ fontSize: '0.625rem', fontWeight: 500, color: '#00EF8B', letterSpacing: '0.1em' }}>Full (4 Layers Active)</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span className="dash-label">Layer 1 — Commit-Reveal</span>
@@ -414,7 +463,7 @@ function DashboardContent() {
                       <span style={{ fontSize: '0.625rem', fontWeight: 500, color: '#00EF8B', letterSpacing: '0.1em' }}>ACTIVE (VRF shuffle)</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="dash-label">MEV Protections Triggered</span>
+                      <span className="dash-label">Protection Events</span>
                       <span style={{ fontSize: '0.625rem', fontWeight: 500, color: '#37DDDF', letterSpacing: '0.1em' }}>{vaults.reduce((sum, v) => sum + (v.mevProtectionsTriggered || 0), 0)}</span>
                     </div>
                   </div>
