@@ -1,7 +1,7 @@
-import FungibleToken from 0x9a0766d93b6608b7
-import FlowToken from 0x7e60df042a9c0868
-import SentinelInterfaces from 0xc13b08053be24e87
-import YieldOracle from 0xc13b08053be24e87
+import FungibleToken
+import FlowToken
+import SentinelInterfaces
+import YieldOracle
 
 // ── Liquid Staking Strategy ──
 // Yield calculation uses oracle APY data (updated by keeper with real Flow staking rates).
@@ -48,7 +48,7 @@ access(all) contract LiquidStakingStrategy {
         self.totalParticipants = 0
         self.totalYieldGenerated = 0.0
         self.totalExecutions = 0
-        self.isActive = true
+        self.isActive = false
     }
 
     //    ── Sync APY from oracle ──
@@ -76,7 +76,6 @@ access(all) contract LiquidStakingStrategy {
         }
 
         access(all) fun getExpectedYield(amount: UFix64): UFix64 {
-            let apy = LiquidStakingStrategy.getOracleAPY()
             return 0.0
         }
 

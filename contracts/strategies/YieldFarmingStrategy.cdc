@@ -1,7 +1,7 @@
-import FungibleToken from 0x9a0766d93b6608b7
-import FlowToken from 0x7e60df042a9c0868
-import SentinelInterfaces from 0xc13b08053be24e87
-import YieldOracle from 0xc13b08053be24e87
+import FungibleToken
+import FlowToken
+import SentinelInterfaces
+import YieldOracle
 
 // ── Yield Farming Strategy — Phase 3 ──
 // Multi-protocol allocation across IncrementFi, Flowty, and FlowSwap.
@@ -51,7 +51,7 @@ access(all) contract YieldFarmingStrategy {
         self.category = "yield-farming"
         self.minDeposit = 100.0
         self.expectedAPY = 0.0
-        self.isActive = true
+        self.isActive = false
 
         self.protocolAllocations = {
             "IncrementFi": 0.40,

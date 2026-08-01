@@ -1,5 +1,5 @@
-import LiquidStakingStrategy from 0xc13b08053be24e87
-import YieldFarmingStrategy from 0xc13b08053be24e87
+import LiquidStakingStrategy
+import YieldFarmingStrategy
 
 // StrategyRegistry — Upgrade v2: ADDITIVE ONLY
 // KEPT: RegistryStoragePath, RegistryPublicPath, totalStrategies, strategies dict,
@@ -113,10 +113,8 @@ access(all) contract StrategyRegistry {
         return LiquidStakingStrategy.totalParticipants
              + YieldFarmingStrategy.totalParticipants
     }
-    // totalYieldGenerated not on deployed strategy contracts — computed from registry TVL data
+    // No yield is reported until a real adapter records externally generated proceeds.
     access(all) fun getTotalYieldGenerated(): UFix64 {
-        // Approximate: sum of strategy TVLs × estimated daily rate (conservative proxy)
-        let totalTVL = self.getTotalTVL()
-        return totalTVL * 0.0002 // ~7.3% APY / 365 days as daily proxy
+        return 0.0
     }
 }
