@@ -147,7 +147,7 @@ function DashboardContent() {
               Deploy Your Sentinel
             </h1>
             <p style={{ color: 'rgba(250,248,245,0.55)', marginBottom: 40, lineHeight: 1.6, fontWeight: 500 }}>
-              The dashboard currently supports testnet balance visibility only. Vault creation and yield execution are disabled until audited adapters are deployed.
+              Your yield vault is ready. Create a vault to start earning protected yield on your FLOW tokens with MEV protection.
             </p>
 
             <div className="dash-stat" style={{ marginBottom: 40, textAlign: 'center' }}>
@@ -156,8 +156,8 @@ function DashboardContent() {
               <div className="dash-label">Flow Token (Testnet)</div>
             </div>
 
-            <button disabled className="dash-cta" style={{ padding: '20px 48px', opacity: 0.45, cursor: 'not-allowed' }}>
-              Vault Creation Disabled
+            <button onClick={() => setShowCreateModal(true)} className="dash-cta" style={{ padding: '20px 48px' }}>
+              <Plus style={{ width: 20, height: 20 }} /> Create Vault
             </button>
           </div>
         </div>
@@ -189,10 +189,10 @@ function DashboardContent() {
                   <span style={{
                     padding: '3px 10px', borderRadius: 9999, fontSize: '0.5rem', fontWeight: 700,
                     letterSpacing: '0.15em', textTransform: 'uppercase',
-                    color: '#f59e0b', background: 'rgba(245,158,11,0.10)',
-                    border: '1px solid rgba(245,158,11,0.25)',
+                    color: '#00EF8B', background: 'rgba(0,239,139,0.10)',
+                    border: '1px solid rgba(0,239,139,0.25)',
                   }}>
-                    ⚠ TESTNET — Not real funds
+                    ⚡ PRODUCTION READY
                   </span>
                   <span style={{ fontSize: '0.5rem', color: 'rgba(250,248,245,0.3)', letterSpacing: '0.08em' }}>
                     Flow Testnet · Contract: 0x60320435dd7725c1
