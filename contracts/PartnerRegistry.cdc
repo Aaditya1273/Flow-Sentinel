@@ -154,8 +154,8 @@ access(all) contract PartnerRegistry {
     /// Attribute a vault to a partner — called during vault creation
     access(all) fun attributeVault(vaultId: UInt64, partnerId: UInt64) {
         if let partner = &self.partners[partnerId] as &Partner? {
-            pre {
-                partner.isActive: "Partner is not active"
+            if !partner.isActive {
+                panic("Partner is not active")
             }
             self.vaultAttribution[vaultId] = partnerId
             partner.totalVaults = partner.totalVaults + 1
