@@ -1,7 +1,7 @@
-import FungibleToken
-import FlowToken
-import SentinelInterfaces
-import YieldOracle
+import "FungibleToken"
+import "FlowToken"
+import "SentinelInterfaces"
+import "YieldOracle"
 
 // ── Yield Farming Strategy — Phase 3 ──
 // Multi-protocol allocation across IncrementFi, Flowty, and FlowSwap.
@@ -108,45 +108,26 @@ access(all) contract YieldFarmingStrategy {
 
     access(all) resource StrategyExecutor: SentinelInterfaces.IStrategy {
 
+        // No external protocol integration exists yet (see YieldFarmingStrategy's own
+        // getStrategyInfo() / SECURITY.md — IncrementFi/Flowty/FlowSwap connectors are not
+        // released). Reports zero real yield rather than a computed-but-fake projection —
+        // this function represents an actual execution, and nothing real executed.
         access(all) fun executeStrategy(vaultBalance: UFix64): SentinelInterfaces.StrategyResult {
-            // PRODUCTION: Generate yield from DeFi farming strategies
             pre {
                 vaultBalance > 0.0: "Cannot execute strategy with zero balance"
                 YieldFarmingStrategy.isActive: "Strategy is not active"
             }
-            
-            // Get the expected APY from oracle
-            let apy = YieldFarmingStrategy.getOracleAPY()
-            
-            // Calculate yield based on balance and APY (daily rate)
-            let dailyRate = apy / 365.0
-            let yieldAmount = vaultBalance * (dailyRate / 100.0)
-            
-            // Update strategy stats
+
             YieldFarmingStrategy.totalExecutions = YieldFarmingStrategy.totalExecutions + 1
-            YieldFarmingStrategy.totalYieldGenerated = YieldFarmingStrategy.totalYieldGenerated + yieldAmount
-            
-            // Distribute yield to protocols
-            let protocols = YieldFarmingStrategy.protocolAllocations.keys
-            var breakdown = ""
-            for protocol in protocols {
-                let allocation = YieldFarmingStrategy.protocolAllocations[protocol] ?? 0.0
-                let protocolYield = yieldAmount * allocation
-                YieldFarmingStrategy.protocolYieldGenerated[protocol] = 
-                    (YieldFarmingStrategy.protocolYieldGenerated[protocol] ?? 0.0) + protocolYield
-                breakdown = breakdown.concat(protocol).concat(":").concat(protocolYield.toString()).concat(" ")
-            }
-            
-            emit ProtocolYieldAccrued(protocol: "multi-protocol", amount: yieldAmount, allocation: 1.0, apy: apy)
-            
+
             return SentinelInterfaces.StrategyResult(
-                yieldAmount: yieldAmount,
+                yieldAmount: 0.0,
                 protocolSource: "Flow DeFi Ecosystem",
-                realizedAPY: apy,
-                confidence: 0.80,
-                executionNote: "Yield generated from multi-protocol DeFi farming",
+                realizedAPY: 0.0,
+                confidence: 0.0,
+                executionNote: "No real yield: IncrementFi/Flowty/FlowSwap connectors are not integrated yet — this strategy does not move funds or generate yield",
                 strategyId: YieldFarmingStrategy.strategyId,
-                usedRealProtocol: true
+                usedRealProtocol: false
             )
         }
 
@@ -186,8 +167,8 @@ access(all) contract YieldFarmingStrategy {
             "verified": false,
             "protocolSource": "Oracle APY allocation; no external protocol call",
             "allocationType": "SIMULATED — per-protocol oracle APY with VRF shuffle",
-            "provenance": YieldOracle.readSourceDetail(self.strategyId)?.protocolName ?? "aggregated",
-            "methodology": YieldOracle.readSourceDetail(self.strategyId)?.methodology ?? "multi-protocol",
+            "provenance": YieldOracle.getYieldData(self.strategyId)?.source ?? "aggregated",
+            "methodology": "multi-protocol",
             "mevProtection": "VRF Protocol Shuffle (≤0.1% timing jitter)"
         }
     }

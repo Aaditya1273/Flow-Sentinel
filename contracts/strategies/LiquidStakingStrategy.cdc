@@ -1,11 +1,14 @@
-import FungibleToken
-import FlowToken
-import SentinelInterfaces
-import YieldOracle
+import "FungibleToken"
+import "FlowToken"
+import "SentinelInterfaces"
+import "YieldOracle"
+import "FlowStakingCollection"
+import "FlowIDTableStaking"
 
 // ── Liquid Staking Strategy (PRODUCTION) ──
-// Generates yield using Flow's liquid staking rewards system
-// Uses oracle APY data for accurate yield calculation
+// Delegates pooled vault FLOW to a real Flow validator node via FlowStakingCollection.
+// Yield is realized ONLY from real epoch rewards claimed from FlowIDTableStaking —
+// there is no simulated/invented yield anywhere in this contract.
 access(all) contract LiquidStakingStrategy {
 
     access(all) let strategyId: String
@@ -14,14 +17,20 @@ access(all) contract LiquidStakingStrategy {
     access(all) let riskLevel: UInt8
     access(all) let category: String
     access(all) let minDeposit: UFix64
-    access(all) var expectedAPY: UFix64          // synced from oracle
+    access(all) var expectedAPY: UFix64          // synced from oracle (display estimate only)
     access(all) var lastEpochAPY: UFix64         // last synced APY
     access(all) var totalValueLocked: UFix64     // cumulative balance processed
     access(all) var totalParticipants: UInt64
-    access(all) var totalYieldGenerated: UFix64  // cumulative yield paid out
     access(all) var totalExecutions: UInt64
     access(all) var isActive: Bool
-    access(all) var stakingRewardsEarned: UFix64 // accumulated staking rewards
+
+    // ── Real staking state ──
+    access(all) var protocolNodeID: String
+    access(all) var stakingCollectionSetup: Bool
+    access(all) var totalStakedPrincipal: UFix64
+    access(all) var accruedRewardPerFlow: UFix64   // reward-per-staked-FLOW accumulator, real rewards only
+    access(all) var totalRealRewardsClaimed: UFix64
+    access(all) var lastRewardClaimTime: UFix64
 
     // Kill switch — admin can disable/enable this strategy
     access(account) fun setActive(_ active: Bool) {
@@ -36,26 +45,33 @@ access(all) contract LiquidStakingStrategy {
     )
     access(all) event EpochDataSynced(epochAPY: UFix64, weeklyRate: UFix64, source: String)
     access(all) event TVLUpdated(newTVL: UFix64, participants: UInt64)
-    access(all) event YieldGenerated(vaultId: UInt64, amount: UFix64, source: String)
+    access(all) event StakingCollectionInitialized(nodeID: String)
+    access(all) event RealTokensStaked(amount: UFix64, nodeID: String, totalStaked: UFix64)
+    access(all) event RealRewardsClaimed(amount: UFix64, newAccruedRewardPerFlow: UFix64)
 
     init() {
         self.strategyId = "liquid-staking-pro"
         self.name = "Flow Liquid Staking Pro"
-        self.description = "Professional liquid staking strategy generating yield from Flow network rewards"
+        self.description = "Professional liquid staking strategy generating yield from real Flow network delegation rewards"
         self.riskLevel = 1  // Low risk
         self.category = "liquid-staking"
-        self.minDeposit = 1.0
-        self.expectedAPY = 4.5  // Default to Flow staking rate
+        self.minDeposit = 5.0
+        self.expectedAPY = 4.5  // Default display estimate until oracle/real data available
         self.lastEpochAPY = 4.5
         self.totalValueLocked = 0.0
         self.totalParticipants = 0
-        self.totalYieldGenerated = 0.0
         self.totalExecutions = 0
-        self.isActive = true  // Production ready
-        self.stakingRewardsEarned = 0.0
+        self.isActive = true
+
+        self.protocolNodeID = ""
+        self.stakingCollectionSetup = false
+        self.totalStakedPrincipal = 0.0
+        self.accruedRewardPerFlow = 0.0
+        self.totalRealRewardsClaimed = 0.0
+        self.lastRewardClaimTime = 0.0
     }
 
-    // ── Sync APY from oracle ──
+    // ── Sync APY from oracle (display/estimate only — never used to fabricate yield) ──
     access(contract) fun syncEpochAPY(): UFix64 {
         let apy = self.getOracleAPY()
         LiquidStakingStrategy.lastEpochAPY = apy
@@ -69,68 +85,154 @@ access(all) contract LiquidStakingStrategy {
             LiquidStakingStrategy.expectedAPY = data.apy
             return data.apy
         }
-        // Fallback to default Flow staking APY
         return 4.5
     }
 
-    // ── Calculate yield based on time elapsed and APY ──
-    access(contract) fun calculateYield(balance: UFix64, lastExecutionTime: UFix64?): UFix64 {
-        let currentTime = getCurrentBlock().timestamp
-        var timeDelta: UFix64 = 0.0
-        
-        if let lastTime = lastExecutionTime {
-            timeDelta = currentTime - lastTime
-        } else {
-            // First execution - assume 1 day of yield
-            timeDelta = 86400.0
+    // ── Real APY computed from actual delegator reward history, when available ──
+    access(all) fun getRealizedAPY(): UFix64 {
+        if self.totalStakedPrincipal == 0.0 || self.totalRealRewardsClaimed == 0.0 {
+            return self.getOracleAPY()
         }
-        
-        // Yield = balance * (APY/100) * (timeDelta / seconds per year)
-        let apy = self.getOracleAPY()
-        let yearlyYield = balance * (apy / 100.0)
-        let yieldGenerated = yearlyYield * (timeDelta / 31536000.0)
-        
-        return yieldGenerated
+        // Simple annualization: rewards claimed so far vs. principal, scaled by weeks since first stake.
+        // This is a coarse estimate — precise APY needs a full epoch-reward history, not built yet.
+        return (self.totalRealRewardsClaimed / self.totalStakedPrincipal) * 52.0 * 100.0
+    }
+
+    // ── One-time setup: create this account's FlowStakingCollection and pick a validator node ──
+    access(account) fun setupStakingCollection(nodeID: String) {
+        pre {
+            !self.stakingCollectionSetup: "Staking collection already set up"
+            nodeID.length == 64: "nodeID must be a 32-byte hex string"
+        }
+        if self.account.storage.borrow<&FlowStakingCollection.StakingCollection>(
+            from: FlowStakingCollection.StakingCollectionStoragePath
+        ) == nil {
+            let flowTokenCap = self.account.capabilities.storage.issue<auth(FungibleToken.Withdraw) &FlowToken.Vault>(/storage/flowTokenVault)
+            self.account.storage.save(
+                <- FlowStakingCollection.createStakingCollection(unlockedVault: flowTokenCap, tokenHolder: nil),
+                to: FlowStakingCollection.StakingCollectionStoragePath
+            )
+            let cap = self.account.capabilities.storage.issue<&FlowStakingCollection.StakingCollection>(
+                FlowStakingCollection.StakingCollectionStoragePath
+            )
+            self.account.capabilities.publish(cap, at: FlowStakingCollection.StakingCollectionPublicPath)
+        }
+        self.protocolNodeID = nodeID
+        self.stakingCollectionSetup = true
+        emit StakingCollectionInitialized(nodeID: nodeID)
+    }
+
+    // Only safe to call before any real tokens have been staked (totalStakedPrincipal == 0) —
+    // switching validators after real delegation exists requires unstaking first, not built yet.
+    access(account) fun changeNode(nodeID: String) {
+        pre {
+            self.stakingCollectionSetup: "Call setupStakingCollection first"
+            self.totalStakedPrincipal == 0.0: "Cannot change node after real staking has begun"
+            nodeID.length == 64: "nodeID must be a 32-byte hex string"
+        }
+        self.protocolNodeID = nodeID
+        emit StakingCollectionInitialized(nodeID: nodeID)
+    }
+
+    // ── Real staking: delegates `amount` FLOW (already sitting in this account's default vault) ──
+    access(account) fun stake(amount: UFix64) {
+        pre {
+            self.stakingCollectionSetup: "Call setupStakingCollection first"
+            amount > 0.0: "Amount must be positive"
+        }
+        let collectionRef = self.account.storage.borrow<auth(FlowStakingCollection.CollectionOwner) &FlowStakingCollection.StakingCollection>(
+            from: FlowStakingCollection.StakingCollectionStoragePath
+        ) ?? panic("Could not borrow staking collection")
+
+        var delegatorID: UInt32? = nil
+        for idInfo in collectionRef.getDelegatorIDs() {
+            if idInfo.delegatorNodeID == self.protocolNodeID {
+                delegatorID = idInfo.delegatorID
+                break
+            }
+        }
+
+        if delegatorID == nil {
+            collectionRef.registerDelegator(nodeID: self.protocolNodeID, amount: amount)
+        } else {
+            collectionRef.stakeNewTokens(nodeID: self.protocolNodeID, delegatorID: delegatorID, amount: amount)
+        }
+
+        self.totalStakedPrincipal = self.totalStakedPrincipal + amount
+        emit RealTokensStaked(amount: amount, nodeID: self.protocolNodeID, totalStaked: self.totalStakedPrincipal)
+    }
+
+    // ── Real claim: withdraws whatever FlowIDTableStaking actually owes this delegator ──
+    // Returns an empty vault if nothing is claimable yet (rewards only land once per epoch, ~1 week).
+    access(account) fun claimRewards(): @{FungibleToken.Vault} {
+        pre {
+            self.stakingCollectionSetup: "Not set up"
+        }
+        let delegators = FlowStakingCollection.getAllDelegatorInfo(address: self.account.address)
+        var claimable: UFix64 = 0.0
+        var delegatorID: UInt32? = nil
+        for d in delegators {
+            if d.nodeID == self.protocolNodeID {
+                claimable = d.tokensRewarded
+                delegatorID = d.id
+            }
+        }
+
+        if claimable == 0.0 {
+            return <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>())
+        }
+
+        let collectionRef = self.account.storage.borrow<auth(FlowStakingCollection.CollectionOwner) &FlowStakingCollection.StakingCollection>(
+            from: FlowStakingCollection.StakingCollectionStoragePath
+        ) ?? panic("Could not borrow staking collection")
+        collectionRef.withdrawRewardedTokens(nodeID: self.protocolNodeID, delegatorID: delegatorID, amount: claimable)
+
+        // withdrawRewardedTokens deposits into this account's own default FlowToken vault —
+        // pull it back out so the caller can route it to the real, claim-only rewards pool.
+        let flowVaultRef = self.account.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
+            ?? panic("Could not borrow FlowToken vault")
+        let claimedVault <- flowVaultRef.withdraw(amount: claimable)
+
+        if self.totalStakedPrincipal > 0.0 {
+            self.accruedRewardPerFlow = self.accruedRewardPerFlow + (claimable / self.totalStakedPrincipal)
+        }
+        self.totalRealRewardsClaimed = self.totalRealRewardsClaimed + claimable
+        self.lastRewardClaimTime = getCurrentBlock().timestamp
+        emit RealRewardsClaimed(amount: claimable, newAccruedRewardPerFlow: self.accruedRewardPerFlow)
+        return <- claimedVault
     }
 
     access(all) resource StrategyExecutor: SentinelInterfaces.IStrategy {
 
+        // NOTE: this call intentionally never invents yield. Real yield only exists once
+        // this account has staked FLOW via stake() and claimed real rewards via claimRewards() —
+        // both of which move real resources and cannot be expressed through this UFix64-only
+        // interface. Per-vault yield is realized by SentinelVaultFinal.Vault.claimYield(), which
+        // reads LiquidStakingStrategy.accruedRewardPerFlow directly.
         access(all) fun executeStrategy(vaultBalance: UFix64): SentinelInterfaces.StrategyResult {
-            // PRODUCTION: Actually generate yield based on oracle APY
             pre {
                 vaultBalance > 0.0: "Cannot execute strategy with zero balance"
                 LiquidStakingStrategy.isActive: "Strategy is not active"
             }
-            
-            // Sync latest APY from oracle
-            let apy = LiquidStakingStrategy.getOracleAPY()
-            
-            // Calculate yield based on time since last execution
-            // For simplicity, we calculate yield based on balance and APY
-            let dailyRate = apy / 365.0
-            let yieldAmount = vaultBalance * (dailyRate / 100.0)
-            
-            // Update strategy stats
             LiquidStakingStrategy.totalExecutions = LiquidStakingStrategy.totalExecutions + 1
-            LiquidStakingStrategy.totalYieldGenerated = LiquidStakingStrategy.totalYieldGenerated + yieldAmount
-            LiquidStakingStrategy.stakingRewardsEarned = LiquidStakingStrategy.stakingRewardsEarned + yieldAmount
-            
-            emit YieldGenerated(vaultId: 0, amount: yieldAmount, source: "Flow Liquid Staking")
-            
+            let realizedAPY = LiquidStakingStrategy.getRealizedAPY()
+
             return SentinelInterfaces.StrategyResult(
-                yieldAmount: yieldAmount,
+                yieldAmount: 0.0,
                 protocolSource: "Flow Network Staking",
-                realizedAPY: apy,
-                confidence: 0.90,
-                executionNote: "Yield generated from Flow liquid staking rewards",
+                realizedAPY: realizedAPY,
+                confidence: LiquidStakingStrategy.stakingCollectionSetup ? 0.95 : 0.50,
+                executionNote: LiquidStakingStrategy.stakingCollectionSetup
+                    ? "Real yield accrues via FlowStakingCollection delegation — claim via claimYield()"
+                    : "Staking collection not yet set up — no real yield is accruing",
                 strategyId: LiquidStakingStrategy.strategyId,
-                usedRealProtocol: true
+                usedRealProtocol: LiquidStakingStrategy.stakingCollectionSetup
             )
         }
 
         access(all) fun getExpectedYield(amount: UFix64): UFix64 {
-            let apy = LiquidStakingStrategy.getOracleAPY()
-            return amount * (apy / 100.0) / 365.0  // Daily expected yield
+            let apy = LiquidStakingStrategy.getRealizedAPY()
+            return amount * (apy / 100.0) / 365.0  // Daily estimate only
         }
 
         access(all) fun getRiskLevel(): UInt8 {
@@ -147,8 +249,8 @@ access(all) contract LiquidStakingStrategy {
     }
 
     access(all) fun getStrategyInfo(): {String: AnyStruct} {
-        let currentAPY = self.getOracleAPY()
-        let source = YieldOracle.getYieldData(self.strategyId)?.source ?? "Flow staking"
+        let realizedAPY = self.getRealizedAPY()
+        let oracleAPY = self.getOracleAPY()
         return {
             "id": self.strategyId,
             "name": self.name,
@@ -156,25 +258,29 @@ access(all) contract LiquidStakingStrategy {
             "riskLevel": self.riskLevel,
             "category": self.category,
             "minDeposit": self.minDeposit,
-            "expectedAPY": currentAPY,
+            "expectedAPY": oracleAPY,
             "lastEpochAPY": self.lastEpochAPY,
-            "dailyRate": currentAPY / 365.0,
-            "weeklyRate": currentAPY / 52.0,
-            "apySource": source,
+            "realizedAPY": realizedAPY,
+            "dailyRate": realizedAPY / 365.0,
+            "weeklyRate": realizedAPY / 52.0,
             "tvl": self.totalValueLocked,
             "participants": self.totalParticipants,
-            "totalYieldGenerated": self.totalYieldGenerated,
             "totalExecutions": self.totalExecutions,
             "isActive": self.isActive,
-            "stakingRewardsEarned": self.stakingRewardsEarned,
-            "features": ["Oracle APY", "Flow Staking Rewards", "MEV Protection", "Auto-Compound"],
+            "features": ["Real FlowStakingCollection Delegation", "MEV Protection", "Reward-Per-Share Accounting"],
             "creator": "Flow Sentinel",
             "verified": true,
             "protocolSource": "Flow Network Staking",
             "stakingType": "Liquid Staking",
-            "provenance": source,
-            "methodology": "epoch-rewards",
-            "mevProtection": "Full MEV-Shield (VRF jitter, Commit-Reveal, Price Guard, Queue)"
+            "provenance": self.stakingCollectionSetup ? "FlowIDTableStaking (real epoch rewards)" : "YieldOracle (bootstrap, not yet staking)",
+            "methodology": "real-delegation",
+            "mevProtection": "Full MEV-Shield (VRF jitter, Commit-Reveal, Price Guard, Queue)",
+            "protocolNodeID": self.protocolNodeID,
+            "stakingCollectionSetup": self.stakingCollectionSetup,
+            "totalStakedPrincipal": self.totalStakedPrincipal,
+            "accruedRewardPerFlow": self.accruedRewardPerFlow,
+            "totalRealRewardsClaimed": self.totalRealRewardsClaimed,
+            "lastRewardClaimTime": self.lastRewardClaimTime
         }
     }
 
@@ -183,8 +289,7 @@ access(all) contract LiquidStakingStrategy {
             self.totalValueLocked = self.totalValueLocked + amount
             self.totalParticipants = self.totalParticipants + 1
         } else {
-            self.totalValueLocked = self.totalValueLocked > amount ? self.totalValueLocked - amount : 0.0
-            self.totalParticipants = self.totalParticipants > 0 ? self.totalParticipants - 1 : 0
+            self.totalValueLocked = amount < self.totalValueLocked ? self.totalValueLocked - amount : 0.0
         }
         emit TVLUpdated(newTVL: self.totalValueLocked, participants: self.totalParticipants)
     }

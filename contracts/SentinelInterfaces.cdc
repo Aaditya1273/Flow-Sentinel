@@ -1,4 +1,4 @@
-import FungibleToken
+import "FungibleToken"
 
 // Standard interfaces for Flow Sentinel ecosystem (v3.0)
 // Phase 3: Added StrategyResult struct — strategies now report real protocol data,

@@ -135,7 +135,13 @@ access(all) contract YieldOracle {
         self.account.storage.save(<-adminRes, to: /storage/SentinelYieldOracleAdmin)
         emit OracleAdminResourceCreated(recipient: self.account.address)
         
-        // PRODUCTION: Seed with real Flow ecosystem APY data
+        // BOOTSTRAP DEFAULTS ONLY — not live-fetched data. Cadence contracts cannot make
+        // outbound HTTP calls (true of every blockchain: the oracle problem), so these are
+        // reasonable starting estimates until an OracleAdminResource holder pushes real
+        // updates via setAPY()/batchSetAPY(). For liquid-staking-pro specifically,
+        // LiquidStakingStrategy.getRealizedAPY() already ignores this and reports real
+        // FlowIDTableStaking-derived APY once staking has actually started — these numbers
+        // are only ever seen pre-stake or for strategies with no on-chain data source.
         // Flow Liquid Staking (typical 4-5% APY)
         self.yieldData["liquid-staking"] = YieldData(
             apy: 4.5,

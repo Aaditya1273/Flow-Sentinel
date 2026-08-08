@@ -1,3 +1,5 @@
+import "SentinelVaultFinal"
+
 // MultiSigAdmin — M-of-N multi-signature authorization for Sentinel admin operations
 access(all) contract MultiSigAdmin {
 
@@ -143,6 +145,7 @@ access(all) contract MultiSigAdmin {
             if proposalRef.getSignatureCount() < MultiSigAdmin.requiredSignatures {
                 panic("Not enough signatures")
             }
+            MultiSigAdmin.dispatch(actionType: proposalRef.actionType, calldata: proposalRef.calldata)
             proposalRef.markExecuted()
             emit ProposalExecuted(id: proposalId, executor: caller)
         }
@@ -248,5 +251,38 @@ access(all) contract MultiSigAdmin {
 
     access(all) fun createAdmin(): @Admin {
         return <- create Admin()
+    }
+
+    // Real dispatch — turns an executed proposal into an actual on-chain action instead of
+    // just flipping a boolean. MultiSigAdmin and SentinelVaultFinal deploy to the same
+    // account, so this borrows SentinelVaultFinal.Admin directly from that shared account's
+    // storage — the same single admin authority fee-setter/pause transactions already use,
+    // rather than inventing a second privileged path.
+    access(contract) fun dispatch(actionType: ActionType, calldata: &{String: AnyStruct}) {
+        let admin = self.account.storage.borrow<&SentinelVaultFinal.Admin>(
+            from: SentinelVaultFinal.AdminStoragePath
+        ) ?? panic("SentinelVaultFinal.Admin not found in this account")
+
+        if actionType == ActionType.EmergencyPause {
+            let paused = calldata["paused"] as? Bool ?? true
+            admin.setGlobalPause(paused)
+        } else if actionType == ActionType.Custom {
+            let action = calldata["action"] as? String ?? ""
+            let value = calldata["value"] as? UFix64 ?? panic("Missing UFix64 'value' in calldata")
+            if action == "setWithdrawalFeeBps" {
+                admin.setWithdrawalFeeBps(value)
+            } else if action == "setManagementFeeBps" {
+                admin.setManagementFeeBps(value)
+            } else if action == "setPerformanceFeeBps" {
+                admin.setPerformanceFeeBps(value)
+            } else {
+                panic("Unknown custom action: ".concat(action))
+            }
+        } else {
+            // FundYieldReserve / UpdateYieldOracle / UpgradeContract / AddAdmin / RemoveAdmin /
+            // ChangeThreshold are not yet wired to a real dispatch target — fail loudly rather
+            // than silently marking a proposal "executed" that did nothing.
+            panic("Action type not yet wired to a real dispatch target")
+        }
     }
 }

@@ -1,11 +1,11 @@
-import LiquidStakingStrategy
-import YieldFarmingStrategy
+import "LiquidStakingStrategy"
+import "YieldFarmingStrategy"
 
 // StrategyRegistry — Upgrade v2: ADDITIVE ONLY
 // KEPT: RegistryStoragePath, RegistryPublicPath, totalStrategies, strategies dict,
 //   all 3 original events, Registry resource, registerDefaultStrategies, updateStrategyTVL,
 //   getAllStrategies/getStrategy contract-level aliases.
-// FIXED: import addresses corrected to 0xc13b08053be24e87.
+// FIXED: import addresses corrected to 0x2090c2fa44d12bd8.
 // ADDED: getTotalTVL, getTotalParticipants, getTotalYieldGenerated (read live from strategy contracts).
 access(all) contract StrategyRegistry {
 
